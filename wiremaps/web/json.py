@@ -3,7 +3,7 @@ from cStringIO import StringIO
 from twisted.internet import defer
 from twisted.python import failure
 
-from nevow import rend, loaders, flat
+from nevow import rend, flat
 from nevow import json, inevow, context
 from nevow import tags as T
 
@@ -11,10 +11,19 @@ from pyPgSQL import PgSQL
 
 class JsonPage(rend.Page):
 
-    docFactory = loaders.stan ( T.div(render=T.directive("json"),
-                                      data=T.directive("json")))
-    addSlash = True
     flattenFactory = lambda self, *args: flat.flattenFactory(*args)
+    addSlash = True
+
+    def renderHTTP(self, ctx):
+        request = inevow.IRequest(ctx)
+        if inevow.ICurrentSegments(ctx)[-1] != '':
+            request.redirect(request.URLPath().child(''))
+            return ''
+        request.setHeader("Content-Type",
+                          "application/json; charset=UTF-8")
+        d = defer.maybeDeferred(self.data_json, ctx, None)
+        d.addCallback(lambda x: self.render_json(ctx, x))
+        return d
 
     def render_json(self, ctx, data):
         """Render the given data in a proper JSON string"""
@@ -60,7 +69,3 @@ class JsonPage(rend.Page):
         d = defer.DeferredList(d)
         d.addCallback(lambda x: serialize(data))
         return d
-        
-
-    def beforeRender(self, ctx):
-        inevow.IRequest(ctx).setHeader("Content-Type", "application/json; charset=UTF-8")

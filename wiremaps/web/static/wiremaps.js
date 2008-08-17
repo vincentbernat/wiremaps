@@ -138,7 +138,7 @@ function replacePorts(ports)
 function displayPortInformation(portdetails, data) {
     var ul = portdetails.children("ul");
     for (var i = 0; i < data.length; i++) {
-	ul.append("<li>"+decodeEntity(data[i])+"</li>");
+	ul.append("<li>"+data[i]+"</li>");
     }
     portdetails.find("a").bind("click", searchOrShow);
     portdetails.show();
@@ -149,7 +149,7 @@ function displaySearchResults(data, elt) {
     ul.children().remove();
     $("div#searchresults span.data:first").html(elt);
     for (var i = 0; i < data.length; i++) {
-	ul.append("<li>"+decodeEntity(data[i])+"</li>");
+	ul.append("<li>"+data[i]+"</li>");
     }
     ul.find("a").bind("click", searchOrShow);
     $("div#searchresults").show();
@@ -213,11 +213,4 @@ function hideMessage()
 	.animate({"top": "-32px"}, "slow", undefined, function() {
 		     $("div#message:not(hidden)").fadeOut("fast");
 		 });
-}
-
-function decodeEntity(msg)
-{
-    $("div#htmlconverter")
-	.html('<textarea id="innerConverter">' + msg + '</textarea>');
-    return $("div#htmlconverter #innerConverter").val();
 }
