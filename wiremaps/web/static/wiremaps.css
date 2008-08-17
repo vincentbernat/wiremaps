@@ -1,0 +1,203 @@
+body
+{
+    background-color: #efd7ca;
+}
+
+/* Informational message */
+
+div#message
+{
+    position: fixed;
+    top: -1px;
+    left: 200px;
+    right: 200px;
+    z-index: 5000;
+    opacity: 0.80;
+}
+
+div#message div
+{
+    width: 400px;
+    margin: 0px auto;
+    height: 24px;
+    min-height: 24px;
+    padding: 8px 10px 8px 46px;
+}
+
+div#message div.msginfo
+{
+    background: url(/static/info.png) 6px 3px no-repeat;
+    background-color: #3DB4EC;
+    border: 1px solid #2587B5;
+}
+
+div#message div.msgalert
+{
+    background: url(/static/error.png) 6px 3px no-repeat;
+    background-color: #EF9398;
+    border: 1px solid #DC5757;
+}
+
+div#message div.msgok
+{
+    background: url(/static/ok.png) 6px 3px no-repeat;
+    background-color: #A6EF7B;
+    border: 1px solid #76C83F;
+}
+
+/* Logo */
+
+div#logo
+{
+    margin: 2px 12px;
+    float: left;
+}
+
+/* Search */
+div#search
+{
+    float: right;
+    text-align: right;
+    visibility: hidden;
+}
+div#searchresults
+{
+    clear: both;
+    margin-top: 3em;
+    margin-left: 3em;
+    padding: 1ex;
+    background-color: #f9a97d;
+    border: 1px solid #f1722c;
+    display: none;
+}
+div#searchactions
+{
+    font-size: x-small;
+    text-align: right;
+    float: right;
+}
+
+/* Global application */
+
+div#application
+{
+    clear: both;
+    background-color: white;
+    padding: 5px;
+    margin-top: 1em;
+    border: 1px dotted #dd9f7e;
+    visibility: hidden;
+}
+.data
+{
+    font-stretch: semi-condensed;
+    font-weight: bold;
+    font-family: monospace;
+}
+.error
+{ 
+    color: red;
+    font-weight: bold;
+}
+
+/* Equipments */
+div#equipments
+{
+    width: 98%;
+}
+div#equipments form select
+{
+    float: left;
+    font-size: 120%;
+    font-weight: bold;
+}
+div#actions
+{
+    font-size: x-small;
+    text-align: right;
+    float: right;
+    visibility: hidden;
+}
+div#actions li, div#actions ul, div#searchactions li, div#searchactions ul
+{
+    display: inline;
+}
+
+/* Photo/picture */
+div#photo
+{
+    clear: both;
+    margin-top: 3em;
+    margin-left: 5%;
+    margin-right: 5%;
+    padding: 5px;
+    text-align:center;
+    border-top-style: dashed;
+    border-bottom-style: dashed;
+    border-color: #dd9f7e;
+    display: none;
+}
+
+/* Ports */
+div#ports
+{ 
+    display: none;
+}
+div#ports > ul
+{
+    list-style-type: none;
+}
+div#ports ul li.port
+{
+    float: left;
+    width: 45%;
+    margin-right: 1%;
+    min-height: 35px;
+}
+div#ports li.up
+{
+    padding: 5px;
+    background: url(/static/up.png) no-repeat;
+}
+div#ports li.down
+{
+    padding: 5px;
+    background: url(/static/down.png) no-repeat;
+}
+div.portbasics, div.portname, div.portalias, div.portactions, 
+div.portactions > ul, div.portactions > ul > li
+{
+    display: inline;
+}
+div.portbasics
+{
+    vertical-align: middle;
+    margin-left: 35px;
+}
+div.portname
+{
+    font-weight: bold;
+    font-style: oblique;
+}
+div.portactions
+{
+    font-size: x-small;
+}
+div.portalias
+{ 
+    font-size: x-small;
+    margin-left: 3ex;
+}
+div.portdetails
+{
+    padding-top: 1em;
+    margin-left: 0.5em;
+}
+div.portdetails ul
+{
+    list-style-image: url("/static/bullet.png");
+}
+div#end
+{
+    clear: both;
+}
