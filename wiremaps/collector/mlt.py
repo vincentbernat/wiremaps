@@ -30,7 +30,20 @@ class MltCollector:
                     continue
                 for j in range(0, 8):
                     if ord(ports[i]) & (1 << j):
-                        # What port is bit j?
+                        # What port is bit j? See this from RAPID-CITY MIB:
+
+                        # "The string is 88 octets long, for a total
+                        # of 704 bits. Each bit corresponds to a port,
+                        # as represented by its ifIndex value . When a
+                        # bit has the value one(1), the corresponding
+                        # port is a member of the set. When a bit has
+                        # the value zero(0), the corresponding port is
+                        # not a member of the set. The encoding is
+                        # such that the most significant bit of octet
+                        # #1 corresponds to ifIndex 0, while the least
+                        # significant bit of octet #88 corresponds to
+                        # ifIndex 703."
+
                         l.append(7-j + 8*i)
             self.mlt[mlt] = l
 
