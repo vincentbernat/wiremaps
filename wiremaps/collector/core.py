@@ -32,6 +32,27 @@ class CollectorService(internet.TimerService):
         We try to explore several IP in parallel. The parallelism is
         defined in the configuration file.
         """
+
+        class Explorer(object):
+
+            def __init__(self, collector, remaining):
+                self.defer = defer.Deferred()
+                self.collector = collector
+                self.remaining = remaining
+
+            def __call__(self):
+                self.exploreNext()
+                return self.defer
+
+            def exploreNext(self):
+                if self.remaining:
+                    ip = self.remaining.pop()
+                    d = self.collector.startExploreIP(ip)
+                    d.addErrback(self.collector.reportError, ip)
+                    d.addCallback(lambda x: self.exploreNext())
+                else:
+                    self.defer.callback(None)
+
         if not self.collect:
             return
         if self.exploring:
@@ -39,10 +60,10 @@ class CollectorService(internet.TimerService):
             return
         self.exploring = True
         print "Start exploring %s..." % self.config['ips']
-        self.remaining = [x for x in IP(self.config['ips'])]
+        remaining = [x for x in IP(self.config['ips'])]
         dl = []
         for i in range(0, self.config['parallel']):
-            dl.append(self.startExplorePool())
+            dl.append(Explorer(self, remaining)())
         defer.DeferredList(dl).addCallback(self.stopExploration)
 
     def startExploreIP(self, ip):
@@ -56,19 +77,6 @@ class CollectorService(internet.TimerService):
         d.addCallback(self.handlePlugins)
         d.addCallback(lambda x: x.close())
         return d
-
-    def startExplorePool(self):
-        """Start to explore a given pool.
-
-        Each IP in C{self.remaining} is explored one after another.
-        """
-        if self.remaining:
-            ip = self.remaining.pop()
-            d = self.startExploreIP(ip)
-            d.addErrback(self.reportError, ip)
-            d.addCallback(lambda x: self.startExplorePool())
-            return d
-        return defer.succeed(None)
 
     def stopExploration(self, ignored):
         """Stop exploration process."""
