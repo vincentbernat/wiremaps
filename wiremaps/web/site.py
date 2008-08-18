@@ -11,9 +11,10 @@ class MainPage(rend.Page):
 
     docFactory = loaders.xmlfile(util.sibpath(__file__, "main.xhtml"))
 
-    def __init__(self, config, dbpool):
+    def __init__(self, config, dbpool, collector):
         self.config = config['web']
         self.dbpool = dbpool
+        self.collector = collector
         rend.Page.__init__(self)
 
     def render_logo(self, ctx, data):
@@ -26,7 +27,7 @@ class MainPage(rend.Page):
         return ImageResource(self.dbpool)
 
     def child_equipment(self, ctx):
-        return EquipmentResource(self.dbpool)
+        return EquipmentResource(self.dbpool, self.collector)
 
     def child_search(self, ctx):
         return SearchResource(self.dbpool)

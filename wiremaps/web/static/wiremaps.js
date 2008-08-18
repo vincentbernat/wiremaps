@@ -19,7 +19,7 @@ $(document).ready(function() {
     $("div#equipments select")
 	.bind("change", function(event) {
 	    event.preventDefault();
-	    loadEquipment(this.value);
+	    loadEquipment(this.value.split(" - ")[1]);
 	});
     $("div#actions #details a")
 	.bind("click", function(event) {
@@ -29,6 +29,7 @@ $(document).ready(function() {
 	    $(this).parent().hide();
 	});
     $("div#actions #autosearch a").bind("click", searchOrShow);
+    $("div#actions #refresh a").bind("click", refresh);
     /* Unhide application on load */
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
@@ -58,16 +59,15 @@ function loadEquipments()
 	    }});
 }
 
-function loadEquipment(equip)
+function loadEquipment(ip)
 {
-    var ip = equip.split(" - ")[1];
     $("div#equipments select")
 	.children(".first:first").remove();
     $("div#equipments div#actions").css("visibility", "visible");
     $("div#photo img")
 	.attr("src", "images/" + ip)
 	.parent().show();
-    $("div#actions #autosearch a").attr("href", "search/" + ip + "/");
+    $("div#actions a").attr("href", "search/" + ip + "/");
     $("div#ports").hide();
     sendMessage("info", "Loading list of ports for "+ip);
     $.ajax({type: "GET",
@@ -161,7 +161,7 @@ function displaySearchResults(data, elt) {
 
 function searchOrShow(event) {
     event.preventDefault();
-    target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
+    var target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
     if (target[0].match(/^search/))
 	search(target[1]);
     else if (target[0].match(/equipment/)) {
@@ -175,6 +175,27 @@ function searchOrShow(event) {
 	a.attr("selected", 1).parent().change();
     } else
 	sendMessage("alert", "Unknown link: " + target[0]);
+}
+
+function refresh(event) {
+    event.preventDefault();
+    var target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
+    sendMessage("info", "Refreshing "+target[1]+"...");
+    $.ajax({type: "GET",
+	    url: "equipment/"+target[1]+"/refresh/",
+	    dataType: "json",
+	    error: function(xmlh, textstatus, error) {
+		sendMessage("alert",
+		"Unable to refresh "+target[1]);
+	    },
+	    success: function(data) {
+		    if (data["status"] == 0) {
+			sendMessage("error", "Refresh error: "+data["message"]);
+		    } else {
+			sendMessage("ok", "Refresh successful");
+			loadEquipment(target[1]);
+		    }
+	    }});
 }
 
 function search(elt) {
