@@ -17,11 +17,12 @@ from wiremaps.collector.icollector import ICollector
 class CollectorService(internet.TimerService):
     """Service to collect data from SNMP"""
     
-    def __init__(self, config, dbpool):
+    def __init__(self, config, dbpool, collect=True):
         self.config = config['collector']
         self.dbpool = dbpool
         self.setName("SNMP collector")
         self.exploring = False
+        self.collect = collect
         internet.TimerService.__init__(self, self.config['period']*60,
                                        self.startExploration)
 
@@ -31,6 +32,8 @@ class CollectorService(internet.TimerService):
         We try to explore several IP in parallel. The parallelism is
         defined in the configuration file.
         """
+        if not self.collect:
+            return
         if self.exploring:
             print "Exploration still running, don't run it now"
             return
