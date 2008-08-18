@@ -28,7 +28,7 @@ class SonmpCollector:
                 segid = segid / 256 * 64 + segid % 256 - 64
             port = int(oid.split(".")[-6]) + (int(oid.split(".")[-7]) - 1)*64
             if port > 0:
-                self.sonmp[(port, ip)] = segid
+                self.sonmp[port] = (ip, segid)
 
     def collectData(self):
         """Collect data from SNMP using s5EnMsTopNmmSegId"""
@@ -36,13 +36,14 @@ class SonmpCollector:
         def fileIntoDb(txn, sonmp, ip):
             txn.execute("DELETE FROM sonmp WHERE equipment=%(ip)s",
                         {'ip': str(ip)})
-            for port, rip in sonmp.keys():
+            for port in sonmp.keys():
+                rip, rport = self.sonmp[port]
                 txn.execute("INSERT INTO sonmp VALUES (%(ip)s, "
                             "%(port)s, %(rip)s, %(rport)s)",
                             {'ip': str(ip),
                              'port': port,
                              'rip': rip,
-                             'rport': sonmp[(port,rip)]})
+                             'rport': rport})
 
         print "Collecting SONMP for %s" % self.proxy.ip
         d = self.proxy.walk(self.s5EnMsTopNmmSegId)
