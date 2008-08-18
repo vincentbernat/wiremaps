@@ -9,3 +9,6 @@ class UnknownEquipment(CollectorException):
 
 class NoLLDP(CollectorException):
     pass
+
+class CollectorAlreadyRunning(CollectorException):
+    pass

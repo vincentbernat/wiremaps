@@ -1,3 +1,4 @@
+from nevow import rend, loaders, tags as T
 from wiremaps.web.json import JsonPage
 from wiremaps.web import ports
 
@@ -11,6 +12,10 @@ class EquipmentResource(JsonPage):
 
     def data_json(self, ctx, data):
         return self.dbpool.runQuery("SELECT name,ip FROM equipment ORDER BY name")
+
+    def child_refresh(self, ctx):
+        self.collector.startExploration()
+        return rend.Page(docFactory=loaders.stan(T.p["Refresh started..."]))
 
     def childFactory(self, ctx, name):
         return EquipmentDetailResource(name, self.dbpool, self.collector)

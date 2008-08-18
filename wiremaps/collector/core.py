@@ -6,7 +6,7 @@ import sys
 
 from IPy import IP
 from twisted.internet import defer
-from twisted.application import internet
+from twisted.application import internet, service
 from twisted.plugin import getPlugins
 
 import wiremaps.collector
@@ -14,17 +14,14 @@ from wiremaps.collector import exception
 from wiremaps.collector.proxy import AgentProxy
 from wiremaps.collector.icollector import ICollector
 
-class CollectorService(internet.TimerService):
+class CollectorService(service.Service):
     """Service to collect data from SNMP"""
     
-    def __init__(self, config, dbpool, collect=True):
+    def __init__(self, config, dbpool):
         self.config = config['collector']
         self.dbpool = dbpool
         self.setName("SNMP collector")
         self.exploring = False
-        self.collect = collect
-        internet.TimerService.__init__(self, self.config['period']*60,
-                                       self.startExploration)
 
     def startExploration(self):
         """Start to explore the range of IP.
@@ -53,11 +50,9 @@ class CollectorService(internet.TimerService):
                 else:
                     self.defer.callback(None)
 
-        if not self.collect:
-            return
         if self.exploring:
-            print "Exploration still running, don't run it now"
-            return
+            raise exception.CollectorAlreadyRunning(
+                "Exploration still running")
         self.exploring = True
         print "Start exploring %s..." % self.config['ips']
         remaining = [x for x in IP(self.config['ips'])]

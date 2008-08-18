@@ -27,9 +27,12 @@ dbpool = adbapi.ConnectionPool("pyPgSQL.PgSQL",
 
 application = service.Application("Wire Maps")
 
-collector = CollectorService(config, dbpool, collect=False)
+collector = CollectorService(config, dbpool)
 collector.setServiceParent(application)
-internet.TCPServer(8087,
-                   appserver.NevowSite(MainPage(config,
-                                                dbpool,
-                                                collector))).setServiceParent(application)
+
+web = internet.TCPServer(8087,
+                         appserver.NevowSite(MainPage(config,
+                                                      dbpool,
+                                                      collector)))
+web.setServiceParent(application)
+
