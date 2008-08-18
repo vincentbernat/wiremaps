@@ -39,7 +39,7 @@ class JsonPage(rend.Page):
             if type(data) in [list, tuple] or isinstance(data, PgSQL.PgResultSet):
                 return [sanitize(x, d) for x in data]
             if type(data) == str:
-                return unicode(data)
+                return unicode(data, errors='ignore')
             if isinstance(data, rend.Fragment):
                 io = StringIO()
                 writer = io.write
@@ -58,7 +58,8 @@ class JsonPage(rend.Page):
                 return data
             if isinstance(data, failure.Failure):
                 return unicode(
-                    "<span class='error'>An error occured (%s)</span>" % data.getErrorMessage())
+                    "<span class='error'>An error occured (%s)</span>" % data.getErrorMessage(),
+                    errors='ignore')
             return data
 
         def serialize(data):
