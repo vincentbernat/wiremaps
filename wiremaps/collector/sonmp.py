@@ -3,7 +3,7 @@ class SonmpCollector:
 
     s5EnMsTopNmmSegId = '.1.3.6.1.4.1.45.1.6.13.2.1.1.4'
 
-    def __init__(self, proxy, dbpool):
+    def __init__(self, proxy, dbpool, normport=None):
         """Create a collector using SONMP entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
@@ -11,6 +11,7 @@ class SonmpCollector:
         """
         self.proxy = proxy
         self.dbpool = dbpool
+        self.normport = normport
 
     def gotSonmp(self, results):
         """Callback handling reception of SONMP
@@ -27,7 +28,9 @@ class SonmpCollector:
             if segid > 0x100:
                 segid = segid / 256 * 64 + segid % 256 - 64
             port = int(oid.split(".")[-6]) + (int(oid.split(".")[-7]) - 1)*64
-            if port > 0:
+            if self.normport:
+                port = self.normport(port)
+            if port is not None and port > 0:
                 self.sonmp[port] = (ip, segid)
 
     def collectData(self):
