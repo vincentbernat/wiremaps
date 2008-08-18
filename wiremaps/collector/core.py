@@ -40,7 +40,7 @@ class CollectorService(internet.TimerService):
         dl = []
         for i in range(0, self.config['parallel']):
             dl.append(self.startExplorePool())
-        defer.DeferredList(dl, consumeErrors=True).addCallback(self.stopExploration)
+        defer.DeferredList(dl).addCallback(self.stopExploration)
 
     def startExploreIP(self, ip):
         """Start to explore a given IP.
