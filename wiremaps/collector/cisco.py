@@ -5,6 +5,7 @@ from twisted.internet import defer
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.arp import ArpCollector
+from wiremaps.collector.fdb import FdbCollector
 
 class Cisco:
     """Collector for Cisco"""
@@ -17,6 +18,7 @@ class Cisco:
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData(write=False))
         d.addCallback(lambda x: fdb.collectData(write=False))
