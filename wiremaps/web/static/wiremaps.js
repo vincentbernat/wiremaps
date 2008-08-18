@@ -190,7 +190,7 @@ function refresh(event) {
 	    },
 	    success: function(data) {
 		    if (data["status"] == 0) {
-			sendMessage("error", "Refresh error: "+data["message"]);
+			sendMessage("alert", "Refresh error: "+data["message"]);
 		    } else {
 			sendMessage("ok", "Refresh successful");
 			loadEquipment(target[1]);
