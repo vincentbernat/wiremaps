@@ -113,6 +113,7 @@ class LldpCollector:
                              'sysname': sysname[port],
                              'sysdesc': sysdesc[port]})
 
+        print "Collecting LLDP for %s" % self.proxy.ip
         d = self.proxy.walk(self.lldpRemManAddrIfId)
         d.addCallback(self.gotLldpMgmtIP)
         self.lldpSysName = {}

@@ -43,6 +43,7 @@ class ArpCollector:
                              'mac': mac,
                              'rip': rip})
 
+        print "Collecting ARP for %s" % self.proxy.ip
         d = self.proxy.walk(self.ipNetToMediaPhysAddress)
         d.addCallback(self.gotArp)
         if write:

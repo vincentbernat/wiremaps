@@ -48,6 +48,7 @@ class FdbCollector:
                              'port': port,
                              'mac': mac})
 
+        print "Collecting FDB for %s" % self.proxy.ip
         d = self.proxy.walk(self.dot1dTpFdbPort)
         d.addCallback(self.gotFdb)
         if write:

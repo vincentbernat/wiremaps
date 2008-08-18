@@ -44,6 +44,7 @@ class SonmpCollector:
                              'rip': rip,
                              'rport': sonmp[(port,rip)]})
 
+        print "Collecting SONMP for %s" % self.proxy.ip
         d = self.proxy.walk(self.s5EnMsTopNmmSegId)
         d.addCallback(self.gotSonmp)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,

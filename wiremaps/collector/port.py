@@ -121,6 +121,7 @@ class PortCollector:
                                                                 'alias': alias,
                                                                 'state': status[port]})
 
+        print "Collecting port information for %s" % self.proxy.ip
         d = self.proxy.walk(self.ifType)
         d.addCallback(self.gotIfTypes)
         d.addCallback(lambda x: self.proxy.walk(self.ifDescr))
