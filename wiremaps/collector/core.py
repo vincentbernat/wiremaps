@@ -39,8 +39,8 @@ class CollectorService(internet.TimerService):
         self.remaining = [x for x in IP(self.config['ips'])]
         dl = []
         for i in range(0, self.config['parallel']):
-            dl.append(self.startExplorePool(0))
-        defer.DeferredList(dl).addCallback(self.stopExploration)
+            dl.append(self.startExplorePool())
+        defer.DeferredList(dl, consumeErrors=True).addCallback(self.stopExploration)
 
     def startExploreIP(self, ip):
         """Start to explore a given IP.
@@ -51,9 +51,10 @@ class CollectorService(internet.TimerService):
         d = self.guessCommunity(None, None, ip, self.config['community'])
         d.addCallback(self.getBasicInformation)
         d.addCallback(self.handlePlugins)
+        d.addCallback(lambda x: x.close())
         return d
 
-    def startExplorePool(self, ignored):
+    def startExplorePool(self):
         """Start to explore a given pool.
 
         Each IP in C{self.remaining} is explored one after another.
@@ -62,7 +63,7 @@ class CollectorService(internet.TimerService):
             ip = self.remaining.pop()
             d = self.startExploreIP(ip)
             d.addErrback(self.reportError, ip)
-            d.addCallback(self.startExplorePool)
+            d.addCallback(lambda x: self.startExplorePool())
             return d
         return defer.succeed(None)
 
@@ -99,6 +100,7 @@ class CollectorService(internet.TimerService):
         d = defer.succeed(None)
         for plugin in plugins:
             d.addCallback(lambda x: plugin.collectData(proxy.ip, proxy, self.dbpool))
+        d.addCallback(lambda x: proxy)
         return d
 
     def guessCommunity(self, ignored, proxy, ip, communities):
