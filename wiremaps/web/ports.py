@@ -70,10 +70,13 @@ class PortDetailsFdb(PortRelatedFragment):
                                      data=T.directive("fdb")))
 
     def data_fdb(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT a.mac, a.ip "
-                                    "FROM fdb f, arp a WHERE f.equipment=%(ip)s "
-                                    "AND f.port=%(port)s AND a.mac=f.mac "
-                                    "ORDER BY a.ip LIMIT 20",
+        return self.dbpool.runQuery("SELECT DISTINCT f.mac, a.ip "
+                                    "FROM fdb f LEFT OUTER JOIN arp a "
+                                    "ON a.mac = f.mac "
+                                    "WHERE f.equipment=%(ip)s "
+                                    "AND f.port=%(port)s "
+                                    "ORDER BY a.ip NULLS LAST, f.mac "
+                                    "LIMIT 20",
                                     {'ip': str(self.ip),
                                      'port': self.index})
 
@@ -91,10 +94,11 @@ class PortDetailsFdb(PortRelatedFragment):
                        small [
                        [T.invisible[T.invisible(data=x[0],
                                                 render=T.directive("mac")),
+                                    x[1] and T.invisible[
                                     " (",
                                     T.invisible(data=x[1],
                                                 render=T.directive("ip")),
-                                    ") "] for x in data]]]
+                                    ") "] or " "] for x in data]]]
 
 class PortDetailsSonmp(PortRelatedFragment):
 
