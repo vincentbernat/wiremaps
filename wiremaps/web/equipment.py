@@ -54,10 +54,7 @@ class RefreshEquipmentResource(JsonPage):
         if not result:
             return {u"status": 0, u"message": u"Cannot find the equipment to refresh"}
         d = self.collector.startExploreIP(self.ip)
-        d.addCallbacks(lambda x: {u"status": 1},
-                       lambda x: {u"status": 0,
-                                  u"message": unicode(x.getErrorMessage(),
-                                                      errors='ignore')})
+        d.addCallback(lambda x: {u"status": 1})
         return d
 
     def data_json(self, ctx, data):
