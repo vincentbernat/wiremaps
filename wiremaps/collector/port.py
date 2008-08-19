@@ -45,7 +45,7 @@ class PortCollector:
             port = int(oid.split(".")[-1])
             if port not in self.ports:
                 continue
-            descr = results[oid].strip()
+            descr = str(results[oid]).strip()
             if self.norm is not None:
                 descr = self.norm(descr).strip()
             self.portNames[port] = descr
@@ -60,7 +60,7 @@ class PortCollector:
             port = int(oid.split(".")[-1])
             if port not in self.ports:
                 continue
-            name = results[oid].strip()
+            name = str(results[oid]).strip()
             if name:
                 self.portAliases[port] = name
 
