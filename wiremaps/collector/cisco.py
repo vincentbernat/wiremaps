@@ -13,7 +13,7 @@ class Cisco:
     implements(ICollector, IPlugin)
 
     def handleEquipment(self, oid):
-        return oid.startswith('.1.3.6.1.4.1.9.1.')
+        return oid.startswith('.1.3.6.1.4.1.9.')
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
