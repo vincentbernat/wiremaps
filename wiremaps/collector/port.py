@@ -74,7 +74,7 @@ class PortCollector:
             port = int(oid.split(".")[-1])
             if port not in self.ports:
                 continue
-            if results[oid] == 0:
+            if results[oid] == 2:
                 self.portStatus[port] = 'down'
             else:
                 self.portStatus[port] = 'up'
