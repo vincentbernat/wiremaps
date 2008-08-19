@@ -153,10 +153,7 @@ function displaySearchResults(data, elt) {
     }
     ul.find("a").bind("click", searchOrShow);
     $("div#searchresults").show();
-    if (i > 1)
-	sendMessage("ok", "Some results found");
-    else
-	sendMessage("ok", "No result found");
+    hideMessage();
 }
 
 function searchOrShow(event) {
