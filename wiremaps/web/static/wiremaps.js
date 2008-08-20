@@ -41,6 +41,7 @@ function loadEquipments()
 {
     sendMessage("info", "Loading list of equipments...");
     $.ajax({type: "GET",
+	    cache: false,
 	    url: "equipment/",
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
@@ -71,6 +72,7 @@ function loadEquipment(ip)
     $("div#ports").hide();
     sendMessage("info", "Loading list of ports for "+ip);
     $.ajax({type: "GET",
+	    cache: false,
 	    url: "equipment/"+ip+"/",
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
@@ -95,6 +97,7 @@ function displayPortDetails(event)
 	.attr("src").match(/.*\/([0-9.]+)$/)[1];
     portdetails.find("li").remove();
     $.ajax({type: "GET",
+	    cache: false,
 	    url: "equipment/"+ip+"/"+port+"/",
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
@@ -179,6 +182,7 @@ function refresh(event) {
     var target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
     sendMessage("info", "Refreshing "+target[1]+"...");
     $.ajax({type: "GET",
+	    cache: false,
 	    url: "equipment/"+target[1]+"/refresh/",
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
@@ -198,6 +202,7 @@ function refresh(event) {
 function search(elt) {
     sendMessage("info", "Search for "+elt+"...");
     $.ajax({type: "GET",
+	    cache: false,
 	    url: "search/"+elt+"/",
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
