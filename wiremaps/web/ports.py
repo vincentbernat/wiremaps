@@ -138,9 +138,10 @@ class PortDetailsDiscovery(PortRelatedFragment):
             "The device ",
             T.invisible(data=data[0][2],
                         render=T.directive("hostname")),
+            data[0][0] != "0.0.0.0" and T.invisible[
             " with IP ",
             T.invisible(data=data[0][0],
-                        render=T.directive("ip")),
+                        render=T.directive("ip")) ] or T.invisible[""],
             " was found with %s. Its description is " % self.discovery_name,
             T.span(_class="data") [data[0][1]],
             " and the remote port is ",
