@@ -106,6 +106,8 @@ class ExtremeFdbCollector(FdbCollector):
             if mac in ['ff:ff:ff:ff:ff:ff', # Broadcast
                        '01:80:c2:00:00:0e', # LLDP
                        '01:80:c2:00:00:02', # Something like LLDP
+                       '00:e0:2b:00:00:02', # Something Extreme
+                       '00:e0:2b:00:00:00', # Again, Extreme
                        ]: continue
             # Rather bad assumption: a vlan is a set of ports
             for port in self.vlans.get(vlan, []):
