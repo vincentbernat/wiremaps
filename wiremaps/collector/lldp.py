@@ -80,7 +80,7 @@ class LldpCollector:
                         {'ip': str(ip)})
             result = txn.fetchall()
             for port in result:
-                port = result[0]
+                port = port[0]
                 if port not in validports:
                     txn.execute("DELETE FROM port WHERE equipment=%(ip)s "
                                 "AND index=%(index)s", {'ip': str(ip),
@@ -100,15 +100,14 @@ class LldpCollector:
             txn.execute("DELETE FROM lldp WHERE equipment=%(ip)s",
                         {'ip': str(ip)})
             for port in sysname.keys():
-                if port not in sysdesc.keys() or port not in portdesc.keys() \
-                        or port not in mgmtip.keys():
+                if port not in sysdesc.keys() or port not in portdesc.keys():
                     continue
                 txn.execute("INSERT INTO lldp VALUES (%(ip)s, "
                             "%(port)s, %(mgmtip)s, %(portdesc)s, "
                             "%(sysname)s, %(sysdesc)s)",
                             {'ip': str(ip),
                              'port': port,
-                             'mgmtip': mgmtip[port],
+                             'mgmtip': mgmtip.get(port, "0.0.0.0"),
                              'portdesc': portdesc[port],
                              'sysname': sysname[port],
                              'sysdesc': sysdesc[port]})
