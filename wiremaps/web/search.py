@@ -1,6 +1,8 @@
 import re
 from IPy import IP
 
+from twisted.names import client
+
 from nevow import rend, loaders
 from nevow import tags as T
 
@@ -96,11 +98,13 @@ class SearchIPResource(JsonPage, RenderMixIn):
                                 T.invisible(data=self.mac,
                                             render=T.directive("mac")), "." ]
         fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
-        return [ fragment,
-                 SearchIPInSonmp(self.dbpool, self.ip),
-                 SearchIPInLldp(self.dbpool, self.ip),
-                 SearchIPInCdp(self.dbpool, self.ip),
-                 SearchMacInFdb(self.dbpool, self.mac) ]
+        l = [ fragment,
+              SearchIPInSonmp(self.dbpool, self.ip),
+              SearchIPInLldp(self.dbpool, self.ip),
+              SearchIPInCdp(self.dbpool, self.ip) ]
+        if macs:
+            l.append(SearchMacInFdb(self.dbpool, self.mac))
+        return l
 
 class SearchHostnameResource(JsonPage, RenderMixIn):
 
@@ -118,8 +122,13 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
         d.addCallback(self.gotIP)
         return d
 
-    def gotIP(self, ips):
+    def gotIP(self, ips, resolve=True):
         if not ips:
+            if resolve:
+                d = client.getHostByName(self.name)
+                d.addCallbacks(lambda x: self.gotIP([[self.name,x]]),
+                               lambda x: self.gotIP(None, resolve=False))
+                return d
             fragment = T.span [ "I cannot find any IP for this host" ]
             fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
             return [ fragment ]
@@ -128,7 +137,8 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
             fragment = T.span [ "The hostname ",
                                 T.span(_class="data")[ip[0]],
                                 " is associated with IP ",
-                                T.a(href="equipment/%s/" % ip[1])[ip[1]],
+                                T.invisible(data=ip[1],
+                                            render=T.directive("ip")),
                                 ". You can ",
                                 T.a(href="search/%s/" % ip[1])["search on it"],
                                 " to find more results." ]
