@@ -60,7 +60,7 @@ class SearchMacResource(JsonPage, RenderMixIn):
             fragment = T.span [ "This MAC address is associated with the following IPs: ",
                                 T.ul [[ T.li[T.invisible(data=ip,
                                                           render=T.directive("ip")),
-                                              " "] for ip in self.ips ] ], "." ]
+                                              " "] for ip in self.ips ] ]]
         fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
         results = [ fragment ]
         for ip in self.ips:
