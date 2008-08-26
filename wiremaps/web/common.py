@@ -20,7 +20,7 @@ class RenderMixIn:
                                  {'name': name})
         d.addCallback(lambda x: x and
                       T.a(href="equipment/%s/" % name) [ name ] or
-                      T.invisible [ name ])
+                      T.a(href="search/%s/" % name) [ name ])
         return d    
 
     def render_sonmpport(self, ctx, port):
