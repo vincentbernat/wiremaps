@@ -131,20 +131,63 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
                 return d
             fragment = T.span [ "I cannot find any IP for this host" ]
             fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
-            return [ fragment ]
-        fragments = []
-        for ip in ips:
-            fragment = T.span [ "The hostname ",
-                                T.span(_class="data")[ip[0]],
-                                " is associated with IP ",
-                                T.invisible(data=ip[1],
-                                            render=T.directive("ip")),
-                                ". You can ",
-                                T.a(href="search/%s/" % ip[1])["search on it"],
-                                " to find more results." ]
-            fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
-            fragments.append(fragment)
+            fragments = [fragment]
+        else:
+            fragments = []
+            for ip in ips:
+                fragment = T.span [ "The hostname ",
+                                    T.span(_class="data")[ip[0]],
+                                    " is associated with IP ",
+                                    T.invisible(data=ip[1],
+                                                render=T.directive("ip")),
+                                    ". You can ",
+                                    T.a(href="search/%s/" % ip[1])["search on it"],
+                                    " to find more results." ]
+                fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
+                fragments.append(fragment)
+
+        fragments.append(SearchHostnameInLldp(self.dbpool, self.name))
+        fragments.append(SearchHostnameInCdp(self.dbpool, self.name))
+        fragments.append(SearchHostnameInEdp(self.dbpool, self.name))
         return fragments
+
+class SearchHostnameWithDiscovery(rend.Fragment, RenderMixIn):
+    docFactory = loaders.stan(T.span(render=T.directive("discovery"),
+                                     data=T.directive("discovery")))
+
+    def __init__(self, dbpool, name):
+        self.name = name
+        self.dbpool = dbpool
+        rend.Fragment.__init__(self)
+
+    def data_discovery(self, ctx, data):
+        return self.dbpool.runQuery("SELECT e.name, p.name "
+                                    "FROM equipment e, port p, " + self.table + " l "
+                                    "WHERE (l.sysname=%(name)s OR l.sysname LIKE %(name)s || '%%') "
+                                    "AND l.port=p.index AND p.equipment=e.ip "
+                                    "AND l.equipment=e.ip "
+                                    "ORDER BY e.name", {'name': self.name})
+
+    def render_discovery(self, ctx, data):
+        if not data:
+            return ctx.tag["This hostname has not been seen with %s." % self.protocolname]
+        return ctx.tag["This hostname has been seen with %s: " % self.protocolname,
+                       T.ul[ [ T.li [
+                    "from port ",
+                    T.span(_class="data") [d[1]],
+                    " of ",
+                    T.span(data=d[0],
+                           render=T.directive("hostname")) ]  for d in data ] ] ]
+
+class SearchHostnameInLldp(SearchHostnameWithDiscovery):
+    table = "lldp"
+    protocolname = "LLDP"
+class SearchHostnameInCdp(SearchHostnameWithDiscovery):
+    table = "cdp"
+    protocolname = "CDP"
+class SearchHostnameInEdp(SearchHostnameWithDiscovery):
+    table = "edp"
+    protocolname = "EDP"
 
 class SearchMacInFdb(rend.Fragment, RenderMixIn):
 
