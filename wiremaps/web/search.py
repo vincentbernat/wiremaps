@@ -99,6 +99,7 @@ class SearchIPResource(JsonPage, RenderMixIn):
                                             render=T.directive("mac")), "." ]
         fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
         l = [ fragment,
+              SearchIPInDNS(self.dbpool, self.ip),
               SearchIPInSonmp(self.dbpool, self.ip),
               SearchIPInLldp(self.dbpool, self.ip),
               SearchIPInCdp(self.dbpool, self.ip) ]
@@ -150,6 +151,32 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
         fragments.append(SearchHostnameInCdp(self.dbpool, self.name))
         fragments.append(SearchHostnameInEdp(self.dbpool, self.name))
         return fragments
+
+class SearchIPInDNS(rend.Fragment, RenderMixIn):
+
+    docFactory = loaders.stan(T.span(render=T.directive("dns"),
+                                     data=T.directive("dns")))
+
+    def __init__(self, dbpool, ip):
+        self.ip = ip
+        self.dbpool = dbpool
+        rend.Fragment.__init__(self)
+
+    def data_dns(self, ctx, data):
+        ptr = '.'.join(str(self.ip).split('.')[::-1]) + '.in-addr.arpa'
+        d = client.lookupPointer(ptr)
+        d.addErrback(lambda x: None)
+        return d
+
+    def render_dns(self, ctx, name):
+        try:
+            name = str(name[0][0].payload.name)
+        except:
+            return ctx.tag["This IP has no known name in DNS."]
+        return ctx.tag["This IP is associated to ",
+                       T.span(data=name,
+                              render=T.directive("hostname")),
+                       " in DNS."]
 
 class SearchHostnameWithDiscovery(rend.Fragment, RenderMixIn):
     docFactory = loaders.stan(T.span(render=T.directive("discovery"),
