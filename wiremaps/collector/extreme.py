@@ -7,6 +7,7 @@ from wiremaps.collector.port import PortCollector
 from wiremaps.collector.fdb import FdbCollector, ExtremeFdbCollector
 from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.lldp import LldpCollector
+from wiremaps.collector.edp import EdpCollector
 
 class ExtremeSummit:
     """Collector for Extreme Summit"""
@@ -26,11 +27,13 @@ class ExtremeSummit:
         ports = PortCollector(proxy, dbpool)
         fdb = FdbCollector(proxy, dbpool, self.normPort)
         arp = ArpCollector(proxy, dbpool)
+        edp = EdpCollector(proxy, dbpool)
         # LLDP disabled due to unstability
         # lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))
         d.addCallback(lambda x: arp.collectData(write=False))
+        d.addCallback(lambda x: edp.collectData())
         # d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
@@ -61,11 +64,13 @@ class ExtremeWare:
         ports = PortCollector(proxy, dbpool)
         fdb = ExtremeFdbCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
+        edp = EdpCollector(proxy, dbpool)
         # LLDP disabled due to unstability
         # lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))
         d.addCallback(lambda x: arp.collectData(write=False))
+        d.addCallback(lambda x: edp.collectData())
         # d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())

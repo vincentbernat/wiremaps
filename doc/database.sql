@@ -65,6 +65,17 @@ CREATE TABLE sonmp (
   PRIMARY KEY (equipment, port)
 );
 
+-- Just a dump of EDP for a given port
+CREATE TABLE edp (
+  equipment  inet  	       REFERENCES equipment(ip) ON DELETE CASCADE,
+  port       int               NOT NULL,
+  sysname    text	       NOT NULL,
+  remoteslot int	       NOT NULL,
+  remoteport int               NOT NULL,
+  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  PRIMARY KEY (equipment, port)
+);
+
 -- Just a dump of CDP for a given port
 CREATE TABLE cdp (
   equipment  inet  	       REFERENCES equipment(ip) ON DELETE CASCADE,
