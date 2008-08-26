@@ -22,6 +22,7 @@ class PortDetailsResource(JsonPage):
                  PortDetailsLldp(self.ip, self.index, self.dbpool),
                  PortDetailsRemoteLldp(self.ip, self.index, self.dbpool),
                  PortDetailsSonmp(self.ip, self.index, self.dbpool),
+                 PortDetailsEdp(self.ip, self.index, self.dbpool),
                  PortDetailsFdb(self.ip, self.index, self.dbpool),
                  PortDetailsCdp(self.ip, self.index, self.dbpool),
                  ]
@@ -122,7 +123,28 @@ class PortDetailsSonmp(PortRelatedFragment):
             " was found with SONMP. The remote port is ",
             T.span(_class="data", data=data[0][1],
                    render=T.directive("sonmpport")), "."]
-                    
+
+class PortDetailsEdp(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("edp"),
+                                     data=T.directive("edp")))
+
+    def data_edp(self, ctx, data):
+        return self.dbpool.runQuery("SELECT DISTINCT sysname, remoteslot, remoteport "
+                                    "FROM edp WHERE equipment=%(ip)s "
+                                    "AND port=%(port)s",
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
+
+    def render_edp(self, ctx, data):
+        if not data:
+            return ctx.tag["This port did not receive anything with EDP."]
+        return ctx.tag[
+            "A device named ",
+            T.invisible(data=data[0][0],
+                        render=T.directive("hostname")),
+            " was found with EDP. The remote port is ",
+            T.span(_class="data")["%d/%d" % (data[0][1], data[0][2])], "."]
 
 class PortDetailsDiscovery(PortRelatedFragment):
 
