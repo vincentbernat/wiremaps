@@ -117,7 +117,7 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
     def data_json(self, ctx, data):
         d = self.dbpool.runQuery("SELECT DISTINCT name, ip FROM equipment "
                                  "WHERE name=%(name)s "
-                                 "OR name LIKE '%%'||%(name)s||'%%' "
+                                 "OR name ILIKE '%%'||%(name)s||'%%' "
                                  "ORDER BY name",
                                  {'name': self.name})
         d.addCallback(self.gotIP)
@@ -190,7 +190,7 @@ class SearchHostnameWithDiscovery(rend.Fragment, RenderMixIn):
     def data_discovery(self, ctx, data):
         return self.dbpool.runQuery("SELECT e.name, p.name "
                                     "FROM equipment e, port p, " + self.table + " l "
-                                    "WHERE (l.sysname=%(name)s OR l.sysname LIKE %(name)s || '%%') "
+                                    "WHERE (l.sysname=%(name)s OR l.sysname ILIKE %(name)s || '%%') "
                                     "AND l.port=p.index AND p.equipment=e.ip "
                                     "AND l.equipment=e.ip "
                                     "ORDER BY e.name", {'name': self.name})

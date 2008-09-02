@@ -36,7 +36,7 @@ class ImageResource(rend.Page):
             if not re.match(r"[0-9\.]+", oid):
                 # This should be an hostname
                 d = self.dbpool.runQuery("SELECT oid FROM equipment WHERE name=%(name)s "
-                                         "OR name LIKE %(name)s||'.%%'",
+                                         "OR name ILIKE %(name)s||'.%%'",
                                          {'name': oid})
             else:
                 d = defer.succeed([[oid]])
