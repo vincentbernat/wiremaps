@@ -4,6 +4,7 @@ class FdbCollector:
     """Collect data using FDB"""
 
     dot1dTpFdbPort = '.1.3.6.1.2.1.17.4.3.1.2'
+    dot1dBasePortIfIndex = '.1.3.6.1.2.1.17.1.4.1.2'
 
     def __init__(self, proxy, dbpool, normport=None):
         """Create a collector using FDB entries in SNMP.
@@ -16,6 +17,7 @@ class FdbCollector:
         self.dbpool = dbpool
         self.normport = normport
         self.fdb = {}
+        self.portif = {}
 
     def gotFdb(self, results):
         """Callback handling reception of FDB
@@ -25,10 +27,22 @@ class FdbCollector:
         for oid in results:
             mac = ":".join(["%02x" % int(m) for m in oid.split(".")[-6:]])
             port = int(results[oid])
+            try:
+                port = self.portif[port]
+            except KeyError:
+                continue        # Ignore the port
             if self.normport is not None:
                 port = self.normport(port)
             if port is not None:
                 self.fdb[(port, mac)] = 1
+
+    def gotPortIf(self, results):
+        """Callback handling reception of port<->ifIndex translation from FDB
+
+        @param results: result of walking C{BRIDGE-MIB::dot1dBasePortIfIndex}
+        """
+        for oid in results:
+            self.portif[int(oid.split(".")[-1])] = int(results[oid])
 
     def collectData(self, write=True):
         """Collect data from SNMP using dot1dTpFdbPort.
@@ -49,7 +63,9 @@ class FdbCollector:
                              'mac': mac})
 
         print "Collecting FDB for %s" % self.proxy.ip
-        d = self.proxy.walk(self.dot1dTpFdbPort)
+        d = self.proxy.walk(self.dot1dBasePortIfIndex)
+        d.addCallback(self.gotPortIf)
+        d.addCallback(lambda x: self.proxy.walk(self.dot1dTpFdbPort))
         d.addCallback(self.gotFdb)
         if write:
             d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,

@@ -39,7 +39,7 @@ class Alteon2208:
         ports = PortCollector(proxy, dbpool, self.normPortName)
         ports.ifName = ports.ifDescr
         ports.ifDescr = '.1.3.6.1.2.1.2.2.1.1' # ifIndex
-        fdb = FdbCollector(proxy, dbpool, self.normPortIndex)
+        fdb = FdbCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
         sonmp = SonmpCollector(proxy, dbpool, self.normPortIndex)
         d = ports.collectData()

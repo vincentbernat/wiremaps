@@ -28,20 +28,11 @@ class Nortel5510:
         except:
             return port
 
-    def normPortIndex(self, port):
-        """Normalize port index.
-        
-        Port 0 is just itself and port >= 1024 are VLAN and co
-        """
-        if port >= 1 and port < 1024:
-            return port
-        return None
-
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool, self.normPortName)
-        fdb = FdbCollector(proxy, dbpool, self.normPortIndex)
+        fdb = FdbCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
-        lldp = LldpCollector(proxy, dbpool, self.normPortIndex)
+        lldp = LldpCollector(proxy, dbpool)
         sonmp = SonmpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))

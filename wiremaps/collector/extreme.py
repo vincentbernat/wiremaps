@@ -20,12 +20,9 @@ class ExtremeSummit:
                         '.1.3.6.1.4.1.1916.2.76', # Extreme Summit 48t
                         ])
 
-    def normPort(self, port):
-        return port
-
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool, self.normPort)
+        fdb = FdbCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
         edp = EdpCollector(proxy, dbpool)
         # LLDP disabled due to unstability

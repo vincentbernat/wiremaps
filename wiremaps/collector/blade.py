@@ -17,18 +17,9 @@ class NortelEthernetSwitch:
                         '.1.3.6.1.4.1.1872.1.18.3', # Nortel 10Gb Uplink Ethernet Switch Module
                         ])
 
-    def normPortIndex(self, port):
-        """Normalize ports.
-
-        128 should be added to get real port.
-        """
-        if port == 0:
-            return None
-        return port + 128
-
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool, self.normPortIndex)
+        fdb = FdbCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))
