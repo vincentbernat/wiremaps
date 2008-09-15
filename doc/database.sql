@@ -18,9 +18,9 @@ DROP TABLE IF EXISTS arp CASCADE;
 DROP TABLE IF EXISTS fdb CASCADE;
 DROP TABLE IF EXISTS port CASCADE;
 DROP TABLE IF EXISTS equipment CASCADE;
-DROP TYPE IF EXISTS state CASCADE;
 
-CREATE TYPE state AS ENUM ('up', 'down');
+-- DROP TYPE IF EXISTS state CASCADE;
+-- CREATE TYPE state AS ENUM ('up', 'down');
 
 CREATE TABLE equipment (
   ip      inet		   PRIMARY KEY,
@@ -34,8 +34,10 @@ CREATE TABLE port (
   index     int		      NOT NULL,
   name	    text	      NOT NULL,
   alias	    text	      NULL,
-  cstate    state	      NOT NULL,
-  PRIMARY KEY (equipment, index)
+--  cstate    state	      NOT NULL,
+  cstate    text              NOT NULL,
+  PRIMARY KEY (equipment, index),
+  CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down')
 );
 
 -- Just a dump of FDB for a given port
