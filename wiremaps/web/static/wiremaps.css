@@ -26,21 +26,21 @@ div#message div
 
 div#message div.msginfo
 {
-    background: url(/static/info.png) 6px 3px no-repeat;
+    background: url(info.png) 6px 3px no-repeat;
     background-color: #3DB4EC;
     border: 1px solid #2587B5;
 }
 
 div#message div.msgalert
 {
-    background: url(/static/error.png) 6px 3px no-repeat;
+    background: url(error.png) 6px 3px no-repeat;
     background-color: #EF9398;
     border: 1px solid #DC5757;
 }
 
 div#message div.msgok
 {
-    background: url(/static/ok.png) 6px 3px no-repeat;
+    background: url(ok.png) 6px 3px no-repeat;
     background-color: #A6EF7B;
     border: 1px solid #76C83F;
 }
@@ -157,12 +157,12 @@ div#ports ul li.port
 div#ports li.up
 {
     padding: 5px;
-    background: url(/static/up.png) no-repeat;
+    background: url(up.png) no-repeat;
 }
 div#ports li.down
 {
     padding: 5px;
-    background: url(/static/down.png) no-repeat;
+    background: url(down.png) no-repeat;
 }
 div.portbasics, div.portname, div.portalias, div.portactions, 
 div.portactions > ul, div.portactions > ul > li
@@ -195,7 +195,7 @@ div.portdetails
 }
 div.portdetails ul
 {
-    list-style-image: url("/static/bullet.png");
+    list-style-image: url(bullet.png);
 }
 div#end
 {
