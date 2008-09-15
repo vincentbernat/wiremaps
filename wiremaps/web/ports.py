@@ -76,7 +76,7 @@ class PortDetailsFdb(PortRelatedFragment):
                                     "ON a.mac = f.mac "
                                     "WHERE f.equipment=%(ip)s "
                                     "AND f.port=%(port)s "
-                                    "ORDER BY a.ip NULLS LAST, f.mac "
+                                    "ORDER BY a.ip ASC, f.mac "
                                     "LIMIT 20",
                                     {'ip': str(self.ip),
                                      'port': self.index})
