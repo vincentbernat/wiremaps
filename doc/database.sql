@@ -36,6 +36,7 @@ CREATE TABLE port (
   alias	    text	      NULL,
 --  cstate    state	      NOT NULL,
   cstate    text              NOT NULL,
+  mac	    macaddr	      NULL,
   PRIMARY KEY (equipment, index),
   CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down')
 );

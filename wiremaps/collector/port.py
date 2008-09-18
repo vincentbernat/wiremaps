@@ -7,6 +7,8 @@ class PortCollector:
     ifName = '.1.3.6.1.2.1.31.1.1.1.1'
     ifType = '.1.3.6.1.2.1.2.2.1.3'
     ifOperStatus = '.1.3.6.1.2.1.2.2.1.8'
+    ifPhysAddress = '.1.3.6.1.2.1.2.2.1.6'
+
 
     def __init__(self, proxy, dbpool, norm=None, filter=None):
         """Create a collector for port information
@@ -64,6 +66,20 @@ class PortCollector:
             if name:
                 self.portAliases[port] = name
 
+    def gotPhysAddress(self, results):
+        """Callback handling retrieving of physical addresses.
+
+        @param result: result of walking on C{IF-MIB::ifPhysAddress}
+        """
+        self.portAddress = {}
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if port not in self.ports:
+                continue
+            address = [ "%x" % ord(a) for a in str(results[oid])]
+            if address and len(address) == 6:
+                self.portAddress[port] = ":".join(address)
+
     def gotOperStatus(self, results):
         """Callback handling retrieving of interface status.
 
@@ -87,7 +103,7 @@ class PortCollector:
         - Using IF-MIB::ifOperStatus for port status
         """
 
-        def fileIntoDb(txn, names, aliases, status, ip):
+        def fileIntoDb(txn, names, aliases, status, address, ip):
             newports = names.keys()
             txn.execute("SELECT index FROM port WHERE equipment = %(ip)s",
                         {'ip': str(ip)})
@@ -95,6 +111,8 @@ class PortCollector:
             for port in ports:
                 port = int(port[0])
                 alias = None
+                if port not in address:
+                    continue
                 if port in aliases:
                     alias = aliases[port]
                 if port not in newports:
@@ -104,22 +122,28 @@ class PortCollector:
                 else:
                     newports.remove(port)
                     txn.execute("UPDATE port SET name=%(name)s, alias=%(alias)s, "
-                                "cstate=%(state)s WHERE equipment = %(ip)s "
+                                "cstate=%(state)s, mac=%(address)s WHERE equipment = %(ip)s "
                                 "AND index = %(index)s", {'ip': str(ip),
                                                           'index': port,
                                                           'name': names[port],
                                                           'alias': alias,
+                                                          'address': address[port],
                                                           'state': status[port]})
             for port in newports:
                 alias = None
+                if port not in address:
+                    continue
                 if port in aliases:
                     alias = aliases[port]
                 txn.execute("INSERT INTO port VALUES (%(ip)s, %(port)s, "
-                            "%(name)s, %(alias)s, %(state)s)", {'ip': str(ip),
-                                                                'port': port,
-                                                                'name': names[port],
-                                                                'alias': alias,
-                                                                'state': status[port]})
+                            "%(name)s, %(alias)s, %(state)s, %(address)s)",
+                            {'ip': str(ip),
+                             'port': port,
+                             'name': names[port],
+                             'alias': alias,
+                             'state': status[port],
+                             'address': address[port],
+                             })
 
         print "Collecting port information for %s" % self.proxy.ip
         d = self.proxy.walk(self.ifType)
@@ -130,9 +154,12 @@ class PortCollector:
         d.addCallback(self.gotIfNames)
         d.addCallback(lambda x: self.proxy.walk(self.ifOperStatus))
         d.addCallback(self.gotOperStatus)
+        d.addCallback(lambda x: self.proxy.walk(self.ifPhysAddress))
+        d.addCallback(self.gotPhysAddress)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
                                                            self.portNames,
                                                            self.portAliases,
                                                            self.portStatus,
+                                                           self.portAddress,
                                                            self.proxy.ip))
         return d
