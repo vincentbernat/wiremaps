@@ -18,7 +18,7 @@ class PortDetailsResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return [ 
+        return [ PortDetailsMac(self.ip, self.index, self.dbpool),
                  PortDetailsLldp(self.ip, self.index, self.dbpool),
                  PortDetailsRemoteLldp(self.ip, self.index, self.dbpool),
                  PortDetailsSonmp(self.ip, self.index, self.dbpool),
@@ -100,6 +100,27 @@ class PortDetailsFdb(PortRelatedFragment):
                                     T.invisible(data=x[1],
                                                 render=T.directive("ip")),
                                     ") "] or " "] for x in data]]]
+
+class PortDetailsMac(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("macaddr"),
+                                     data=T.directive("macaddr")))
+
+    def data_macaddr(self, ctx, data):
+        return self.dbpool.runQuery("SELECT mac "
+                                    "FROM port "
+                                    "WHERE equipment=%(ip)s AND index=%(port)s "
+                                    "AND mac IS NOT NULL",
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
+
+    def render_macaddr(self, ctx, data):
+        if not data:
+            return ctx.tag["I don't know the MAC address of this port."]
+        return ctx.tag["The MAC address of this port is ",
+                       T.invisible(data=data[0][0],
+                                   render=T.directive("mac")),
+                       "."]
 
 class PortDetailsSonmp(PortRelatedFragment):
 
