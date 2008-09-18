@@ -65,6 +65,7 @@ class SearchMacResource(JsonPage, RenderMixIn):
                                               " "] for ip in self.ips ] ]]
         fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
         results = [ fragment ]
+        results.append(SearchMacInInterfaces(self.dbpool, self.mac))
         for ip in self.ips:
             results.append(SearchIPInEquipment(self.dbpool, ip))
             results.append(SearchIPInSonmp(self.dbpool, ip))
@@ -104,6 +105,7 @@ class SearchIPResource(JsonPage, RenderMixIn):
               SearchIPInLldp(self.dbpool, self.ip),
               SearchIPInCdp(self.dbpool, self.ip) ]
         if macs:
+            l.append(SearchMacInInterfaces(self.dbpool, self.mac))
             l.append(SearchMacInFdb(self.dbpool, self.mac))
         return l
 
@@ -241,13 +243,43 @@ class SearchMacInFdb(rend.Fragment, RenderMixIn):
     def render_macfdb(self, ctx, data):
         if not data:
             return ctx.tag["I did not find this MAC on any FDB entry."]
-        return ctx.tag["This MAC was found on the following equipments: ",
+        return ctx.tag["This MAC was found in FDB of the following equipments: ",
                        T.ul [ [ T.li[
                     T.invisible(data=l[0],
                                 render=T.directive("hostname")),
                     " (", T.invisible(data=l[1],
                                       render=T.directive("ip")), ") "
                     "on port ", T.span(_class="data") [ l[2] ] ]
+                         for l in data] ] ]
+
+class SearchMacInInterfaces(rend.Fragment, RenderMixIn):
+
+    docFactory = loaders.stan(T.span(render=T.directive("macif"),
+                                     data=T.directive("macif")))
+
+    def __init__(self, dbpool, mac):
+        self.mac = mac
+        self.dbpool = dbpool
+        rend.Fragment.__init__(self)
+
+    def data_macif(self, ctx, data):
+        return self.dbpool.runQuery("SELECT DISTINCT e.name, e.ip, p.name, p.index "
+                                    "FROM equipment e, port p "
+                                    "WHERE p.mac=%(mac)s "
+                                    "AND p.equipment=e.ip "
+                                    "ORDER BY e.name, p.index",
+                                    {'mac': self.mac})
+
+    def render_macif(self, ctx, data):
+        if not data:
+            return ctx.tag["I did not find this MAC on any interface."]
+        return ctx.tag["This MAC was found on the following interfaces: ",
+                       T.ul [ [ T.li[
+                    T.invisible(data=l[0],
+                                render=T.directive("hostname")),
+                    " (", T.invisible(data=l[1],
+                                      render=T.directive("ip")), ") "
+                    "interface ", T.span(_class="data") [ l[2] ] ]
                          for l in data] ] ]
 
 class SearchIPInEquipment(rend.Fragment, RenderMixIn):
