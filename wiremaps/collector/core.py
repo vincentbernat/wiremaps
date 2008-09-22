@@ -116,10 +116,10 @@ class CollectorService(service.Service):
         @param ip: ip of the equipment to test
         @param communities: list of communities to test
         """
-        if not communities:
-            raise exception.NoCommunity("unable to guess community")
         if proxy:
             proxy.close()
+        if not communities:
+            raise exception.NoCommunity("unable to guess community")
         community = communities[0]
         proxy = AgentProxy(ip=ip,
                            community=community,
