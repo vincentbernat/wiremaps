@@ -8,6 +8,7 @@ from IPy import IP
 from twisted.internet import defer
 from twisted.application import internet, service
 from twisted.plugin import getPlugins
+from twisted.python.failure import Failure
 
 import wiremaps.collector
 from wiremaps.collector import exception
@@ -68,10 +69,29 @@ class CollectorService(service.Service):
         """
         print "Explore IP %s" % ip
         d = self.guessCommunity(None, None, ip, self.config['community'])
-        d.addCallback(self.getBasicInformation)
-        d.addCallback(self.handlePlugins)
-        d.addCallback(lambda x: x.close())
+        d.addCallback(self.getInformations)
         return d
+
+    def getInformations(self, proxy):
+        """Get informations for a given host
+
+        @param proxy: proxy to host
+        """
+        d = self.getBasicInformation(proxy)
+        d.addCallback(self.handlePlugins)
+        d.addBoth(lambda x: self.closeProxy(proxy, x))
+        return d
+
+    def closeProxy(self, proxy, obj):
+        """Close the proxy and reraise error if obj is a failure.
+
+        @param proxy: proxy to close
+        @param obj: object from callback
+        """
+        proxy.close()
+        if isinstance(obj, Failure):
+            return obj
+        return None
 
     def stopExploration(self, ignored):
         """Stop exploration process."""
@@ -106,7 +126,6 @@ class CollectorService(service.Service):
         d = defer.succeed(None)
         for plugin in plugins:
             d.addCallback(lambda x: plugin.collectData(proxy.ip, proxy, self.dbpool))
-        d.addCallback(lambda x: proxy)
         return d
 
     def guessCommunity(self, ignored, proxy, ip, communities):
