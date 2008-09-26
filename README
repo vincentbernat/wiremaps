@@ -1,10 +1,24 @@
 Wiremaps
 ========
 
-Wiremaps is an application to gather wiring information on a network
-using protocols like LLDP, EDP, CDP and SONMP. It also gathers
+Wiremaps is an application to gather wiring (aka L2) information on a
+network using protocols like LLDP, EDP, CDP and SONMP. It also gathers
 information from the FDB (MAC-port table on switches), the ARP table
-(MAC-IP table) and some miscellaneous information like interface names.
+(MAC-IP table) and some miscellaneous information like interface
+names.
+
+The ARP table is only used to link IP addresses to MAC addresses (and
+vice-versa). We don't use the information about the interface where
+this information came from.
+
+GNU/Linux workstations need an LLDP daemon using SNMP to export
+information gathered. Otherwise, almost no information can be
+extracted from those hosts. Unfortunately, there is no free LLDP
+daemon exporting information to SNMP yet for GNU/Linux.
+
+The situation is the same for Windows. However, there exists a
+commercial one:
+ http://www.hanewin.net/lldp-e.htm
 
 Installation
 ------------
