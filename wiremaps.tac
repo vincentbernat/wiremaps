@@ -15,7 +15,10 @@ from wiremaps.collector.core import CollectorService
 from wiremaps.web.site import MainPage
 
 # Configuration file
+# Try first in the current directory
 config = os.path.join(os.path.curdir, 'wiremaps.cfg')
+if not os.path.exists(config):
+    config = "/etc/wiremaps/wiremaps.cfg"
 config = yaml.load(file(config, 'rb').read())
 
 # Database

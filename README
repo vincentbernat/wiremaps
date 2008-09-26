@@ -37,7 +37,9 @@ Then load the content of doc/database.sql:
 
 You need to write a "wiremaps.cfg" file. See doc/wiremaps.cfg.sample
 for an example. This file should be located in the same directory as
-wiremaps.tac.
+wiremaps.tac or in /etc/wiremaps/wiremaps.cfg.
+
+The logo need to be located in wiremaps/wiremaps/web/static directory.
 
 You can launch the application by hand:
  twistd -noy wiremaps.tac
