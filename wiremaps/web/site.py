@@ -1,3 +1,5 @@
+import os
+
 from twisted.python import util
 from nevow import rend, appserver, loaders, page
 from nevow import tags as T
@@ -18,7 +20,11 @@ class MainPage(rend.Page):
         rend.Page.__init__(self)
 
     def render_logo(self, ctx, data):
-        return T.img(src="static/%s" % self.config['logo'])
+        if 'logo' in self.config and os.path.exists(os.path.join(
+                util.sibpath(__file__, "static"),
+                self.config['logo'])):
+            return T.img(src="static/%s" % self.config['logo'])
+        return "To place your logo here, see the documentation"
 
     def child_static(self, ctx):
         return static.File(util.sibpath(__file__, "static"))
