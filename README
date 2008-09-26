@@ -18,12 +18,15 @@ To use this application, you need the following Debian packages:
  - python-ipy (iPy - http://c0re.23.nu/c0de/IPy/)
  - python-pynetsnmp (PyNetSNMP from ZenOSS project)
  - python-yaml (PyYAML - http://pyyaml.org/)
+ - javascript-jquery (jQuery - http://jquery.com/)
 
 For PyNetSNMP, the tarball is here:
  http://dev.zenoss.org/svn/trunk/inst/externallibs/
 
 On other distributions, you should find the proper package or download
-and install from the website.
+and install from the website. For jQuery, there is a symlink in
+wiremaps/wiremaps/web/static targeted at Debian. Correct it or place
+jQuery on your system in /usr/share/javascript/jquery/jquery.js.
 
 You then need to create a database and install the corresponding
 schema. As postgres user ("su - postgres"), you can use the following:
