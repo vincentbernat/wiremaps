@@ -168,12 +168,12 @@ class CollectorService(service.Service):
             if not id:
                 txn.execute("INSERT INTO equipment (ip, name, oid) VALUES "
                             "(%(ip)s, %(name)s, %(oid)s)",
-                            {'ip': str(ip), 'name': result['.1.3.6.1.2.1.1.5.0'],
+                            {'ip': str(ip), 'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
                              'oid': result['.1.3.6.1.2.1.1.2.0']})
             else:
                 txn.execute("UPDATE equipment SET name=%(name)s, oid=%(oid)s "
                             "WHERE ip=%(ip)s",
-                            {'name': result['.1.3.6.1.2.1.1.5.0'],
+                            {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
                              'oid': result['.1.3.6.1.2.1.1.2.0'],
                              'ip': str(ip)})
             return result['.1.3.6.1.2.1.1.2.0']
