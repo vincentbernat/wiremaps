@@ -1,0 +1,70 @@
+Wiremaps
+========
+
+Wiremaps is an application to gather wiring information on a network
+using protocols like LLDP, EDP, CDP and SONMP. It also gathers
+information from the FDB (MAC-port table on switches), the ARP table
+(MAC-IP table) and some miscellaneous information like interface names.
+
+Installation
+------------
+
+To use this application, you need the following Debian packages:
+ - postgresql-8.2 (PostgreSQL 8.2 - http://www.postgresql.org)
+ - python-pgsql (PyPgSQL Python bindings - http://pypgsql.sourceforge.net/)
+ - python-twisted-core (Twisted - http://twistedmatrix.com)
+ - python-twisted-names (Twisted Names - http://twistedmatrix.com)
+ - python-nevow (Nevow - http://divmod.org/trac/wiki/DivmodNevow)
+ - python-ipy (iPy - http://c0re.23.nu/c0de/IPy/)
+ - python-pynetsnmp (PyNetSNMP from ZenOSS project)
+ - python-yaml (PyYAML - http://pyyaml.org/)
+
+For PyNetSNMP, the tarball is here:
+ http://dev.zenoss.org/svn/trunk/inst/externallibs/
+
+On other distributions, you should find the proper package or download
+and install from the website.
+
+You then need to create a database and install the corresponding
+schema. As postgres user ("su - postgres"), you can use the following:
+
+  createuser -P wiremaps
+  createdb -O wiremaps wiremaps
+
+Then load the content of doc/database.sql:
+
+  psql -h localhost -U wiremaps -W < doc/database.sql
+
+You need to write a "wiremaps.cfg" file. See doc/wiremaps.cfg.sample
+for an example. This file should be located in the same directory as
+wiremaps.tac.
+
+You can launch the application by hand:
+ twistd -noy wiremaps.tac
+
+There is no need to launch it as root! To launch it as a daemon:
+ twistd -oy wiremaps.tac
+
+You can also use doc/init.d as a base for an init script.
+
+License
+-------
+
+This program is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 3, or (at your option)
+any later version.
+
+See LICENSE file for the complete text. Moreover, to avoid any problem
+with SNMP bindings using NetSNMP which may be linked with OpenSSL,
+there is an exception for OpenSSL:
+
+ In addition, as a special exception, the Free Software Foundation
+ gives permission to link the code of its release of Wget with the
+ OpenSSL project's "OpenSSL" library (or with modified versions of it
+ that use the same license as the "OpenSSL" library), and distribute
+ the linked executables.  You must obey the GNU General Public License
+ in all respects for all of the code used other than "OpenSSL".  If you
+ modify this file, you may extend this exception to your version of the
+ file, but you are not obligated to do so.  If you do not wish to do
+ so, delete this exception statement from your version.

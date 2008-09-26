@@ -1,0 +1,14 @@
+%YAML 1.1
+---
+
+collector:
+  ips: 192.168.14.0/24
+  parallel: 4
+  community: [ public, community2 ]
+database:
+  host: localhost
+  username: wiremaps
+  password: wiremaps
+  database: wiremaps
+web:
+  logo: yourlogo.png
