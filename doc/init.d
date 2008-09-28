@@ -2,27 +2,22 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
-# Change this path before using this script!
-# $basedir/wiremaps.tac should exist.
-basedir=/path/to/directory/containing/wiremaps
-
-rundir=$basedir
-pidfile=$basedir/../wiremaps.pid
-file=wiremaps.tac
-logfile=$basedir/../wiremaps.log
+user=network
+group=network
+pidfile=/var/run/wiremaps/wiremaps.pid
+logfile=/var/log/wiremaps/wiremaps.log
 
 test -x /usr/bin/twistd || exit 0
-test -d $basedir || exit 0
 
 case "$1" in
     start)
         echo -n "Starting wiremaps: twistd"
-        start-stop-daemon -d $rundir -c network -g network --start \
+        start-stop-daemon -c $user -g $group --start \
 			  --quiet --exec /usr/bin/twistd -- \
                           --pidfile=$pidfile \
 			  --no_save \
-                          --python=$file \
-                          --logfile=$logfile
+                          --logfile=$logfile \
+	                  wiremaps --config=/etc/wiremaps/wiremaps.cfg
         echo "."	
     ;;
 

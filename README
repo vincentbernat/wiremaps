@@ -60,13 +60,14 @@ The logo need to be located in wiremaps/wiremaps/web/static
 directory. You can use a symbolic link. The default distribution comes
 with a symbolic link to /etc/wiremaps/logo.png.
 
-You can launch the application by hand:
+You need to install the application with:
+ python setup.py install
+
+Or you can launch the application by hand:
  twistd -noy wiremaps.tac
 
-There is no need to launch it as root! To launch it as a daemon:
- twistd -oy wiremaps.tac
-
-You can also use doc/init.d as a base for an init script.
+You can also use doc/init.d as a base for an init script (work only if
+the application is installed).
 
 License
 -------
