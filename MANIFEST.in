@@ -1,1 +1,5 @@
 graft twisted
+include LICENSE*
+include doc/*.sql
+include doc/init.d
+include doc/wiremaps.cfg.sample
