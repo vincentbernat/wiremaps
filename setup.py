@@ -27,6 +27,9 @@ if __name__ == "__main__":
           author_email="bernat@luffy.cx",
           packages=["wiremaps", "wiremaps.collector", "wiremaps.web",
                     "twisted.plugins"],
-          package_data={'twisted': ['plugins/wiremaps_plugin.py']},
+          package_data={'twisted': ['plugins/wiremaps_plugin.py'],
+                        'wiremaps.web': ["static/*.png", "static/*.css", "static/*.js",
+                                         "main.xhtml",
+                                         "images/1.*.png", "images/unknown.png"],},
           )
     refresh_plugin_cache()

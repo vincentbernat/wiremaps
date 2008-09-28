@@ -53,18 +53,16 @@ Then load the content of doc/database.sql:
   psql -h localhost -U wiremaps -W < doc/database.sql
 
 You need to write a "wiremaps.cfg" file. See doc/wiremaps.cfg.sample
-for an example. This file should be located in the same directory as
-wiremaps.tac or in /etc/wiremaps/wiremaps.cfg.
+for an example. The default path for this file is
+/etc/wiremaps/wiremaps.cfg. You can alter it with "--config" option.
 
-The logo need to be located in wiremaps/wiremaps/web/static
-directory. You can use a symbolic link. The default distribution comes
-with a symbolic link to /etc/wiremaps/logo.png.
-
-You need to install the application with:
+You can install the application with:
  python setup.py install
 
-Or you can launch the application by hand:
+You can launch the application by hand
  twistd -no wiremaps
+or
+ twistd -no wiremaps --config=/etc/wiremaps/wiremaps.cfg
 
 You can also use doc/init.d as a base for an init script (work only if
 the application is installed).

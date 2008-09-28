@@ -11,4 +11,4 @@ database:
   password: wiremaps
   database: wiremaps
 web:
-  logo: yourlogo.png
+  logo: /etc/wiremaps/yourlogo.png
