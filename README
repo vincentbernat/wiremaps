@@ -64,7 +64,7 @@ You need to install the application with:
  python setup.py install
 
 Or you can launch the application by hand:
- twistd -noy wiremaps.tac
+ twistd -no wiremaps
 
 You can also use doc/init.d as a base for an init script (work only if
 the application is installed).
