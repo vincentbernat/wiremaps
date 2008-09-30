@@ -1,11 +1,13 @@
-from pynetsnmp.twistedsnmp import AgentProxy as original_AgentProxy
-from pynetsnmp.twistedsnmp import translateOid
+from snmp import AgentProxy as original_AgentProxy
 from twisted.internet import defer
+
+def translateOid(oid):
+    return [int(x) for x in oid.split(".") if x]
 
 class AgentProxy(original_AgentProxy):
     """Act like AgentProxy but handles walking itself"""
 
-    def walk(self, oid, timeout=None, retryCount=None):
+    def walk(self, oid):
         """Real walking.
         
         Return the list of oid retrieved
@@ -23,7 +25,7 @@ class Walker(object):
         self.defer = defer.Deferred()
 
     def __call__(self):
-        d = original_AgentProxy.walk(self.proxy, self.baseoid)
+        d = original_AgentProxy.getnext(self.proxy, self.baseoid)
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return self.defer
@@ -38,7 +40,7 @@ class Walker(object):
             return
         self.lastoid = lastoid
         self.results[lastoid] = x[lastoid]
-        d = original_AgentProxy.walk(self.proxy, self.lastoid)
+        d = original_AgentProxy.getnext(self.proxy, self.lastoid)
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return None

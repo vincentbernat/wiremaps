@@ -30,12 +30,8 @@ To use this application, you need the following Debian packages:
  - python-twisted-names (Twisted Names - http://twistedmatrix.com)
  - python-nevow (Nevow - http://divmod.org/trac/wiki/DivmodNevow)
  - python-ipy (iPy - http://c0re.23.nu/c0de/IPy/)
- - python-pynetsnmp (PyNetSNMP from ZenOSS project)
  - python-yaml (PyYAML - http://pyyaml.org/)
  - javascript-jquery (jQuery - http://jquery.com/)
-
-For PyNetSNMP, the tarball is here:
- http://dev.zenoss.org/svn/trunk/inst/externallibs/
 
 On other distributions, you should find the proper package or download
 and install from the website. For jQuery, there is a symlink in
@@ -57,7 +53,8 @@ for an example. The default path for this file is
 /etc/wiremaps/wiremaps.cfg. You can alter it with "--config" option.
 
 You can install the application with:
- python setup.py install
+ python setup.py build
+ sudo python setup.py install
 
 You can launch the application by hand
  twistd -no wiremaps

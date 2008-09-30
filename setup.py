@@ -1,6 +1,6 @@
 import sys
 import twisted
-from distutils.core import setup
+from distutils.core import setup, Extension
 from wiremaps import VERSION
 
 def refresh_plugin_cache():
@@ -25,6 +25,11 @@ if __name__ == "__main__":
           description='layer 2 network discovery application',
           author='Vincent Bernat',
           author_email="bernat@luffy.cx",
+          ext_modules= [
+            Extension('wiremaps.collector.snmp',
+                      libraries = ['netsnmp', 'crypto'],
+                      sources= ['wiremaps/collector/snmp.c']),
+            ],
           packages=["wiremaps", "wiremaps.collector", "wiremaps.web",
                     "twisted.plugins"],
           package_data={'twisted': ['plugins/wiremaps_plugin.py'],
@@ -32,4 +37,4 @@ if __name__ == "__main__":
                                          "main.xhtml",
                                          "images/1.*.png", "images/unknown.png"],},
           )
-    refresh_plugin_cache()
+    # refresh_plugin_cache()

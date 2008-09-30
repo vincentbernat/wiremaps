@@ -88,7 +88,7 @@ class CollectorService(service.Service):
         @param proxy: proxy to close
         @param obj: object from callback
         """
-        proxy.close()
+        del proxy
         if isinstance(obj, Failure):
             return obj
         return None
@@ -136,17 +136,13 @@ class CollectorService(service.Service):
         @param communities: list of communities to test
         """
         if proxy:
-            proxy.close()
+            del proxy
         if not communities:
             raise exception.NoCommunity("unable to guess community")
         community = communities[0]
-        proxy = AgentProxy(ip=ip,
+        proxy = AgentProxy(ip=str(ip),
                            community=community,
-                           snmpVersion=2,
-                           timeout=2,
-                           tries=3,
-                           allowCache=True)
-        proxy.open()
+                           version=2)
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])
         d.addCallbacks(callback=lambda x,y: y, callbackArgs=(proxy,),
                        errback=self.guessCommunity, errbackArgs=(proxy, ip,
