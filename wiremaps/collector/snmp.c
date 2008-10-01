@@ -309,13 +309,37 @@ Snmp_oid2string(PyObject *resultvalue)
 	return tmp;
 }
 
+static void
+Snmp_invokeerrback(PyObject *defer)
+{
+	PyObject *type, *value, *traceback, *failure, *tmp;
+
+	PyErr_Fetch(&type, &value, &traceback);
+        if (!traceback)
+                failure = PyObject_CallMethod(FailureModule,
+		    "Failure", "OO", value, type);
+	else
+                failure = PyObject_CallMethod(FailureModule,
+		    "Failure", "OOO", value, type, traceback);
+	if (failure != NULL) {
+		if ((tmp = PyObject_GetAttrString(defer, "errback")) != NULL) {
+			PyObject_CallMethod(reactor, "callLater",
+			    "iOO", 0, tmp, failure);
+			Py_DECREF(tmp);
+		}
+		Py_DECREF(failure);
+	}
+	Py_XDECREF(type);
+	Py_XDECREF(value);
+	Py_XDECREF(traceback);
+}
+
 static int
 Snmp_handle(int operation, netsnmp_session *session, int reqid,
     netsnmp_pdu *response, void *magic)
 {
-	PyObject *key, *defer, *failure, *results = NULL, *resultvalue = NULL,
+	PyObject *key, *defer, *results = NULL, *resultvalue = NULL,
 	    *resultoid = NULL, *tmp;
-	PyObject *type, *value, *traceback;
 	struct ErrorException *e;
 	struct variable_list *vars;
 	int i;
@@ -461,24 +485,7 @@ Snmp_handle(int operation, netsnmp_session *session, int reqid,
 	return 1;
 
 fireexception:
-	PyErr_Fetch(&type, &value, &traceback);
-        if (!traceback)
-                failure = PyObject_CallMethod(FailureModule,
-		    "Failure", "OO", value, type);
-	else
-                failure = PyObject_CallMethod(FailureModule,
-		    "Failure", "OOO", value, type, traceback);
-	if (failure != NULL) {
-		if ((tmp = PyObject_GetAttrString(defer, "errback")) != NULL) {
-			PyObject_CallMethod(reactor, "callLater",
-			    "iOO", 0, tmp, failure);
-			Py_DECREF(tmp);
-		}
-		Py_DECREF(failure);
-	}
-	Py_XDECREF(type);
-	Py_XDECREF(value);
-	Py_XDECREF(traceback);
+	Snmp_invokeerrback(defer);
 	Py_XDECREF(results);
 	Py_XDECREF(resultvalue);
 	Py_XDECREF(resultoid);
@@ -561,18 +568,19 @@ Snmp_op(SnmpObject *self, PyObject *args, int op)
 	}
 	self->ss->callback = Snmp_handle;
 	self->ss->callback_magic = self;
+	if ((deferred = PyObject_CallMethod(DeferModule,
+		    "Deferred", NULL)) == NULL)
+		goto operror;
 	if (!snmp_send(self->ss, pdu)) {
 		Snmp_raise_error(self->ss);
-		goto operror;
+		/* Instead of raising, we will fire errback */
+		Snmp_invokeerrback(deferred);
 	}
 	reqid = pdu->reqid;
 	pdu = NULL;		/* Avoid to free it when future errors occurs */
 
 	/* We create a Deferred object and put it in a dictionary using
 	 * pdu->reqid to be able to call its callbacks later. */
-	if ((deferred = PyObject_CallMethod(DeferModule,
-		    "Deferred", NULL)) == NULL)
-		goto operror;
 	if ((req = PyInt_FromLong(reqid)) == NULL)
 		goto operror;
 	if (PyDict_SetItem(self->defers, req, deferred) != 0) {
