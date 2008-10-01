@@ -461,10 +461,10 @@ fireexception:
 	PyErr_Fetch(&type, &value, &traceback);
         if (!traceback)
                 failure = PyObject_CallMethod(FailureModule,
-		    "Failure", "OO", type, value);
+		    "Failure", "OO", value, type);
 	else
                 failure = PyObject_CallMethod(FailureModule,
-		    "Failure", "OOO", type, value, traceback);
+		    "Failure", "OOO", value, type, traceback);
 	if (failure != NULL) {
 		if ((tmp = PyObject_GetAttrString(defer, "errback")) != NULL) {
 			PyObject_CallMethod(reactor, "callLater",
