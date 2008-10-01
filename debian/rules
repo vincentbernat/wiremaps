@@ -6,3 +6,8 @@ include /usr/share/cdbs/1/rules/debhelper.mk
 include /usr/share/cdbs/1/class/python-distutils.mk
 
 DEB_DH_ALWAYS_EXCLUDE := .git
+
+# Call dh_installinit later in the process...
+DEB_DH_INSTALLINIT_ARGS := -n
+binary-install/wiremaps::
+	dh_installinit -p$(cdbs_curpkg)
