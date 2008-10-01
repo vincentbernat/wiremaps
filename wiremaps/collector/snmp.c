@@ -575,6 +575,10 @@ Snmp_op(SnmpObject *self, PyObject *args, int op)
 		Snmp_raise_error(self->ss);
 		/* Instead of raising, we will fire errback */
 		Snmp_invokeerrback(deferred);
+		Py_DECREF(self);
+		Py_DECREF(oids);
+		snmp_free_pdu(pdu);
+		return deferred;
 	}
 	reqid = pdu->reqid;
 	pdu = NULL;		/* Avoid to free it when future errors occurs */
