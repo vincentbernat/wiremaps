@@ -31,12 +31,6 @@ To use this application, you need the following Debian packages:
  - python-nevow (Nevow - http://divmod.org/trac/wiki/DivmodNevow)
  - python-ipy (iPy - http://c0re.23.nu/c0de/IPy/)
  - python-yaml (PyYAML - http://pyyaml.org/)
- - javascript-jquery (jQuery - http://jquery.com/)
-
-On other distributions, you should find the proper package or download
-and install from the website. For jQuery, there is a symlink in
-wiremaps/wiremaps/web/static targeted at Debian. Correct it or place
-jQuery on your system in /usr/share/javascript/jquery/jquery.js.
 
 You then need to create a database and install the corresponding
 schema. As postgres user ("su - postgres"), you can use the following:
