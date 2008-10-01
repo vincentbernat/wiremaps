@@ -1,4 +1,13 @@
 #!/bin/sh
+### BEGIN INIT INFO
+# Provides:          wiremaps
+# Required-Start:    $remote_fs $syslog
+# Required-Stop:     $remote_fs $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Wiremaps
+# Description:       layer 2 network discovery application
+### END INIT INFO
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
