@@ -1,3 +1,4 @@
+import snmp
 from snmp import AgentProxy as original_AgentProxy
 from twisted.internet import defer
 
@@ -35,6 +36,7 @@ class Walker(object):
 
     def __call__(self):
         d = self.proxy.getbulk(self.baseoid)
+        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return self.defer
@@ -52,11 +54,12 @@ class Walker(object):
             self.results[o] = x[o]
             if translateOid(self.lastoid) < translateOid(o):
                 self.lastoid = o
-        if stop or (self.proxy.use_getbulk and len(x) < 10):
+        if stop or not x or (self.proxy.use_getbulk and len(x) < 10):
             self.defer.callback(self.results)
             self.defer = None
             return
         d = self.proxy.getbulk(self.lastoid)
+        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return None
