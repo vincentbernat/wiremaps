@@ -30,7 +30,7 @@ if __name__ == "__main__":
                       libraries = ['netsnmp', 'crypto'],
                       sources= ['wiremaps/collector/snmp.c']),
             ],
-          packages=["wiremaps", "wiremaps.collector", "wiremaps.web",
+          packages=["wiremaps", "wiremaps.collector", "wiremaps.web", "wiremaps.core",
                     "twisted.plugins"],
           package_data={'twisted': ['plugins/wiremaps_plugin.py'],
                         'wiremaps.web': ["static/*.png", "static/*.css", "static/*.js",

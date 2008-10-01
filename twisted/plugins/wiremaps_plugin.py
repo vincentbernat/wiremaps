@@ -2,7 +2,7 @@ from zope.interface import implements
 from twisted.python import usage
 from twisted.application.service import IServiceMaker
 from twisted.plugin import IPlugin
-import wiremaps
+from wiremaps.core import service
 
 class Options(usage.Options):
     synopsis = "[options]"
@@ -20,6 +20,6 @@ class WiremapsServiceMaker(object):
     options = Options
     
     def makeService(self, config):
-        return wiremaps.makeService(config)
+        return service.makeService(config)
 
 wiremapsServer = WiremapsServiceMaker()
