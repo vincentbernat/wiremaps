@@ -1,0 +1,5 @@
+user=network
+group=network
+pidfile=/var/run/wiremaps/wiremaps.pid
+logfile=/var/log/wiremaps/wiremaps.log
+configfile=/etc/wiremaps/wiremaps.cfg

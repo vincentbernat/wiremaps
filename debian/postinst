@@ -2,11 +2,17 @@
 
 set -e
 
+. /etc/default/wiremaps
+
 case "$1" in
     configure)
         for p in $(pyversions -i); do
             $p -c 'from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin))' >/dev/null 2>&1 || true
         done
+	[ -d $(dirname $logfile) ] || mkdir $(dirname $logfile)
+	[ -d $(dirname $pidfile) ] || mkdir $(dirname $pidfile)
+	chown $user.$group $(dirname $logfile)
+	chown $user.$group $(dirname $pidfile)
         ;;
 esac
 
