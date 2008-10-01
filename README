@@ -56,6 +56,10 @@ You can install the application with:
  python setup.py build
  sudo python setup.py install
 
+If you do not wish to install the application, you still need to
+compile the module to build SNMP queries. This can be done with:
+ python setup.py build_ext --inplace
+
 You can launch the application by hand
  twistd -no wiremaps
 or
