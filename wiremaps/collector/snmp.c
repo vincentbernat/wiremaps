@@ -65,6 +65,7 @@ Snmp_updatereactor(void)
 	SnmpReaderObject *reader;
 	fd_set fdset;
 	struct timeval timeout;
+	double to;
 
 	FD_ZERO(&fdset);
 	snmp_select_info(&maxfd, &fdset, &timeout, &block);
@@ -137,10 +138,11 @@ Snmp_updatereactor(void)
 		Py_CLEAR(timeoutId);
 	}
 	if (!block) {
+		to = (double)timeout.tv_sec +
+		    (double)timeout.tv_usec/(double)1000000;
+		if (to <= 0) to = 2.0;
 		if ((timeoutId = PyObject_CallMethod(reactor, "callLater", "dO",
-			    (double)timeout.tv_sec +
-			    (double)timeout.tv_usec/(double)1000000,
-			    timeoutFunction)) == NULL) {
+			    to, timeoutFunction)) == NULL) {
 			return -1;
 		}
 	}
