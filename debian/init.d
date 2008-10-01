@@ -11,24 +11,38 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
-test -x /usr/bin/twistd || exit 0
-test -f $configfile || exit 0
-
 user=wiremaps
 group=wiremaps
 pidfile=/var/run/wiremaps/wiremaps.pid
 logfile=/var/log/wiremaps/wiremaps.log
 configfile=/etc/wiremaps/wiremaps.cfg
 
+test -x /usr/bin/twistd || exit 0
+test -f $configfile || exit 0
+
+version="$(twistd --version | head -1 | awk '{print $NF}')"
+
 case "$1" in
     start)
         echo -n "Starting wiremaps: twistd"
-        start-stop-daemon -c $user -g $group --start \
-			  --quiet --exec /usr/bin/twistd -- \
-                          --pidfile=$pidfile \
-			  --no_save \
-                          --logfile=$logfile \
-	                  wiremaps --config=/etc/wiremaps/wiremaps.cfg
+	case "$version" in
+	    8.*)
+		start-stop-daemon -c $user -g $group --start \
+		    --quiet --exec /usr/bin/twistd -- \
+                    --pidfile=$pidfile \
+		    --no_save \
+                    --logfile=$logfile \
+	            wiremaps --config=/etc/wiremaps/wiremaps.cfg
+		;;
+	    *)
+		start-stop-daemon -c $user -g $group --start \
+		    --quiet --exec /usr/bin/twistd -- \
+                    --pidfile=$pidfile \
+		    --no_save \
+                    --logfile=$logfile \
+	            --python $(python -c 'import imp ; print imp.find_module("wiremaps/core/tac")[1]')
+		;;
+	esac
         echo "."	
     ;;
 
