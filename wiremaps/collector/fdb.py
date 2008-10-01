@@ -112,7 +112,7 @@ class ExtremeFdbCollector(FdbCollector):
         @param results: result of walking C{EXTREME-BASE-MIB::extremeFdb}
         """
         if self.vlans is None:
-            d = self.proxy.walk(self.vlanOid, results)
+            d = self.proxy.walk(self.vlanOid)
             d.addCallback(self.gotVlans, results)
             return d
         for oid in results:
