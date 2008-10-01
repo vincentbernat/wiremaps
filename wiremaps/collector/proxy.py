@@ -7,6 +7,15 @@ def translateOid(oid):
 class AgentProxy(original_AgentProxy):
     """Act like AgentProxy but handles walking itself"""
 
+    use_getbulk = True
+
+    def getbulk(self, oid, *args):
+        if self.use_getbulk:
+            return original_AgentProxy.getbulk(self, oid, *args)
+        d = self.getnext(oid)
+        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
+        return d
+
     def walk(self, oid):
         """Real walking.
         
@@ -25,22 +34,29 @@ class Walker(object):
         self.defer = defer.Deferred()
 
     def __call__(self):
-        d = original_AgentProxy.getnext(self.proxy, self.baseoid)
+        d = self.proxy.getbulk(self.baseoid)
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return self.defer
 
     def getMore(self, x):
-        lastoid = x.keys()[0]
-        if (translateOid(lastoid) <= translateOid(self.lastoid)) or \
-                translateOid(lastoid)[:len(translateOid(self.baseoid))] != \
-                translateOid(self.baseoid):
+        stop = False
+        for o in x:
+            if o in self.results:
+                stop = True
+                continue
+            if translateOid(o)[:len(translateOid(self.baseoid))] != \
+                    translateOid(self.baseoid):
+                stop = True
+                continue
+            self.results[o] = x[o]
+            if translateOid(self.lastoid) < translateOid(o):
+                self.lastoid = o
+        if stop or (self.proxy.use_getbulk and len(x) < 10):
             self.defer.callback(self.results)
             self.defer = None
             return
-        self.lastoid = lastoid
-        self.results[lastoid] = x[lastoid]
-        d = original_AgentProxy.getnext(self.proxy, self.lastoid)
+        d = self.proxy.getbulk(self.lastoid)
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return None
