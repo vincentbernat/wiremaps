@@ -358,8 +358,12 @@ Snmp_handle(int operation, netsnmp_session *session, int reqid,
 			PyErr_SetString(SnmpNoSuchInstance, "No such instance exists");
 			goto fireexception;
 		case SNMP_ENDOFMIBVIEW:
-			PyErr_SetString(SnmpEndOfMibView, "End of MIB was reached");
-			goto fireexception;
+			if (response->command != SNMP_MSG_GETBULK) {
+				PyErr_SetString(SnmpEndOfMibView,
+				    "End of MIB was reached");
+				goto fireexception;
+			} else
+				continue;
 		case ASN_INTEGER:
 			resultvalue = PyLong_FromLong(*vars->val.integer);
 			break;
