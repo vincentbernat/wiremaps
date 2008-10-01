@@ -59,7 +59,7 @@ You can launch the application by hand
 or
  twistd -no wiremaps --config=/etc/wiremaps/wiremaps.cfg
 
-You can also use doc/init.d as a base for an init script (work only if
+You can also use debian/init.d as a base for an init script (work only if
 the application is installed).
 
 Indexation is not done automatically. You must browse

@@ -6,8 +6,10 @@ user=network
 group=network
 pidfile=/var/run/wiremaps/wiremaps.pid
 logfile=/var/log/wiremaps/wiremaps.log
+configfile=/etc/wiremaps/wiremaps.cfg
 
 test -x /usr/bin/twistd || exit 0
+test -f $configfile || exit 0
 
 case "$1" in
     start)
