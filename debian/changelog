@@ -1,0 +1,5 @@
+wiremaps (0~git20091001-1) unstable; urgency=low
+
+  * Initial packaging.
+
+ -- Vincent Bernat <bernat@debian.org>  Wed, 01 Oct 2008 09:28:36 +0200

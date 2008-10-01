@@ -1,0 +1,30 @@
+This package was downloaded from https://trac.luffy.cx/wiremaps/
+
+Files: *
+Copyright: © 2008 Vincent Bernat <bernat@luffy.cx>
+License: GPL3+
+ This program is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 3, or (at your option)
+ any later version.
+
+ In addition, as a special exception, a permission to link the code
+ with the OpenSSL project's "OpenSSL" library (or with modified
+ versions of it that use the same license as the "OpenSSL" library),
+ and distribute the linked executables is given.  You must obey the
+ GNU General Public License in all respects for all of the code used
+ other than "OpenSSL".  If you modify this file, you may extend this
+ exception to your version of the file, but you are not obligated to
+ do so.  If you do not wish to do so, delete this exception statement
+ from your version.
+
+Files: wiremaps/web/images/*
+Copyright: © 2008 Vincent Bernat <bernat@luffy.cx>
+License: Creative Commons Attribution 3.0
+
+Files: debian/*
+Copyright: © 2008 Vincent Bernat <bernat@debian.org>
+License: GPL3+
+
+On Debian systems, the complete text of the GNU General Public License
+can be found in the file `/usr/share/common-licenses/GPL-3'.

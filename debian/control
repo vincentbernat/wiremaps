@@ -1,0 +1,20 @@
+Source: wiremaps
+Section: python
+Priority: optional
+Maintainer: Vincent Bernat <bernat@debian.org>
+Standards-Version: 3.8.0
+Build-Depends: debhelper (>= 5.0.38), cdbs, python-all-dev (>= 2.3.5-11), python-central (>= 0.5.6), python-setuptools (>= 0.6b3)
+Homepage: https://trac.luffy.cx/wiremaps/
+XS-Python-Version: all
+
+Package: wiremaps
+Architecture: any
+Depends: ${misc:Depends}, ${python:Depends}, python-twisted-core (>= 2.4), python-nevow (>= 0.9.26), python-pgsql, python-twisted-names, python-ipy, python-yaml
+Suggests: postgresql-server
+XB-Python-Version: ${python:Versions}
+Description: layer 2 network discovery application
+ Wiremaps is an application to gather wiring (aka L2) information on a
+ network using protocols like LLDP, EDP, CDP and SONMP. It also
+ gathers information from the FDB (MAC-port table on switches), the
+ ARP table (MAC-IP table) and some miscellaneous information like
+ interface names.
