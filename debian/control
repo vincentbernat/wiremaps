@@ -3,7 +3,7 @@ Section: python
 Priority: optional
 Maintainer: Vincent Bernat <bernat@debian.org>
 Standards-Version: 3.8.0
-Build-Depends: debhelper (>= 5.0.38), cdbs, python-all-dev (>= 2.3.5-11), python-central (>= 0.5.6), python-setuptools (>= 0.6b3)
+Build-Depends: debhelper (>= 5.0.38), cdbs, python-all-dev (>= 2.3.5-11), python-central (>= 0.5.6), python-setuptools (>= 0.6b3), python-twisted-core
 Homepage: https://trac.luffy.cx/wiremaps/
 XS-Python-Version: current, >= 2.4
 
