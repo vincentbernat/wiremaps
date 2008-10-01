@@ -2,6 +2,8 @@
 
 set -e
 
+#DEBHELPER#
+
 case "$1" in
     remove|purge)
         for p in $(pyversions -i); do
@@ -9,8 +11,6 @@ case "$1" in
         done
         ;;
 esac
-
-#DEBHELPER#
 
 if [ "$1" = "purge" ]; then
     deluser --system wiremaps || true

@@ -9,14 +9,6 @@ if ! ([ "$1" = "configure" ] || [ "$1" = "reconfigure" ]); then
   exit 0
 fi
 
-case "$1" in
-    configure)
-        for p in $(pyversions -i); do
-            $p -c 'from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin))' >/dev/null 2>&1 || true
-        done
-        ;;
-esac
-
 [ -d /var/log/wiremaps ] || mkdir /var/log/wiremaps
 [ -d /var/run/wiremaps ] || mkdir /var/run/wiremaps
 adduser --system --disabled-password --disabled-login --home /var/run/wiremaps \
@@ -25,5 +17,13 @@ chown $user.$group /var/run/wiremaps
 chown $user.$group /var/log/wiremaps
 
 #DEBHELPER#
+
+case "$1" in
+    configure)
+        for p in $(pyversions -i); do
+            $p -c 'from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin))' >/dev/null 2>&1 || true
+        done
+        ;;
+esac
 
 exit 0
