@@ -459,8 +459,13 @@ Snmp_handle(int operation, netsnmp_session *session, int reqid,
 
 fireexception:
 	PyErr_Fetch(&type, &value, &traceback);
-	if ((failure = PyObject_CallMethod(FailureModule,
-		    "Failure", "OO", type, value)) != NULL) {
+        if (!traceback)
+                failure = PyObject_CallMethod(FailureModule,
+		    "Failure", "OO", type, value);
+	else
+                failure = PyObject_CallMethod(FailureModule,
+		    "Failure", "OOO", type, value, traceback);
+	if (failure != NULL) {
 		if ((tmp = PyObject_GetAttrString(defer, "errback")) != NULL) {
 			PyObject_CallMethod(reactor, "callLater",
 			    "iOO", 0, tmp, failure);
