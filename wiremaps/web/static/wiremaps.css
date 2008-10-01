@@ -138,6 +138,14 @@ div#photo
     display: none;
 }
 
+div#description
+{
+    display: none;
+    text-align: center;
+    font-weight: bold;
+    font-size: 110%;
+}
+
 /* Ports */
 div#ports
 { 

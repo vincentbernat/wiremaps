@@ -70,6 +70,18 @@ function loadEquipment(ip)
 	.parent().show();
     $("div#actions a").attr("href", "search/" + ip + "/");
     $("div#ports").hide();
+    $.ajax({type: "GET",
+	    cache: false,
+	    url: "equipment/"+ip+"/descr/",
+	    dataType: "json",
+	    error: function(xmlh, textstatus, error) {
+		$("div#description").hide();
+	    },
+	    success: function(data) {
+	        $("div#description").html(data[0][0]);
+		$("div#description").show();
+		hideMessage();
+	    }});
     sendMessage("info", "Loading list of ports for "+ip);
     $.ajax({type: "GET",
 	    cache: false,

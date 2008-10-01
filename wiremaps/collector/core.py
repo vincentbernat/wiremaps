@@ -162,19 +162,23 @@ class CollectorService(service.Service):
                         {'ip': str(ip)})
             id = txn.fetchall()
             if not id:
-                txn.execute("INSERT INTO equipment (ip, name, oid) VALUES "
-                            "(%(ip)s, %(name)s, %(oid)s)",
+                txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
+                            "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
                             {'ip': str(ip), 'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
-                             'oid': result['.1.3.6.1.2.1.1.2.0']})
+                             'oid': result['.1.3.6.1.2.1.1.2.0'],
+                             'description': result['.1.3.6.1.2.1.1.1.0']})
             else:
-                txn.execute("UPDATE equipment SET name=%(name)s, oid=%(oid)s "
+                txn.execute("UPDATE equipment SET name=%(name)s, oid=%(oid)s, "
+                            "description=%(description)s "
                             "WHERE ip=%(ip)s",
                             {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
                              'oid': result['.1.3.6.1.2.1.1.2.0'],
+                             'description': result['.1.3.6.1.2.1.1.1.0'],
                              'ip': str(ip)})
             return result['.1.3.6.1.2.1.1.2.0']
 
-        d = proxy.get(['.1.3.6.1.2.1.1.2.0', # OID
+        d = proxy.get(['.1.3.6.1.2.1.1.1.0', # description
+                       '.1.3.6.1.2.1.1.2.0', # OID
                        '.1.3.6.1.2.1.1.5.0', # name
                        ])
         d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb, x, proxy.ip))

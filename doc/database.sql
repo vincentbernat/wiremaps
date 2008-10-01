@@ -25,7 +25,8 @@ DROP TABLE IF EXISTS equipment CASCADE;
 CREATE TABLE equipment (
   ip      inet		   PRIMARY KEY,
   name    text		   NULL,
-  oid	  text		   NOT NULL
+  oid	  text		   NOT NULL,
+  description text	   DEFAULT '',
 );
 
 

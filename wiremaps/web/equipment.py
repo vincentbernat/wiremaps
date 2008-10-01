@@ -20,6 +20,19 @@ class EquipmentResource(JsonPage):
     def childFactory(self, ctx, name):
         return EquipmentDetailResource(name, self.dbpool, self.collector)
 
+class EquipmentDescriptionResource(JsonPage):
+    """Give the description of a given equipment"""
+
+    def __init__(self, ip, dbpool):
+        self.dbpool = dbpool
+        self.ip = ip
+        JsonPage.__init__(self)
+
+    def data_json(self, ctx, data):
+        return self.dbpool.runQuery("SELECT description FROM equipment "
+                                    "WHERE ip=%(ip)s",
+                                    {'ip': str(self.ip)})
+
 class EquipmentDetailResource(JsonPage):
     """Give the list of ports for a given equipment or allow refresh"""
 
@@ -37,6 +50,9 @@ class EquipmentDetailResource(JsonPage):
 
     def child_refresh(self, ctx):
         return RefreshEquipmentResource(self.ip, self.dbpool, self.collector)
+
+    def child_descr(self, ctx):
+        return EquipmentDescriptionResource(self.ip, self.dbpool)
 
     def childFactory(self, ctx, name):
         return ports.PortDetailsResource(self.ip, int(name), self.dbpool)
