@@ -12,4 +12,11 @@ esac
 
 #DEBHELPER#
 
+if [ "$1" = "purge" ]; then
+    deluser --system wiremaps || true
+    delgroup --system wiremaps || true
+    rm -rf /var/run/wiremaps
+    rm -rf /var/log/wiremaps
+fi
+
 exit 0

@@ -66,6 +66,10 @@ Indexation is not done automatically. You must browse
 http://localhost:8087/equipment/refresh to initiate a whole
 refresh. Put this command in a crontab.
 
+In the git repository (git clone git://trac.luffy.cx/wiremaps.git),
+there is a debian/ directory that builds a Debian package (with
+dpkg-buildpackage -us -uc). It does not setup the database.
+
 License
 -------
 

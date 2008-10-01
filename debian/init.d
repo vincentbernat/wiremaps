@@ -2,10 +2,14 @@
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
 
-[ ! -f /etc/default/wiremaps ] || . /etc/default/wiremaps
-
 test -x /usr/bin/twistd || exit 0
 test -f $configfile || exit 0
+
+user=wiremaps
+group=wiremaps
+pidfile=/var/run/wiremaps/wiremaps.pid
+logfile=/var/log/wiremaps/wiremaps.log
+configfile=/etc/wiremaps/wiremaps.cfg
 
 case "$1" in
     start)
