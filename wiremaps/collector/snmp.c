@@ -68,6 +68,8 @@ Snmp_updatereactor(void)
 	double to;
 
 	FD_ZERO(&fdset);
+	timeout.tv_sec = 5;
+	timeout.tv_usec = 0;
 	snmp_select_info(&maxfd, &fdset, &timeout, &block);
 	for (fd = 0; fd < maxfd; fd++) {
 		if (FD_ISSET(fd, &fdset)) {
@@ -140,7 +142,6 @@ Snmp_updatereactor(void)
 	if (!block) {
 		to = (double)timeout.tv_sec +
 		    (double)timeout.tv_usec/(double)1000000;
-		if (to <= 0) to = 2.0;
 		if ((timeoutId = PyObject_CallMethod(reactor, "callLater", "dO",
 			    to, timeoutFunction)) == NULL) {
 			return -1;
