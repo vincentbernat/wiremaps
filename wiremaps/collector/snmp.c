@@ -358,7 +358,7 @@ Snmp_handle(int operation, netsnmp_session *session, int reqid,
 			PyErr_SetString(SnmpNoSuchInstance, "No such instance exists");
 			goto fireexception;
 		case SNMP_ENDOFMIBVIEW:
-			if (response->command != SNMP_MSG_GETBULK) {
+			if (PyDict_Size(results) == 0) {
 				PyErr_SetString(SnmpEndOfMibView,
 				    "End of MIB was reached");
 				goto fireexception;
