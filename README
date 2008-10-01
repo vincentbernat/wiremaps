@@ -64,6 +64,10 @@ or
 You can also use doc/init.d as a base for an init script (work only if
 the application is installed).
 
+Indexation is not done automatically. You must browse
+http://localhost:8087/equipment/refresh to initiate a whole
+refresh. Put this command in a crontab.
+
 License
 -------
 

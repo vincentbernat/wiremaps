@@ -15,7 +15,9 @@ class EquipmentResource(JsonPage):
 
     def child_refresh(self, ctx):
         self.collector.startExploration()
-        return rend.Page(docFactory=loaders.stan(T.p["Refresh started..."]))
+        p = rend.Page(docFactory=loaders.stan(T.p["Refresh started..."]))
+        p.addSlash = True
+        return p
 
     def childFactory(self, ctx, name):
         return EquipmentDetailResource(name, self.dbpool, self.collector)
