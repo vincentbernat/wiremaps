@@ -61,7 +61,7 @@ static int
 Snmp_updatereactor(void)
 {
 	int maxfd = 0, block = 0, fd, result, i;
-	PyObject *keys, *key;
+	PyObject *keys, *key, *tmp;
 	SnmpReaderObject *reader;
 	fd_set fdset;
 	struct timeval timeout;
@@ -94,11 +94,13 @@ Snmp_updatereactor(void)
 					return -1;
 				}
 				Py_DECREF(key);
-				if (PyObject_CallMethod(reactor,
-					"addReader", "O", (PyObject*)reader) == NULL) {
+				if ((tmp = PyObject_CallMethod(reactor,
+					    "addReader", "O", (PyObject*)reader)) ==
+				    NULL) {
 					Py_DECREF(reader);
 					return -1;
 				}
+				Py_DECREF(tmp);
 				Py_DECREF(reader);
 			}
 		}
@@ -122,11 +124,12 @@ Snmp_updatereactor(void)
 				Py_DECREF(keys);
 				return -1;
 			}
-			if (PyObject_CallMethod(reactor,
-				"removeReader", "O", (PyObject*)reader) == NULL) {
+			if ((tmp = PyObject_CallMethod(reactor,
+				    "removeReader", "O", (PyObject*)reader)) == NULL) {
 				Py_DECREF(keys);
 				return -1;
 			}
+			Py_DECREF(tmp);
 			if (PyDict_DelItem(SnmpFds, key) == -1) {
 				Py_DECREF(keys);
 				return -1;
@@ -136,7 +139,7 @@ Snmp_updatereactor(void)
 	Py_DECREF(keys);
 	/* Setup timeout */
 	if (timeoutId) {
-		PyObject_CallMethod(timeoutId, "cancel", NULL);
+		Py_DECREF(PyObject_CallMethod(timeoutId, "cancel", NULL));
 		Py_CLEAR(timeoutId);
 	}
 	if (!block) {
@@ -323,8 +326,8 @@ Snmp_invokeerrback(PyObject *defer)
 		    "Failure", "OOO", value, type, traceback);
 	if (failure != NULL) {
 		if ((tmp = PyObject_GetAttrString(defer, "errback")) != NULL) {
-			PyObject_CallMethod(reactor, "callLater",
-			    "iOO", 0, tmp, failure);
+			Py_DECREF(PyObject_CallMethod(reactor, "callLater",
+				"iOO", 0, tmp, failure));
 			Py_DECREF(tmp);
 		}
 		Py_DECREF(failure);
@@ -477,7 +480,7 @@ Snmp_handle(int operation, netsnmp_session *session, int reqid,
 	}
 	if ((tmp = PyObject_GetAttrString(defer, "callback")) == NULL)
 		goto fireexception;
-	PyObject_CallMethod(reactor, "callLater", "iOO", 0, tmp, results);
+	Py_DECREF(PyObject_CallMethod(reactor, "callLater", "iOO", 0, tmp, results));
 	Py_DECREF(tmp);
 	Py_DECREF(results);
 	Py_DECREF(defer);
