@@ -94,7 +94,7 @@ class LldpCollector:
         return d
 
     def collectData(self):
-        """Collect data from SNMP using s5EnMsTopNmmSegId"""
+        """Collect data from SNMP using LLDP"""
     
         def fileIntoDb(txn, sysname, sysdesc, portdesc, mgmtip, ip):
             txn.execute("DELETE FROM lldp WHERE equipment=%(ip)s",
