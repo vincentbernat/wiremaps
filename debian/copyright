@@ -18,6 +18,10 @@ License: GPL3+
  do so.  If you do not wish to do so, delete this exception statement
  from your version.
 
+Files: wiremaps/collector/snmp.c
+Copyright: © 2008 Vincent Bernat <bernat@luffy.cx>
+License: MIT
+
 Files: wiremaps/web/images/*
 Copyright: © 2008 Vincent Bernat <bernat@luffy.cx>
 License: Creative Commons Attribution 3.0
