@@ -277,13 +277,21 @@ Snmp_oid2string(PyObject *resultvalue)
 	int i;
 	if ((list = PyTuple_New(PyTuple_Size(resultvalue))) == NULL)
 		return NULL;
-	for (i = 0; i < PyTuple_Size(resultvalue); i++)
-		/* Stealing... */
-		PyTuple_SetItem(list, i,
-		    PyObject_Str(PyTuple_GetItem(resultvalue, i)));
-	if (PyErr_Occurred()) {
-		Py_DECREF(list);
-		return NULL;
+	for (i = 0; i < PyTuple_Size(resultvalue); i++) {
+		if ((tmp = PyTuple_GetItem(resultvalue, i)) == NULL) {
+			Py_DECREF(list);
+			return NULL;
+		}
+		if ((tmp2 = PyObject_Str(tmp)) == NULL) {
+			Py_DECREF(list);
+			return NULL;
+		}
+		PyTuple_SetItem(list, i, tmp2);
+		if (PyErr_Occurred()) {
+			Py_DECREF(tmp2);
+			Py_DECREF(list);
+			return NULL;
+		}
 	}
 	Py_DECREF(resultvalue);
 	resultvalue = list;
@@ -308,6 +316,7 @@ Snmp_oid2string(PyObject *resultvalue)
 		Py_DECREF(tmp2);
 		return NULL;
 	}
+	Py_DECREF(tmp2);
 	Py_DECREF(resultvalue);
 	return tmp;
 }
