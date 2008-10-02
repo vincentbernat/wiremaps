@@ -6,6 +6,7 @@ from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.fdb import FdbCollector
+from wiremaps.collector.cdp import CdpCollector
 
 class Cisco:
     """Collector for Cisco"""
@@ -19,9 +20,11 @@ class Cisco:
         ports = PortCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool)
         fdb = FdbCollector(proxy, dbpool)
+        cdp = CdpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData(write=False))
         d.addCallback(lambda x: fdb.collectData(write=False))
+        d.addCallback(lambda x: cdp.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         return d
