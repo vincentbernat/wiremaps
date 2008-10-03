@@ -34,7 +34,7 @@ class CdpCollector:
         """Collect CDP data from SNMP"""
     
         def fileIntoDb(txn, sysname, portname, platform, mgmtiptype, mgmtip, ip):
-            txn.execute("DELETE FROM edp WHERE equipment=%(ip)s",
+            txn.execute("DELETE FROM cdp WHERE equipment=%(ip)s",
                         {'ip': str(ip)})
             for port in sysname.keys():
                 if mgmtiptype[port] != 1:
