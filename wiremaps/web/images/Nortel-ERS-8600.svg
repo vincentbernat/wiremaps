@@ -9,12 +9,12 @@
    xmlns:xlink="http://www.w3.org/1999/xlink"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="551.93054"
-   height="722.06799"
+   width="722.06799"
+   height="551.93054"
    id="svg2"
    sodipodi:version="0.32"
    inkscape:version="0.46"
-   sodipodi:docname="ers8600.svg"
+   sodipodi:docname="Nortel-ERS-8600.svg"
    inkscape:output_extension="org.inkscape.output.svg.inkscape"
    version="1.0">
   <defs
@@ -150,9 +150,10 @@
      inkscape:label="Calque 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(-107.3522,-235.14309)">
+     transform="translate(-22.283452,-320.21183)">
     <g
-       id="g2930">
+       id="g2930"
+       transform="matrix(0,1,-1,0,979.49455,212.85963)">
       <rect
          y="235.79295"
          x="108.00185"
