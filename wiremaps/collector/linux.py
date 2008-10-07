@@ -17,7 +17,8 @@ class Linux:
     implements(ICollector, IPlugin)
 
     def handleEquipment(self, oid):
-        return (oid in ['.1.3.6.1.4.1.8072.3.2.10', # netsnmp
+        return (oid in ['.1.3.6.1.4.1.8072.3.2.10', # Net-SNMP Linux
+                        '.1.3.6.1.4.1.3375.2.1.3.4.10', # F5 BIG IP 6400
                         ])
 
     def collectData(self, ip, proxy, dbpool):
