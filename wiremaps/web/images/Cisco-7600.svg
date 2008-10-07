@@ -86,7 +86,7 @@
     <radialGradient
        inkscape:collect="always"
        xlink:href="#linearGradient4037"
-       id="radialGradient10483"
+       id="radialGradient3359"
        gradientUnits="userSpaceOnUse"
        gradientTransform="matrix(1,0,0,8.6307759,-626.79387,6650.931)"
        cx="1795.5002"
@@ -102,16 +102,16 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.12602291"
-     inkscape:cx="1866.9664"
-     inkscape:cy="1465.4751"
+     inkscape:zoom="0.25204582"
+     inkscape:cx="1775.5008"
+     inkscape:cy="1059.7626"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1280"
      inkscape:window-height="1024"
-     inkscape:window-x="-2"
-     inkscape:window-y="-22" />
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
   <metadata
      id="metadata7">
     <rdf:RDF>
@@ -129,14 +129,14 @@
      id="layer1"
      transform="translate(-995.07277,1702.1203)">
     <g
-       id="g9968">
+       id="g3460">
       <rect
          y="-1701.4203"
          x="995.77277"
          height="1547.3376"
          width="2182.1428"
          id="rect3044"
-         style="opacity:1;fill:#3f4042;fill-opacity:1;stroke:#000000;stroke-width:1.39999998;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:#3f4042;fill-opacity:1;stroke:#000000;stroke-width:1.39999998;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <g
          transform="translate(2267.0461,-1406.0014)"
          id="g3822">
@@ -507,7 +507,7 @@
          height="1543.7368"
          width="342.26608"
          id="rect4020"
-         style="opacity:1;fill:#3f4042;fill-opacity:1;stroke:#000000;stroke-width:5.00117207;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:#3f4042;fill-opacity:1;stroke:#000000;stroke-width:5.00117207;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <use
          height="205.21103"
          width="2055.1819"
@@ -532,7 +532,7 @@
          sodipodi:cy="-1447.2103"
          sodipodi:cx="1798.3058"
          id="path4027"
-         style="opacity:1;fill:#008000;fill-opacity:1;stroke:#000000;stroke-width:5;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         style="fill:#008000;fill-opacity:1;stroke:#000000;stroke-width:5;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
          sodipodi:type="arc" />
       <text
          id="text4029"
@@ -555,7 +555,7 @@
          height="667.70166"
          width="72.9422"
          id="rect4035"
-         style="opacity:1;fill:url(#radialGradient10483);fill-opacity:1;stroke:#000000;stroke-width:5;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+         style="fill:url(#radialGradient3359);fill-opacity:1;stroke:#000000;stroke-width:5;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
       <g
          id="g4051">
         <rect
@@ -3340,6 +3340,66 @@
            id="tspan9966"
            x="1361.5869"
            y="-1442.2903">WS-SUP720</tspan></text>
+      <text
+         id="text3428"
+         y="-1341.5581"
+         x="1286.6052"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+         xml:space="preserve"><tspan
+           y="-1341.5581"
+           x="1286.6052"
+           id="tspan3430"
+           sodipodi:role="line">1</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+         x="1286.6052"
+         y="-1123.5581"
+         id="text3440"><tspan
+           sodipodi:role="line"
+           id="tspan3442"
+           x="1286.6052"
+           y="-1123.5581">2</tspan></text>
+      <text
+         id="text3444"
+         y="-905.87555"
+         x="1286.6052"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+         xml:space="preserve"><tspan
+           y="-905.87555"
+           x="1286.6052"
+           id="tspan3446"
+           sodipodi:role="line">3</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+         x="1286.6052"
+         y="-687.63141"
+         id="text3448"><tspan
+           sodipodi:role="line"
+           id="tspan3450"
+           x="1286.6052"
+           y="-687.63141">4</tspan></text>
+      <text
+         id="text3452"
+         y="-470.18073"
+         x="1286.6052"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+         xml:space="preserve"><tspan
+           y="-470.18073"
+           x="1286.6052"
+           id="tspan3454"
+           sodipodi:role="line">5</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:50px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+         x="1286.6052"
+         y="-251.86334"
+         id="text3456"><tspan
+           sodipodi:role="line"
+           id="tspan3458"
+           x="1286.6052"
+           y="-251.86334">6</tspan></text>
     </g>
   </g>
 </svg>
