@@ -27,6 +27,7 @@ CREATE TABLE equipment (
   name    text		   NULL,
   oid	  text		   NOT NULL,
   description text	   DEFAULT '',
+  last    timestamp	   DEFAULT CURRENT_TIMESTAMP,
 );
 
 

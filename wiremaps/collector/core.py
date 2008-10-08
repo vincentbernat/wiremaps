@@ -97,6 +97,13 @@ class CollectorService(service.Service):
         """Stop exploration process."""
         print "Exploration of %s finished!" % self.config['ips']
         self.exploring = False
+        self.cleanUp()
+        self.dbpool.runOperation("DELETE FROM equipment "
+                                 "WHERE timestamp 'now' - interval '%(expire)s days' "
+                                 "> last", {'expire': self.config.get('expire', 1)})
+
+    def cleanUp(self):
+        """Clean older entries"""
 
     def reportError(self, failure, ip):
         """Generic method to report an error on failure
@@ -169,7 +176,7 @@ class CollectorService(service.Service):
                              'description': result['.1.3.6.1.2.1.1.1.0']})
             else:
                 txn.execute("UPDATE equipment SET name=%(name)s, oid=%(oid)s, "
-                            "description=%(description)s "
+                            "description=%(description)s, last=CURRENT_TIMESTAMP "
                             "WHERE ip=%(ip)s",
                             {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
                              'oid': result['.1.3.6.1.2.1.1.2.0'],

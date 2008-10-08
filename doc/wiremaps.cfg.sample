@@ -5,6 +5,7 @@ collector:
   ips: 192.168.14.0/24
   parallel: 4
   community: [ public, community2 ]
+  expire: 1
 database:
   host: localhost
   username: wiremaps
