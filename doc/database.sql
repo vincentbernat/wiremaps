@@ -11,6 +11,8 @@
 -- lc_numeric = 'en_US.UTF-8'
 -- lc_time = 'en_US.UTF-8'
 
+DROP RULE  IF EXISTS insert_or_replace_fdb ON fdb;
+DROP RULE  IF EXISTS insert_or_replace_arp ON arp;
 DROP TABLE IF EXISTS lldp CASCADE;
 DROP TABLE IF EXISTS cdp CASCADE;
 DROP TABLE IF EXISTS sonmp CASCADE;
@@ -48,17 +50,29 @@ CREATE TABLE fdb (
   equipment inet  	      REFERENCES equipment(ip) ON DELETE CASCADE,
   port      int               NOT NULL,
   mac       macaddr	      NOT NULL,
+  last      timestamp	      DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
   UNIQUE (equipment, port, mac)
 );
+
+CREATE RULE insert_or_replace_fdb AS ON INSERT TO fdb
+WHERE EXISTS (SELECT 1 FROM arp WHERE equipment=new.equipment AND mac=new.mac AND port=new.port)
+DO INSTEAD UPDATE fdb SET last=CURRENT_TIMESTAMP
+WHERE equipment=new.equipment AND mac=new.mac AND port=new.port;
 
 -- Just a dump of ARP for a given port
 CREATE TABLE arp (
   equipment inet  	      REFERENCES equipment(ip) ON DELETE CASCADE,
   mac       macaddr           NOT NULL,
   ip	    inet	      NOT NULL,
+  last      timestamp	      DEFAULT CURRENT_TIMESTAMP,
   UNIQUE (equipment, mac, ip)
 );
+
+CREATE RULE insert_or_replace_arp AS ON INSERT TO arp
+WHERE EXISTS (SELECT 1 FROM arp WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip)
+DO INSTEAD UPDATE arp SET last=CURRENT_TIMESTAMP
+WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip;
 
 -- Just a dump of SONMP for a given port
 CREATE TABLE sonmp (

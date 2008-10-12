@@ -23,7 +23,7 @@ class Linux:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool)
+        arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())

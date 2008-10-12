@@ -132,6 +132,7 @@ class CollectorService(service.Service):
                                                     proxy.ip)
         d = defer.succeed(None)
         for plugin in plugins:
+            plugin.config = self.config
             d.addCallback(lambda x: plugin.collectData(proxy.ip, proxy, self.dbpool))
         return d
 

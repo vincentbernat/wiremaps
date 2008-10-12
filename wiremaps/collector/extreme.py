@@ -22,8 +22,8 @@ class ExtremeSummit:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool, self.config)
+        arp = ArpCollector(proxy, dbpool, self.config)
         edp = EdpCollector(proxy, dbpool)
         # LLDP disabled due to unstability
         # lldp = LldpCollector(proxy, dbpool)
@@ -59,8 +59,8 @@ class ExtremeWare:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
-        fdb = ExtremeFdbCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool)
+        fdb = ExtremeFdbCollector(proxy, dbpool, self.config)
+        arp = ArpCollector(proxy, dbpool, self.config)
         edp = EdpCollector(proxy, dbpool)
         # LLDP disabled due to unstability
         # lldp = LldpCollector(proxy, dbpool)

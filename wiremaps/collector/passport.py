@@ -38,8 +38,8 @@ class NortelPassport:
         ports.ifDescr = ports.ifName
         ports.ifName = ".1.3.6.1.4.1.2272.1.4.10.1.1.35"
         mlt = MltCollector(proxy)
-        fdb = FdbCollector(proxy, dbpool, lambda x: self.normPortIndex(x, mlt))
-        arp = ArpCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool, self.config, lambda x: self.normPortIndex(x, mlt))
+        arp = ArpCollector(proxy, dbpool, self.config)
         sonmp = SonmpCollector(proxy, dbpool, lambda x: x+63)
         d = ports.collectData()
         d.addCallback(lambda x: mlt.collectData())

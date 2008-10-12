@@ -20,7 +20,7 @@ class ArrowPoint:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool, self.normPortName)
-        arp = ArpCollector(proxy, dbpool)
+        arp = ArpCollector(proxy, dbpool, self.config)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData(write=False))
         d.addCallback(lambda x: arp.collectData())

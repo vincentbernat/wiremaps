@@ -20,8 +20,8 @@ class NortelEthernetSwitch:
     def collectData(self, ip, proxy, dbpool):
         proxy.use_getbulk = False # Some Blade have bogus GETBULK
         ports = PortCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool, self.config)
+        arp = ArpCollector(proxy, dbpool, self.config)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))
         d.addCallback(lambda x: arp.collectData(write=False))

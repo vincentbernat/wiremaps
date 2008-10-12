@@ -6,6 +6,8 @@ collector:
   parallel: 4
   community: [ public, community2 ]
   expire: 1
+  fdbexpire: 24
+  arpexpire: 24
 database:
   host: localhost
   username: wiremaps

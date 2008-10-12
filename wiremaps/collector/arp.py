@@ -1,3 +1,5 @@
+from pyPgSQL import PgSQL
+from twisted.python import log
 from twisted.internet import defer, reactor
 
 class ArpCollector:
@@ -5,14 +7,16 @@ class ArpCollector:
 
     ipNetToMediaPhysAddress = '.1.3.6.1.2.1.4.22.1.2'
 
-    def __init__(self, proxy, dbpool):
+    def __init__(self, proxy, dbpool, config):
         """Create a collector using ARP entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
         @param dbpool: pool of database connections
+        @param config: configuration
         """
         self.proxy = proxy
         self.dbpool = dbpool
+        self.config = config
         self.arp = {}
 
     def gotArp(self, results):
@@ -34,14 +38,20 @@ class ArpCollector:
         """
     
         def fileIntoDb(txn, arp, ip):
-            txn.execute("DELETE FROM arp WHERE equipment=%(ip)s",
-                        {'ip': str(ip)})
             for mac, rip in arp.keys():
-                txn.execute("INSERT INTO arp VALUES (%(ip)s, "
+                # Some magic here: PostgreSQL will take care of
+                # updating the record if it already exists.
+                txn.execute("INSERT INTO arp (equipment, mac, ip) VALUES (%(ip)s, "
                             "%(mac)s, %(rip)s)",
                             {'ip': str(ip),
                              'mac': mac,
                              'rip': rip})
+            # Expire oldest entries
+            txn.execute("DELETE FROM arp WHERE "
+                       "timestamp 'now' - interval '%(expire)s hours' > last "
+                       "AND equipment=%(ip)s",
+                       {'ip': str(ip),
+                        'expire': self.config.get('arpexpire', 24)})
 
         print "Collecting ARP for %s" % self.proxy.ip
         d = self.proxy.walk(self.ipNetToMediaPhysAddress)

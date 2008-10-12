@@ -26,12 +26,12 @@ class Database:
         fs.sort()
         d = defer.succeed(None)
         for f in fs:
-            d.addCallback(lambda x: log.msg("Upgrade database: %s" %
-                                            getattr(self, f).__doc__))
-            d.addCallback(lambda x: getattr(self, f)())
+            d.addCallback(lambda x,ff: log.msg("Upgrade database: %s" %
+                                            getattr(self, ff).__doc__), f)
+            d.addCallback(lambda x,ff: getattr(self, ff)(), f)
         d.addCallbacks(
             lambda x: log.msg("database upgrade completed"),
-            lambda x: log.err("unable to update database: %s" % str(x)))
+            lambda x: log.msg("unable to update database: %s" % str(x)))
         return d
 
     def upgradeDatabase_01(self):
@@ -41,3 +41,39 @@ class Database:
                 "ALTER TABLE equipment "
                 "ADD COLUMN last TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
         return d
+
+    def upgradeDatabase_02(self):
+        """add 'last' column to 'fdb' table"""
+        d  = self.pool.runOperation("SELECT last FROM fdb LIMIT 1")
+        d.addErrback(lambda x: self.pool.runOperation(
+                "ALTER TABLE fdb "
+                "ADD COLUMN last TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+
+    def upgradeDatabase_03(self):
+        """add 'last' column to 'arp' table"""
+        d  = self.pool.runOperation("SELECT last FROM arp LIMIT 1")
+        d.addErrback(lambda x: self.pool.runOperation(
+                "ALTER TABLE arp "
+                "ADD COLUMN last TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+
+    def upgradeDatabase_04(self):
+        """add rule for updating 'last' column in 'fdb' table"""
+        d  = self.pool.runQuery("SELECT 1 FROM pg_catalog.pg_rules "
+                                "WHERE tablename='fdb' AND rulename='insert_or_replace_fdb'")
+        d.addCallback(lambda x: x or self.pool.runOperation(
+                "CREATE RULE insert_or_replace_fdb AS ON INSERT TO fdb "
+                "WHERE EXISTS (SELECT 1 FROM arp WHERE equipment=new.equipment "
+                "AND mac=new.mac AND port=new.port) "
+                "DO INSTEAD UPDATE fdb SET last=CURRENT_TIMESTAMP "
+                "WHERE equipment=new.equipment AND mac=new.mac AND port=new.port"))
+
+    def upgradeDatabase_05(self):
+        """add rule for updating 'last' column in 'arp' table"""
+        d  = self.pool.runQuery("SELECT 1 FROM pg_catalog.pg_rules "
+                                "WHERE tablename='arp' AND rulename='insert_or_replace_arp'")
+        d.addCallback(lambda x: x or self.pool.runOperation(
+                "CREATE RULE insert_or_replace_arp AS ON INSERT TO arp "
+                "WHERE EXISTS (SELECT 1 FROM arp WHERE equipment=new.equipment AND "
+                "mac=new.mac AND ip=new.ip) "
+                "DO INSTEAD UPDATE arp SET last=CURRENT_TIMESTAMP "
+                "WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip "))

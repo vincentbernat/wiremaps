@@ -32,8 +32,8 @@ class Nortel5510:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool, self.normPortName)
-        fdb = FdbCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool, self.config)
+        arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
         sonmp = SonmpCollector(proxy, dbpool)
         d = ports.collectData()

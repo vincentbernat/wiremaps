@@ -1,3 +1,4 @@
+from pyPgSQL import PgSQL
 from twisted.internet import reactor, defer
 
 class FdbCollector:
@@ -6,16 +7,18 @@ class FdbCollector:
     dot1dTpFdbPort = '.1.3.6.1.2.1.17.4.3.1.2'
     dot1dBasePortIfIndex = '.1.3.6.1.2.1.17.1.4.1.2'
 
-    def __init__(self, proxy, dbpool, normport=None):
+    def __init__(self, proxy, dbpool, config, normport=None):
         """Create a collector using FDB entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
         @param dbpool: pool of database connections
+        @param config: configuration
         @param nomport: function to use to normalize port index
         """
         self.proxy = proxy
         self.dbpool = dbpool
         self.normport = normport
+        self.config = config
         self.fdb = {}
         self.portif = {}
 
@@ -53,14 +56,21 @@ class FdbCollector:
         """
     
         def fileIntoDb(txn, fdb, ip):
-            txn.execute("DELETE FROM fdb WHERE equipment=%(ip)s",
-                        {'ip': str(ip)})
             for port, mac in fdb.keys():
-                txn.execute("INSERT INTO fdb VALUES (%(ip)s, "
-                            "%(port)s, %(mac)s)",
+                # Some magic here: PostgreSQL will take care of
+                # updating the record if it already exists.
+                txn.execute("INSERT INTO fdb (equipment, port, mac) "
+                            "VALUES (%(ip)s, %(port)s, %(mac)s)",
                             {'ip': str(ip),
                              'port': port,
                              'mac': mac})
+            # Expire oldest entries
+            txn.execute("DELETE FROM fdb WHERE "
+                       "timestamp 'now' - interval '%(expire)s hours' > last "
+                       "AND equipment=%(ip)s",
+                       {'ip': str(ip),
+                        'expire': self.config.get('fdbexpire', 24)})
+
 
         print "Collecting FDB for %s" % self.proxy.ip
         d = self.proxy.walk(self.dot1dBasePortIfIndex)

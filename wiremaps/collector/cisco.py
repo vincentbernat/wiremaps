@@ -18,8 +18,8 @@ class Cisco:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool)
+        arp = ArpCollector(proxy, dbpool, self.config)
+        fdb = FdbCollector(proxy, dbpool, self.config)
         cdp = CdpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData(write=False))
