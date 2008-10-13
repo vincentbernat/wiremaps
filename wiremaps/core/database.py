@@ -62,7 +62,7 @@ class Database:
                                 "WHERE tablename='fdb' AND rulename='insert_or_replace_fdb'")
         d.addCallback(lambda x: x or self.pool.runOperation(
                 "CREATE RULE insert_or_replace_fdb AS ON INSERT TO fdb "
-                "WHERE EXISTS (SELECT 1 FROM arp WHERE equipment=new.equipment "
+                "WHERE EXISTS (SELECT 1 FROM fdb WHERE equipment=new.equipment "
                 "AND mac=new.mac AND port=new.port) "
                 "DO INSTEAD UPDATE fdb SET last=CURRENT_TIMESTAMP "
                 "WHERE equipment=new.equipment AND mac=new.mac AND port=new.port"))
