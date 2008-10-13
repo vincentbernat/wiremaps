@@ -16,7 +16,8 @@ class RenderMixIn:
         return T.a(href="search/%s/" % mac) [ mac ]
 
     def render_hostname(self, ctx, name):
-        d = self.dbpool.runQuery("SELECT name FROM equipment WHERE name=%(name)s",
+        d = self.dbpool.runQuery("SELECT name FROM equipment "
+                                 "WHERE lower(name)=lower(%(name)s)",
                                  {'name': name})
         d.addCallback(lambda x: x and
                       T.a(href="equipment/%s/" % name) [ name ] or
