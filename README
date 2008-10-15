@@ -13,8 +13,8 @@ this information came from.
 
 GNU/Linux workstations need an LLDP daemon using SNMP to export
 information gathered. Otherwise, almost no information can be
-extracted from those hosts. Unfortunately, there is no free LLDP
-daemon exporting information to SNMP yet for GNU/Linux.
+extracted from those hosts. You can get a LLDP daemon here:
+ https://trac.luffy.cx/lldpd/
 
 The situation is the same for Windows. However, there exists a
 commercial one:
