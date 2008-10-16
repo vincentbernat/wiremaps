@@ -4,7 +4,6 @@ import yaml
 
 from twisted.application import service, internet
 from nevow import appserver
-from pynetsnmp import twistedsnmp
 
 from wiremaps.collector.core import CollectorService
 from database import Database
