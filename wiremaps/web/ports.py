@@ -74,41 +74,42 @@ class PortDetailsVlan(PortRelatedFragment):
 
     def data_vlan(self, ctx, data):
         q = """
-SELECT DISTINCT vid, name
-FROM vlan
-WHERE equipment=%(ip)s
-AND port=%(port)s
-AND type=%(type)s
-ORDER BY vid"""
-        l = self.dbpool.runQuery(q,
-                                 {'ip': str(self.ip),
-                                  'port': self.index,
-                                  'type': 'local'})
-        r = self.dbpool.runQuery(q,
-                                 {'ip': str(self.ip),
-                                  'port': self.index,
-                                  'type': 'remote'})
-        dl = defer.DeferredList([l,r])
-        dl.addCallback(lambda x: [x[0][1], x[1][1]])
-        return dl
+SELECT COALESCE(l.vid, r.vid) as vvid, l.name, r.name
+FROM
+(SELECT * FROM vlan WHERE equipment=%(ip)s AND port=%(port)s AND type='local') l
+FULL OUTER JOIN
+(SELECT * FROM vlan WHERE equipment=%(ip)s AND port=%(port)s AND type='remote') r
+ON l.vid = r.vid
+ORDER BY vvid;
+"""
+        return self.dbpool.runQuery(q,
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
 
     def render_vlan(self, ctx, data):
-        local, remote = data
-        if not local:
-            l = "No local VLAN found on this port. "
-        else:
-            l = T.invisible["The following local VLAN are present on this port:",
-                            [T.invisible[" ", T.span(_class="data")[name],
-                                         " (", vid, ")"] for vid,name in local],
-                            ". "]
-        if not remote:
-            r = "No remote VLAN found on this port."
-        else:
-            r = T.invisible["The following remote VLAN are present on this port:",
-                            [T.invisible[" ", T.span(_class="data")[name],
-                                         " (", vid, ")"] for vid,name in remote],
-                            "."]
-        return ctx.tag[l, r]
+        if not data:
+            return ctx.tag["No VLAN information available on this port."]
+        r = []
+        i = 0
+        for row in data:
+            if row[1] is None:
+                r.append(T.tr(_class=(i%2) and "odd" or "even")[
+                        T.td[row[0]], T.td(_class="notpresent")["Not present"],
+                        T.td[row[2]]])
+            elif row[2] is None:
+                r.append(T.tr(_class=(i%2) and "odd" or "even")
+                         [T.td[row[0]], T.td[row[1]],
+                          T.td(_class="notpresent")["Not present"]])
+            elif row[1] == row[2]:
+                r.append(T.tr(_class=(i%2) and "odd" or "even")
+                         [T.td[row[0]], T.td(colspan=2)[row[1]]])
+            else:
+                r.append(T.tr(_class=(i%2) and "odd" or "even")
+                         [T.td[row[0]], T.td[row[1]], T.td[row[2]]])
+            i += 1
+        return ctx.tag["Here are the VLAN available on this port:",
+                       T.table(_class="vlan")[
+                T.thead[T.td["VID"], T.td["Local"], T.td["Remote"]], r]]
 
 class PortDetailsFdb(PortRelatedFragment):
 

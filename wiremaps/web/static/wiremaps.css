@@ -209,3 +209,35 @@ div#end
 {
     clear: both;
 }
+table.vlan
+{
+    margin-left: 1ex;
+    border: 2px;
+    text-align: center;
+}
+table.vlan td
+{
+    padding-left: 1em;
+    padding-right: 1em;
+}
+table.vlan thead td
+{
+    font-weight: bold;
+    background-color: #ccc;
+}
+tr.odd td
+{
+    background-color: #d6ffab;
+}
+tr.even td
+{
+    background-color: #a6ef7b;
+}
+table.vlan tr td.notpresent
+{
+    background-color: #EF9398;
+}
+table.vlan tr > td:first-child
+{
+    font-weight: bold;
+}
