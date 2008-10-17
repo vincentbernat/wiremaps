@@ -8,6 +8,8 @@ class LldpCollector:
     lldpRemSysDesc = '.1.0.8802.1.1.2.1.4.1.1.10'
     lldpRemManAddrIfId = '.1.0.8802.1.1.2.1.4.2.1.4'
     lldpLocPortId = '.1.0.8802.1.1.2.1.3.7.1.3'
+    lldpLocVlanName = '.1.0.8802.1.1.2.1.5.32962.1.2.3.1.2'
+    lldpRemVlanName = '.1.0.8802.1.1.2.1.5.32962.1.3.3.1.2'
 
     def __init__(self, proxy, dbpool, normport=None):
         """Create a collector using LLDP entries in SNMP.
@@ -57,6 +59,34 @@ class LldpCollector:
             if port is not None:
                 self.lldpMgmtIp[port] = ip
 
+    def gotLldpLocalVlan(self, results):
+        """Callback handling reception of LLDP local vlan
+
+        @param results: result of walking C{LLDP-EXT-DOT1-MIB::lldpXdot1LocVlanName}
+        """
+        self.lldpLocalVlan = {}
+        for oid in results:
+            vid = int(oid.split(".")[-1])
+            port = int(oid.split(".")[-2])
+            if self.normport is not None:
+                port = self.normport(port)
+            if port is not None:
+                self.lldpLocalVlan[vid,port] = results[oid]
+
+    def gotLldpRemoteVlan(self, results):
+        """Callback handling reception of LLDP remote vlan
+
+        @param results: result of walking C{LLDP-EXT-DOT1-MIB::lldpXdot1RemVlanName}
+        """
+        self.lldpRemoteVlan = {}
+        for oid in results:
+            vid = int(oid.split(".")[-1])
+            port = int(oid.split(".")[-3])
+            if self.normport is not None:
+                port = self.normport(port)
+            if port is not None:
+                self.lldpRemoteVlan[vid,port] = results[oid]
+
     def gotLldpLocPort(self, results):
         """Callback handling reception of LLDP Local Port ID
 
@@ -66,7 +96,7 @@ class LldpCollector:
         if not results:
             raise exception.NoLLDP("LLDP does not seem to be running")
         for oid in results:
-            port =int(oid.split(".")[-1])
+            port = int(oid.split(".")[-1])
             if self.normport is not None:
                 port = self.normport(port)
             if port is not None:
@@ -96,7 +126,8 @@ class LldpCollector:
     def collectData(self):
         """Collect data from SNMP using LLDP"""
     
-        def fileIntoDb(txn, sysname, sysdesc, portdesc, mgmtip, ip):
+        def fileIntoDb(txn, sysname, sysdesc, portdesc, mgmtip,
+                       ip):
             txn.execute("DELETE FROM lldp WHERE equipment=%(ip)s",
                         {'ip': str(ip)})
             for port in sysname.keys():
@@ -112,6 +143,29 @@ class LldpCollector:
                              'sysname': sysname[port],
                              'sysdesc': sysdesc[port]})
 
+        def fileVlanIntoDb(txn, rvlan, lvlan,
+                           ip):
+            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s",
+                        {'ip': str(ip)})
+            for vid,port in rvlan.keys():
+                txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
+                            "%(port)s, %(vid)s, %(name)s, "
+                            "%(type)s)",
+                            {'ip': str(ip),
+                             'port': port,
+                             'vid': vid,
+                             'name': rvlan[vid,port],
+                             'type': 'remote'})
+            for vid,port in lvlan.keys():
+                txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
+                            "%(port)s, %(vid)s, %(name)s, "
+                            "%(type)s)",
+                            {'ip': str(ip),
+                             'port': port,
+                             'vid': vid,
+                             'name': lvlan[vid,port],
+                             'type': 'local'})
+
         print "Collecting LLDP for %s" % self.proxy.ip
         d = self.proxy.walk(self.lldpRemManAddrIfId)
         d.addCallback(self.gotLldpMgmtIP)
@@ -124,10 +178,18 @@ class LldpCollector:
         d.addCallback(self.gotLldp, self.lldpSysDesc)
         d.addCallback(lambda x: self.proxy.walk(self.lldpRemPortDesc))
         d.addCallback(self.gotLldp, self.lldpPortDesc)
+        d.addCallback(lambda x: self.proxy.walk(self.lldpRemVlanName))
+        d.addCallback(self.gotLldpRemoteVlan)
+        d.addCallback(lambda x: self.proxy.walk(self.lldpLocVlanName))
+        d.addCallback(self.gotLldpLocalVlan)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
                                                            self.lldpSysName,
                                                            self.lldpSysDesc,
                                                            self.lldpPortDesc,
                                                            self.lldpMgmtIp,
+                                                           self.proxy.ip))
+        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
+                                                           self.lldpRemoteVlan,
+                                                           self.lldpLocalVlan,
                                                            self.proxy.ip))
         return d

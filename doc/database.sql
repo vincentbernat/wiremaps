@@ -11,6 +11,10 @@
 -- lc_numeric = 'en_US.UTF-8'
 -- lc_time = 'en_US.UTF-8'
 
+-- !!!!
+-- When modifying this file, an upgrade procedure should be done in
+-- wiremaps/core/database.py.
+
 DROP RULE  IF EXISTS insert_or_replace_fdb ON fdb;
 DROP RULE  IF EXISTS insert_or_replace_arp ON arp;
 DROP TABLE IF EXISTS lldp CASCADE;
@@ -20,6 +24,7 @@ DROP TABLE IF EXISTS arp CASCADE;
 DROP TABLE IF EXISTS fdb CASCADE;
 DROP TABLE IF EXISTS port CASCADE;
 DROP TABLE IF EXISTS equipment CASCADE;
+DROP TABLE IF EXISTS vlan CASCADE;
 
 -- DROP TYPE IF EXISTS state CASCADE;
 -- CREATE TYPE state AS ENUM ('up', 'down');
@@ -117,4 +122,16 @@ CREATE TABLE lldp (
   sysdesc    text	       NOT NULL, -- System description
   FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
   PRIMARY KEY (equipment, port)
+);
+
+-- Info about vlan
+CREATE TABLE vlan (
+  equipment inet   	       REFERENCES equipment(ip) ON DELETE CASCADE,
+  port	    int		       NOT NULL,
+  vid	    int		       NOT NULL,
+  name	    text	       NOT NULL,
+  type	    text	       NOT NULL,
+  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  PRIMARY KEY (equipment, port, vid, type),
+  CONSTRAINT type_check CHECK (type = 'remote' OR type = 'local')
 );

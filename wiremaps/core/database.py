@@ -1,3 +1,5 @@
+# When modifying this class, also update doc/database.sql
+
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
@@ -77,3 +79,18 @@ class Database:
                 "mac=new.mac AND ip=new.ip) "
                 "DO INSTEAD UPDATE arp SET last=CURRENT_TIMESTAMP "
                 "WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip "))
+    def upgradeDatabase_06(self):
+        """add 'vlan' table"""
+        d = self.pool.runOperation("SELECT 1 FROM vlan LIMIT 1")
+        d.addErrback(lambda x: self.pool.runOperation("""
+  CREATE TABLE vlan (
+  equipment inet   	       REFERENCES equipment(ip) ON DELETE CASCADE,
+  port	    int		       NOT NULL,
+  vid	    int		       NOT NULL,
+  name	    text	       NOT NULL,
+  type	    text	       NOT NULL,
+  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  PRIMARY KEY (equipment, port, vid, type),
+  CONSTRAINT type_check CHECK (type = 'remote' OR type = 'local')
+)"""))
+

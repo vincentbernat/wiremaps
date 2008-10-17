@@ -1,3 +1,4 @@
+from twisted.internet import defer
 from nevow import loaders, rend
 from nevow import tags as T
 
@@ -21,6 +22,7 @@ class PortDetailsResource(JsonPage):
         return [ PortDetailsMac(self.ip, self.index, self.dbpool),
                  PortDetailsLldp(self.ip, self.index, self.dbpool),
                  PortDetailsRemoteLldp(self.ip, self.index, self.dbpool),
+                 PortDetailsVlan(self.ip, self.index, self.dbpool),
                  PortDetailsSonmp(self.ip, self.index, self.dbpool),
                  PortDetailsEdp(self.ip, self.index, self.dbpool),
                  PortDetailsFdb(self.ip, self.index, self.dbpool),
@@ -64,6 +66,49 @@ class PortDetailsRemoteLldp(PortRelatedFragment):
                        "on port ",
                        T.span(_class="data")[ data[0][2] ],
                        " by LLDP."]
+
+class PortDetailsVlan(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("vlan"),
+                                     data=T.directive("vlan")))
+
+    def data_vlan(self, ctx, data):
+        q = """
+SELECT DISTINCT vid, name
+FROM vlan
+WHERE equipment=%(ip)s
+AND port=%(port)s
+AND type=%(type)s
+ORDER BY vid"""
+        l = self.dbpool.runQuery(q,
+                                 {'ip': str(self.ip),
+                                  'port': self.index,
+                                  'type': 'local'})
+        r = self.dbpool.runQuery(q,
+                                 {'ip': str(self.ip),
+                                  'port': self.index,
+                                  'type': 'remote'})
+        dl = defer.DeferredList([l,r])
+        dl.addCallback(lambda x: [x[0][1], x[1][1]])
+        return dl
+
+    def render_vlan(self, ctx, data):
+        local, remote = data
+        if not local:
+            l = "No local VLAN found on this port. "
+        else:
+            l = T.invisible["The following local VLAN are present on this port:",
+                            [T.invisible[" ", T.span(_class="data")[name],
+                                         " (", vid, ")"] for vid,name in local],
+                            ". "]
+        if not remote:
+            r = "No remote VLAN found on this port."
+        else:
+            r = T.invisible["The following remote VLAN are present on this port:",
+                            [T.invisible[" ", T.span(_class="data")[name],
+                                         " (", vid, ")"] for vid,name in remote],
+                            "."]
+        return ctx.tag[l, r]
 
 class PortDetailsFdb(PortRelatedFragment):
 
