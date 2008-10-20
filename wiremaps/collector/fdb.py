@@ -84,47 +84,23 @@ class FdbCollector:
         return d
 
 class ExtremeFdbCollector(FdbCollector):
+    """Collect FDB for some Extreme switch.
+
+    Some Extreme switches need VLAN information to interpret FDB correctly. We use this.
+    """
 
     # It is really EXTREME-FDB-MIB::extremeFdbMacFdbMacAddress
     dot1dTpFdbPort = '.1.3.6.1.4.1.1916.1.16.1.1.3'
-    vlanOid = '.1.3.6.1.4.1.1916.1.2.6.1.1'
-    vlanTagged = '.1.3.6.1.4.1.1916.1.2.6.1.1.1'
-    vlanUntagged = '.1.3.6.1.4.1.1916.1.2.6.1.1.2'
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, vlan, *args, **kwargs):
         FdbCollector.__init__(self, *args, **kwargs)
-        self.vlans = None
-
-    def gotVlans(self, results, fdbresults):
-        """Process VLAN results.
-
-        We assume that n/m has index n*1000 + m
-        """
-        if self.vlans is None:
-            self.vlans = {}
-        for oid in results:
-            slot = int(oid.split(".")[-1])
-            vlan = int(oid.split(".")[-2])
-            ports = results[oid]
-            l = self.vlans.get(vlan, [])
-            for i in range(0, len(ports)):
-                if ord(ports[i]) == 0:
-                    continue
-                for j in range(0, 8):
-                    if ord(ports[i]) & (1 << j):
-                        l.append(8-j + 8*i + 1000*slot)
-            self.vlans[vlan] = l
-        self.gotFdb(fdbresults)
+        self.vlan = vlan
 
     def gotFdb(self, results):
         """Callback handling reception of FDB
 
         @param results: result of walking C{EXTREME-BASE-MIB::extremeFdb}
         """
-        if self.vlans is None:
-            d = self.proxy.walk(self.vlanOid)
-            d.addCallback(self.gotVlans, results)
-            return d
         for oid in results:
             vlan = int(oid.split(".")[-2])
             mac = results[oid]
@@ -136,7 +112,7 @@ class ExtremeFdbCollector(FdbCollector):
                        '00:e0:2b:00:00:00', # Again, Extreme
                        ]: continue
             # Rather bad assumption: a vlan is a set of ports
-            for port in self.vlans.get(vlan, []):
+            for port in self.vlan.vlanPorts.get(vlan, []):
                 if self.normport is not None:
                     port = self.normport(port)
                 if port is not None:
