@@ -6,6 +6,7 @@ class EdpCollector:
     edpNeighborName = '.1.3.6.1.4.1.1916.1.13.2.1.3'
     edpNeighborSlot = '.1.3.6.1.4.1.1916.1.13.2.1.5'
     edpNeighborPort = '.1.3.6.1.4.1.1916.1.13.2.1.6'
+    edpNeighborVlanId = '.1.3.6.1.4.1.1916.1.13.3.1.2'
 
     def __init__(self, proxy, dbpool, normport=None):
         """Create a collector using EDP entries in SNMP.
@@ -32,6 +33,19 @@ class EdpCollector:
             if desc and port is not None:
                 dic[port] = desc
 
+    def gotEdpVlan(self, results):
+        """Callback handling reception of EDP vlan
+
+        @param results: result of walking C{EXTREME-EDP-MIB::extremeEdpNeighborVlanId}
+        """
+        for oid in results:
+            port = int(oid[len(self.edpNeighborVlanId):].split(".")[1])
+            if self.normport is not None:
+                port = self.normport(port)
+            vlan = [chr(int(x))
+                    for x in oid[len(self.edpNeighborVlanId):].split(".")[11:]]
+            self.vlan[results[oid], port] = "".join(vlan)
+
     def collectData(self):
         """Collect EDP data from SNMP"""
     
@@ -48,19 +62,38 @@ class EdpCollector:
                              'remoteslot': int(remoteslot[port]),
                              'remoteport': int(remoteport[port])})
 
+        def fileVlanIntoDb(txn, vlan, ip):
+            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='remote'",
+                        {'ip': str(ip)})
+            for vid,port in vlan.keys():
+                txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
+                            "%(port)s, %(vid)s, %(name)s, "
+                            "%(type)s)",
+                            {'ip': str(ip),
+                             'port': port,
+                             'vid': vid,
+                             'name': vlan[vid,port],
+                             'type': 'remote'})
+
         print "Collecting EDP for %s" % self.proxy.ip
         self.edpSysName = {}
         self.edpRemoteSlot = {}
         self.edpRemotePort = {}
+        self.vlan = {}
         d = self.proxy.walk(self.edpNeighborName)
         d.addCallback(self.gotEdp, self.edpSysName)
         d.addCallback(lambda x: self.proxy.walk(self.edpNeighborSlot))
         d.addCallback(self.gotEdp, self.edpRemoteSlot)
         d.addCallback(lambda x: self.proxy.walk(self.edpNeighborPort))
         d.addCallback(self.gotEdp, self.edpRemotePort)
+        d.addCallback(lambda x: self.proxy.walk(self.edpNeighborVlanId))
+        d.addCallback(self.gotEdpVlan)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
                                                            self.edpSysName,
                                                            self.edpRemoteSlot,
                                                            self.edpRemotePort,
+                                                           self.proxy.ip))
+        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
+                                                           self.vlan,
                                                            self.proxy.ip))
         return d

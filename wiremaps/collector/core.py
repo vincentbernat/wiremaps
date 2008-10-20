@@ -23,6 +23,7 @@ class CollectorService(service.Service):
         self.dbpool = dbpool
         self.setName("SNMP collector")
         self.exploring = False
+        AgentProxy.use_getbulk = self.config.get("bulk", True)
 
     def startExploration(self):
         """Start to explore the range of IP.
