@@ -57,7 +57,12 @@ class CollectorService(service.Service):
                 "Exploration still running")
         self.exploring = True
         print "Start exploring %s..." % self.config['ips']
-        remaining = [x for x in IP(self.config['ips'])]
+        if type(self.config['ips']) in [list, tuple]:
+            remaining = []
+            for ip in self.config['ips']:
+                remaining += [x for x in IP(ip)]
+        else:
+            remaining = [x for x in IP(self.config['ips'])]
         dl = []
         for i in range(0, self.config['parallel']):
             dl.append(Explorer(self, remaining)())
