@@ -16,6 +16,7 @@ class ExtremeSummit:
 
     def handleEquipment(self, oid):
         return (oid in ['.1.3.6.1.4.1.1916.2.40', # Extreme Summit 24e
+                        '.1.3.6.1.4.1.1916.2.28', # Extreme Summit 48si
                         '.1.3.6.1.4.1.1916.2.54', # Extreme Summit 48e
                         '.1.3.6.1.4.1.1916.2.76', # Extreme Summit 48t
                         '.1.3.6.1.4.1.1916.2.62', # Black Diamond 8810
