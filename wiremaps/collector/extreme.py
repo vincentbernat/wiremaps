@@ -87,11 +87,6 @@ class VlanCollector:
             vid = int(oid.split(".")[-1])
             dic[vid] = results[oid]
 
-    def gotVlans(self, results, fdbresults):
-        """Process VLAN results.
-
-        We assume that n/m has index n*1000 + m
-        """
     def gotVlanMembers(self, results):
         """Callback handling reception of VLAN members
 
