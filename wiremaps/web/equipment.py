@@ -94,7 +94,7 @@ class EquipmentVlansResource(rend.Page):
     def data_vlans(self, ctx, data):
         return self.dbpool.runQuery("SELECT DISTINCT vid, name, port FROM vlan "
                                     "WHERE equipment=%(ip)s AND type='local' "
-                                    "ORDER BY port",
+                                    "ORDER BY vid, port",
                                     {'ip': str(self.ip)})
 
 class EquipmentDetailResource(JsonPage):
