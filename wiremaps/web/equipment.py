@@ -58,24 +58,26 @@ class EquipmentVlansResource(rend.Page):
             vlans[row[0], row[1]].append(row[2])
         r = []
         i = 0
-        for vid, name in vlans:
+        vlans = list(vlans.iteritems())
+        vlans.sort()
+        for (vid, name), ports in vlans:
             j = 0
             first = -1
             last = -1
             results = []
-            while j < len(vlans[vid,name]):
+            while j < len(ports):
                 if first == -1:
-                    first = last = vlans[vid,name][j]
+                    first = last = ports[j]
                     j += 1
                     continue
-                if vlans[vid,name][j] == last + 1:
+                if ports[j] == last + 1:
                     last += 1
                 else:
                     if first == last:
                         results.append(str(first))
                     else:
                         results.append("%s-%s" % (first, last))
-                    first = vlans[vid,name][j]
+                    first = ports[j]
                     last = first
                 j += 1
             if first == last:
@@ -88,8 +90,7 @@ class EquipmentVlansResource(rend.Page):
                     T.td[", ".join(results)]])
             i += 1
         return T.table(_class="vlan")[
-                T.thead[T.td["VID"], T.td["Name"], T.td["Ports"]], r]
-        
+            T.thead[T.td["VID"], T.td["Name"], T.td["Ports"]], r]
 
     def data_vlans(self, ctx, data):
         return self.dbpool.runQuery("SELECT DISTINCT vid, name, port FROM vlan "
