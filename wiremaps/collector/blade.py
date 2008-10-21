@@ -6,6 +6,7 @@ from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.fdb import FdbCollector
 from wiremaps.collector.arp import ArpCollector
+from wiremaps.collector.alteon import VlanCollector
 
 class NortelEthernetSwitch:
     """Collector for Nortel Ethernet Switch Module for BladeCenter"""
@@ -22,9 +23,11 @@ class NortelEthernetSwitch:
         ports = PortCollector(proxy, dbpool)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
+        vlan = VlanCollector(proxy, dbpool, lambda x: x+128)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))
         d.addCallback(lambda x: arp.collectData(write=False))
+        d.addCallback(lambda x: vlan.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         return d
