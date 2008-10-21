@@ -28,6 +28,7 @@ $(document).ready(function() {
 		      .parent().find(".portbasics").click();
 	    $(this).parent().hide();
 	});
+    $("div#actions #vlans a").bind("click", showVlans);
     $("div#actions #autosearch a").bind("click", searchOrShow);
     $("div#actions #refresh a").bind("click", refresh);
     /* Unhide application on load */
@@ -70,6 +71,7 @@ function loadEquipment(ip)
 	.parent().show();
     $("div#actions a").attr("href", "search/" + ip + "/");
     $("div#ports").hide();
+    $("div#infovlans").hide();
     $.ajax({type: "GET",
 	    cache: false,
 	    url: "equipment/"+ip+"/descr/",
@@ -94,8 +96,31 @@ function loadEquipment(ip)
 		replacePorts(data);
 		$("div#ports").show();
 		$("div#actions #details").show();
+		$("div#actions #vlans").show();
 		hideMessage();
 	    }});
+}
+
+function showVlans(event)
+{
+  event.preventDefault();
+  var target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
+  var ip = target[1];
+  sendMessage("info", "Loading vlan information for "+ip);
+  $.ajax({type: "GET",
+	  cache: false,
+	  url: "equipment/"+ip+"/vlans/",
+	  dataType: "html",
+	  error: function(xmlh, textstatus, error) {
+		$("div#infovlans").hide();
+		sendMessage("alert", "Unable to get the list of vlans for "+ip);
+	  },
+	  success: function(data) {
+	    $("div#infovlans").html(data);
+	    $("div#infovlans").show();
+	    $("div#actions #vlans").hide();
+	    hideMessage();
+	  }});
 }
 
 function displayPortDetails(event)

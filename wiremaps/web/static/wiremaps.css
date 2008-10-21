@@ -241,3 +241,13 @@ table.vlan tr > td:first-child
 {
     font-weight: bold;
 }
+div#infovlans
+{
+    display: hide;
+    text-align: center;
+}
+div#infovlans table
+{
+    margin-left: auto;
+    margin-right: auto;
+}
