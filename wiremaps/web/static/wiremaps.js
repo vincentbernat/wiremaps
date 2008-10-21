@@ -12,6 +12,11 @@ $(document).ready(function() {
         event.preventDefault();
 	$("div#searchresults").hide();
     });
+    $("div#vlanactions a").bind("click", function(event) {
+        event.preventDefault();
+	$("div#infovlans").hide();
+	$("div#actions #vlans").show();
+    });
     $("form")
 	.bind("submit", function() {
 		  return false;
@@ -116,7 +121,7 @@ function showVlans(event)
 		sendMessage("alert", "Unable to get the list of vlans for "+ip);
 	  },
 	  success: function(data) {
-	    $("div#infovlans").html(data);
+	    $("div#vlancontent").html(data);
 	    $("div#infovlans").show();
 	    $("div#actions #vlans").hide();
 	    hideMessage();

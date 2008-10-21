@@ -70,7 +70,7 @@ div#searchresults
     border: 1px solid #f1722c;
     display: none;
 }
-div#searchactions
+div#searchactions, div#vlanactions
 {
     font-size: x-small;
     text-align: right;
@@ -118,7 +118,7 @@ div#actions
     float: right;
     visibility: hidden;
 }
-div#actions li, div#actions ul, div#searchactions li, div#searchactions ul
+div#actions li, div#actions ul, div#searchactions li, div#searchactions ul, div#vlanactions li, div#vlanactions ul
 {
     display: inline;
 }
@@ -243,8 +243,12 @@ table.vlan tr > td:first-child
 }
 div#infovlans
 {
-    display: hide;
+    display: none;
+    margin-top: 1em;
+    padding: 0.5em;
     text-align: center;
+    background-color: #efd7ca;
+    border: 1px solid #f1722c;
 }
 div#infovlans table
 {
