@@ -1,3 +1,5 @@
+import re
+
 from nevow import rend, loaders, tags as T
 from wiremaps.web.common import RenderMixIn
 from wiremaps.web.json import JsonPage
@@ -60,30 +62,33 @@ class EquipmentVlansResource(rend.Page):
         i = 0
         vlans = list(vlans.iteritems())
         vlans.sort()
+        lastdigit = re.compile("^(.*?)(\d+-)?(\d+)$")
         for (vid, name), ports in vlans:
-            j = 0
-            first = -1
-            last = -1
             results = []
-            while j < len(ports):
-                if first == -1:
-                    first = last = ports[j]
-                    j += 1
+            for p in ports:
+                if not results:
+                    results.append(p)
                     continue
-                if ports[j] == last + 1:
-                    last += 1
+                lmo = lastdigit.match(results[-1])
+                if not lmo:
+                    results.append(p)
+                    continue
+                cmo = lastdigit.match(p)
+                if not cmo:
+                    results.append(p)
+                    continue
+                if int(lmo.group(3)) + 1 != int(cmo.group(3)) or \
+                        lmo.group(1) != cmo.group(1):
+                    results.append(p)
+                    continue
+                if lmo.group(2):
+                    results[-1] = "%s%s%s" % (lmo.group(1),
+                                              lmo.group(2),
+                                              cmo.group(3))
                 else:
-                    if first == last:
-                        results.append(str(first))
-                    else:
-                        results.append("%s-%s" % (first, last))
-                    first = ports[j]
-                    last = first
-                j += 1
-            if first == last:
-                results.append(str(first))
-            else:
-                results.append("%s-%s" % (first, last))
+                    results[-1] = "%s%s-%s" % (lmo.group(1),
+                                               lmo.group(3),
+                                               cmo.group(3))
             r.append(T.tr(_class=(i%2) and "odd" or "even")[
                     T.td[vid],
                     T.td[name],
@@ -93,9 +98,12 @@ class EquipmentVlansResource(rend.Page):
             T.thead[T.td["VID"], T.td["Name"], T.td["Ports"]], r]
 
     def data_vlans(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT vid, name, port FROM vlan "
-                                    "WHERE equipment=%(ip)s AND type='local' "
-                                    "ORDER BY vid, port",
+        return self.dbpool.runQuery("SELECT v.vid, v.name, p.name "
+                                    "FROM vlan v, port p "
+                                    "WHERE v.equipment=%(ip)s AND v.type='local' "
+                                    "AND v.port = p.index AND "
+                                    "p.equipment = v.equipment "
+                                    "ORDER BY v.vid, p.index",
                                     {'ip': str(self.ip)})
 
 class EquipmentDetailResource(JsonPage):
