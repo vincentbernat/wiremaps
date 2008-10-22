@@ -50,6 +50,7 @@ class Database:
         d.addErrback(lambda x: self.pool.runOperation(
                 "ALTER TABLE fdb "
                 "ADD COLUMN last TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+        return d
 
     def upgradeDatabase_03(self):
         """add 'last' column to 'arp' table"""
@@ -57,6 +58,7 @@ class Database:
         d.addErrback(lambda x: self.pool.runOperation(
                 "ALTER TABLE arp "
                 "ADD COLUMN last TIMESTAMP DEFAULT CURRENT_TIMESTAMP"))
+        return d
 
     def upgradeDatabase_04(self):
         """add rule for updating 'last' column in 'fdb' table"""
@@ -68,6 +70,7 @@ class Database:
                 "AND mac=new.mac AND port=new.port) "
                 "DO INSTEAD UPDATE fdb SET last=CURRENT_TIMESTAMP "
                 "WHERE equipment=new.equipment AND mac=new.mac AND port=new.port"))
+        return d
 
     def upgradeDatabase_05(self):
         """add rule for updating 'last' column in 'arp' table"""
@@ -79,6 +82,7 @@ class Database:
                 "mac=new.mac AND ip=new.ip) "
                 "DO INSTEAD UPDATE arp SET last=CURRENT_TIMESTAMP "
                 "WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip "))
+        return d
 
     def upgradeDatabase_06(self):
         """add 'vlan' table"""
@@ -94,6 +98,7 @@ class Database:
   PRIMARY KEY (equipment, port, vid, type),
   CONSTRAINT type_check CHECK (type = 'remote' OR type = 'local')
 )"""))
+        return d
 
     def upgradeDatabase_07(self):
         """add rule for updating 'vlan' table"""
@@ -107,3 +112,4 @@ WHERE EXISTS
 WHERE equipment=new.equipment AND port=new.port AND vid=new.vid AND type=new.type)
 DO INSTEAD NOTHING;
 """))
+        return d
