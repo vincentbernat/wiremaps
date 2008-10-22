@@ -25,11 +25,9 @@ class NortelEthernetSwitch:
         arp = ArpCollector(proxy, dbpool, self.config)
         vlan = AlteonVlanCollector(proxy, dbpool, lambda x: x+127)
         d = ports.collectData()
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
-        d.addCallback(lambda x: vlan.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
+        d.addCallback(lambda x: vlan.collectData())
         return d
 
 blade = NortelEthernetSwitch()

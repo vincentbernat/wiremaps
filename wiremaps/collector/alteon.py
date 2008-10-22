@@ -45,12 +45,10 @@ class Alteon2208:
         vlan = AlteonVlanCollector(proxy, dbpool, lambda x: self.normPortIndex(x-1))
         sonmp = SonmpCollector(proxy, dbpool, self.normPortIndex)
         d = ports.collectData()
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
-        d.addCallback(lambda x: vlan.collectData())
-        d.addCallback(lambda x: sonmp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
+        d.addCallback(lambda x: vlan.collectData())
+        d.addCallback(lambda x: sonmp.collectData())
         return d
 
 alteon = Alteon2208()

@@ -23,11 +23,9 @@ class Procurve:
         arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
-        d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
+        d.addCallback(lambda x: lldp.collectData())
         return d
 
 procurve = Procurve()

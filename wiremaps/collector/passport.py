@@ -43,11 +43,9 @@ class NortelPassport:
         sonmp = SonmpCollector(proxy, dbpool, lambda x: x+63)
         d = ports.collectData()
         d.addCallback(lambda x: mlt.collectData())
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
-        d.addCallback(lambda x: sonmp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
+        d.addCallback(lambda x: sonmp.collectData())
         return d
 
 passport = NortelPassport()

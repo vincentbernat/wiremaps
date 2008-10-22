@@ -35,12 +35,10 @@ class Cisco:
         cdp = CdpCollector(proxy, dbpool)
         vlan = CiscoVlanCollector(proxy, dbpool, self.ports)
         d = self.ports.collectData()
-        d.addCallback(lambda x: arp.collectData(write=False))
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: cdp.collectData())
-        d.addCallback(lambda x: vlan.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: fdb.collectData())
+        d.addCallback(lambda x: cdp.collectData())
+        d.addCallback(lambda x: vlan.collectData())
         return d
 
 cisco = Cisco()

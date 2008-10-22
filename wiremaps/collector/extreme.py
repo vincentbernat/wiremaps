@@ -31,13 +31,11 @@ class ExtremeSummit:
         # LLDP disabled due to unstability
         # lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
+        d.addCallback(lambda x: fdb.collectData())
+        d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: edp.collectData())
         d.addCallback(lambda x: vlan.collectData())
         # d.addCallback(lambda x: lldp.collectData())
-        d.addCallback(lambda x: fdb.collectData())
-        d.addCallback(lambda x: arp.collectData())
         return d
 
 class ExtremeWare:
@@ -59,12 +57,10 @@ class ExtremeWare:
         # lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: vlan.collectData())
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
-        d.addCallback(lambda x: edp.collectData())
-        # d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
+        d.addCallback(lambda x: edp.collectData())
+        # d.addCallback(lambda x: lldp.collectData())
         return d
 
 class VlanCollector:
