@@ -64,3 +64,8 @@ class VlanCollector:
                                                            self.vlanPorts,
                                                            self.proxy.ip))
         return d
+
+class Rfc2674VlanCollector(VlanCollector):
+    """Collect VLAN information for switch that respects RFC 2674"""
+    oidVlanNames = '.1.3.6.1.2.1.17.7.1.4.3.1.1' # dot1qVlanStaticName
+    oidVlanPorts = '.1.3.6.1.2.1.17.7.1.4.2.1.4' # dot1qVlanCurrentEgressPorts
