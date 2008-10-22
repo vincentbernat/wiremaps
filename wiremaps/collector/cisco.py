@@ -16,25 +16,26 @@ class Cisco:
     def handleEquipment(self, oid):
         return oid.startswith('.1.3.6.1.4.1.9.')
 
-    def normport(self, port):
-        if port not in self.ports.portNames:
+    def normport(self, port, ports):
+        if port not in ports.portNames:
             return None
         return port
 
     def collectData(self, ip, proxy, dbpool):
         # On Cisco, ifName is more revelant than ifDescr, especially
         # on Catalyst switches
-        self.ports = PortCollector(proxy, dbpool)
-        tmp = self.ports.ifDescr
-        self.ports.ifDescr = self.ports.ifName
-        self.ports.ifName = tmp
+        ports = PortCollector(proxy, dbpool)
+        tmp = ports.ifDescr
+        ports.ifDescr = ports.ifName
+        ports.ifName = tmp
 
-        fdb = CiscoFdbCollector(proxy, dbpool, self.config, self.normport)
+        fdb = CiscoFdbCollector(proxy, dbpool, self.config,
+                                lambda x: self.normport(x, ports))
 
         arp = ArpCollector(proxy, dbpool, self.config)
         cdp = CdpCollector(proxy, dbpool)
-        vlan = CiscoVlanCollector(proxy, dbpool, self.ports)
-        d = self.ports.collectData()
+        vlan = CiscoVlanCollector(proxy, dbpool, ports)
+        d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: cdp.collectData())

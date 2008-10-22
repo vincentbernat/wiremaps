@@ -17,17 +17,18 @@ class Procurve:
         # Complete list is in hpicfOid.mib
         return oid.startswith('.1.3.6.1.4.1.11.2.3.7.11.')
 
-    def normport(self, port):
-        if port not in self.ports.portNames:
+    def normport(self, port, ports):
+        if port not in ports.portNames:
             return None
         return port
 
     def collectData(self, ip, proxy, dbpool):
-        self.ports = PortCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool, self.config, self.normport)
+        ports = PortCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool, self.config,
+                           lambda x: self.normport(x, ports))
         arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
-        d = self.ports.collectData()
+        d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())
