@@ -17,6 +17,7 @@
 
 DROP RULE  IF EXISTS insert_or_replace_fdb ON fdb;
 DROP RULE  IF EXISTS insert_or_replace_arp ON arp;
+DROP RULE  IF EXISTS insert_or_replace_vlan ON vlan;
 DROP TABLE IF EXISTS lldp CASCADE;
 DROP TABLE IF EXISTS cdp CASCADE;
 DROP TABLE IF EXISTS sonmp CASCADE;
@@ -135,3 +136,9 @@ CREATE TABLE vlan (
   PRIMARY KEY (equipment, port, vid, type),
   CONSTRAINT type_check CHECK (type = 'remote' OR type = 'local')
 );
+
+CREATE RULE insert_or_replace_vlan AS ON INSERT TO vlan
+WHERE EXISTS
+(SELECT 1 FROM vlan
+WHERE equipment=new.equipment AND port=new.port AND vid=new.vid AND type=new.type)
+DO INSTEAD NOTHING;

@@ -79,6 +79,7 @@ class Database:
                 "mac=new.mac AND ip=new.ip) "
                 "DO INSTEAD UPDATE arp SET last=CURRENT_TIMESTAMP "
                 "WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip "))
+
     def upgradeDatabase_06(self):
         """add 'vlan' table"""
         d = self.pool.runOperation("SELECT 1 FROM vlan LIMIT 1")
@@ -94,3 +95,15 @@ class Database:
   CONSTRAINT type_check CHECK (type = 'remote' OR type = 'local')
 )"""))
 
+    def upgradeDatabase_07(self):
+        """add rule for updating 'vlan' table"""
+        d  = self.pool.runQuery("SELECT 1 FROM pg_catalog.pg_rules "
+                                "WHERE tablename='vlan' AND "
+                                "rulename='insert_or_replace_vlan'")
+        d.addCallback(lambda x: x or self.pool.runOperation("""
+CREATE RULE insert_or_replace_vlan AS ON INSERT TO vlan
+WHERE EXISTS
+(SELECT 1 FROM vlan
+WHERE equipment=new.equipment AND port=new.port AND vid=new.vid AND type=new.type)
+DO INSTEAD NOTHING;
+"""))

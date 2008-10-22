@@ -8,6 +8,7 @@ from wiremaps.collector.fdb import FdbCollector
 from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.sonmp import SonmpCollector
 from wiremaps.collector.lldp import LldpCollector
+from wiremaps.collector.vlan import VlanCollector
 
 class Nortel5510:
     """Collector for Nortel 55x0 and Nortel 425"""
@@ -36,11 +37,20 @@ class Nortel5510:
         arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
         sonmp = SonmpCollector(proxy, dbpool)
+        vlan = NortelVlanCollector(proxy, dbpool,
+                                   normPort=lambda x: x-1,
+                                   clean=False) # cleaning is done by LLDP
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData(write=False))
         d.addCallback(lambda x: arp.collectData(write=False))
         d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: sonmp.collectData())
+        d.addCallback(lambda x: vlan.collectData())
         return d
 
 n5510 = Nortel5510()
+
+class NortelVlanCollector(VlanCollector):
+    """Collect VLAN information for Nortel switchs without LLDP"""
+    oidVlanNames = '.1.3.6.1.4.1.2272.1.3.2.1.2' # rcVlanName
+    oidVlanPorts = '.1.3.6.1.4.1.2272.1.3.2.1.13' # rcVlanStaticMembers

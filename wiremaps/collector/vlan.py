@@ -9,10 +9,11 @@ class VlanCollector:
     C{oidVlanNames} and C{oidVlanPorts} should be defined.
     """
 
-    def __init__(self, proxy, dbpool, normPort=None):
+    def __init__(self, proxy, dbpool, normPort=None, clean=True):
         self.proxy = proxy
         self.dbpool = dbpool
         self.normPort = normPort
+        self.clean = clean
 
     def gotVlan(self, results, dic):
         """Callback handling reception of VLAN
@@ -28,8 +29,9 @@ class VlanCollector:
         """Collect VLAN data from SNMP"""
     
         def fileVlanIntoDb(txn, names, ports, ip):
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
-                        {'ip': str(ip)})
+            if self.clean:
+                txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
+                            {'ip': str(ip)})
             for vid in names:
                 if vid in ports:
                     for i in range(0, len(ports[vid])):
