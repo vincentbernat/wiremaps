@@ -233,14 +233,14 @@ Snmp_init(SnmpObject *self, PyObject *args, PyObject *kwds)
 	if ((ccommunity = PyString_AsString(community)) == NULL)
 		return -1;
 	session.community_len = strlen(ccommunity);
-	session.community = (u_char*)malloc(strlen(ccommunity)+1);
-	session.peername = (char*)malloc(strlen(chost)+1);
-	if ((session.community == NULL) || (session.peername == NULL)) {
+	if ((session.community = (u_char*)strdup(ccommunity)) == NULL) {
 		PyErr_NoMemory();
 		return -1;
 	}
-	memcpy(session.community, ccommunity, strlen(ccommunity)+1);
-	memcpy(session.peername, chost, strlen(chost)+1);
+	if ((session.peername = strdup(chost)) == NULL) {
+		PyErr_NoMemory();
+		return -1;
+	}
 	if ((self->ss = snmp_open(&session)) == NULL) {
 		Snmp_raise_error(&session);
 		free(session.community);
