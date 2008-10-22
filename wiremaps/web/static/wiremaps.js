@@ -122,6 +122,7 @@ function showVlans(event)
 	  },
 	  success: function(data) {
 	    $("div#vlancontent").html(data);
+	    $("div#vlancontent").find("a").bind("click", searchOrShow);
 	    $("div#infovlans").show();
 	    $("div#actions #vlans").hide();
 	    hideMessage();

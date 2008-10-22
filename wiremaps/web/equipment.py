@@ -38,7 +38,7 @@ class EquipmentDescriptionResource(JsonPage):
                                     "WHERE ip=%(ip)s",
                                     {'ip': str(self.ip)})
 
-class EquipmentVlansResource(rend.Page):
+class EquipmentVlansResource(rend.Page, RenderMixIn):
     """Give the list of vlans for a given equipment (as an HTML table)"""
 
     docFactory = loaders.stan(T.span(render=T.directive("vlans"),
@@ -90,7 +90,7 @@ class EquipmentVlansResource(rend.Page):
                                                lmo.group(3),
                                                cmo.group(3))
             r.append(T.tr(_class=(i%2) and "odd" or "even")[
-                    T.td[vid],
+                    T.td[T.span(data=vid, render=T.directive("vlan"))],
                     T.td[name],
                     T.td[", ".join(results)]])
             i += 1

@@ -237,9 +237,10 @@ table.vlan tr td.notpresent
 {
     background-color: #EF9398;
 }
-table.vlan tr > td:first-child
+table.vlan tr td a
 {
     font-weight: bold;
+    text-decoration: none;
 }
 div#infovlans
 {

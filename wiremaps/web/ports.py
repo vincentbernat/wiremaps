@@ -69,10 +69,10 @@ class PortDetailsRemoteLldp(PortRelatedFragment):
 
 class PortDetailsVlan(PortRelatedFragment):
 
-    docFactory = loaders.stan(T.span(render=T.directive("vlan"),
-                                     data=T.directive("vlan")))
+    docFactory = loaders.stan(T.span(render=T.directive("vlans"),
+                                     data=T.directive("vlans")))
 
-    def data_vlan(self, ctx, data):
+    def data_vlans(self, ctx, data):
         q = """
 SELECT COALESCE(l.vid, r.vid) as vvid, l.name, r.name
 FROM
@@ -86,7 +86,7 @@ ORDER BY vvid;
                                     {'ip': str(self.ip),
                                      'port': self.index})
 
-    def render_vlan(self, ctx, data):
+    def render_vlans(self, ctx, data):
         if not data:
             return ctx.tag["No VLAN information available on this port."]
         r = []
@@ -94,19 +94,20 @@ ORDER BY vvid;
         notpresent = T.td(_class="notpresent")[
             T.acronym(title="Not present or no information from remote")["N/A"]]
         for row in data:
+            vid = T.td[T.span(data=row[0], render=T.directive("vlan"))]
             if row[1] is None:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")[
-                        T.td[row[0]], notpresent,
+                        vid, notpresent,
                         T.td[row[2]]])
             elif row[2] is None:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
-                         [T.td[row[0]], T.td[row[1]], notpresent])
+                         [vid, T.td[row[1]], notpresent])
             elif row[1] == row[2]:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
-                         [T.td[row[0]], T.td(colspan=2)[row[1]]])
+                         [vid, T.td(colspan=2)[row[1]]])
             else:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
-                         [T.td[row[0]], T.td[row[1]], T.td[row[2]]])
+                         [vid, T.td[row[1]], T.td[row[2]]])
             i += 1
         return ctx.tag["Here are the VLAN available on this port:",
                        T.table(_class="vlan")[

@@ -26,6 +26,10 @@ class SearchResource(rend.Page):
          - an IP address
          - an hostname
         """
+        if re.match(r'^\d+$', name):
+            vlan = int(name)
+            if int(name) >= 1 and int(name) <= 4096:
+                return SearchVlanResource(self.dbpool, vlan)
         if re.match(r'^(?:[0-9a-fA-F]{1,2}:){5}[0-9a-fA-F]{1,2}$', name):
             return SearchMacResource(self.dbpool, name)
         try:
@@ -36,6 +40,85 @@ class SearchResource(rend.Page):
             return SearchIPResource(self.dbpool, str(ip))
         # Should be a hostname then
         return SearchHostnameResource(self.dbpool, name)
+
+class SearchVlanResource(JsonPage, RenderMixIn):
+
+    def __init__(self, dbpool, vlan):
+        self.vlan = vlan
+        self.dbpool = dbpool
+        JsonPage.__init__(self)
+
+    def data_json(self, ctx, data):
+        return [SearchVlanName(self.dbpool, self.vlan),
+                SearchLocalVlan(self.dbpool, self.vlan),
+                SearchRemoteVlan(self.dbpool, self.vlan)]
+
+class SearchVlanName(rend.Fragment, RenderMixIn):
+
+    docFactory = loaders.stan(T.span(render=T.directive("nvlan"),
+                                     data=T.directive("nvlan")))
+    
+    def __init__(self, dbpool, vlan):
+        self.vlan = vlan
+        self.dbpool = dbpool
+        rend.Fragment.__init__(self)
+
+    def data_nvlan(self, ctx, data):
+        return self.dbpool.runQuery("SELECT count(vid) AS c, name "
+                                    "FROM vlan WHERE vid=%(vid)s "
+                                    "GROUP BY name ORDER BY c DESC "
+                                    "LIMIT 1",
+                                    {'vid': self.vlan})
+
+    def render_nvlan(self, ctx, results):
+        if not results:
+            return ctx.tag["I don't know the name of this VLAN."]
+        return ctx.tag["This VLAN is known as ",
+                       T.span(_class="data")[results[0][1]],
+                       "."]
+
+class SearchVlan(rend.Fragment, RenderMixIn):
+
+    docFactory = loaders.stan(T.span(render=T.directive("nvlan"),
+                                     data=T.directive("nvlan")))
+
+    def __init__(self, dbpool, vlan):
+        self.vlan = vlan
+        self.dbpool = dbpool
+        rend.Fragment.__init__(self)
+
+    def data_nvlan(self, ctx, data):
+        return self.dbpool.runQuery("SELECT DISTINCT e.name "
+                                    "FROM vlan v, equipment e "
+                                    "WHERE v.equipment=e.ip "
+                                    "AND v.vid=%(vid)s "
+                                    "AND v.type=%(type)s",
+                                    {'vid': self.vlan,
+                                     'type': self.type})
+
+class SearchLocalVlan(SearchVlan):
+
+    type = 'local'
+
+    def render_nvlan(self, ctx, results):
+        if not results:
+            return ctx.tag["This VLAN is not known locally."]
+        return ctx.tag["This VLAN can be found locally on:",
+                       T.ul [[ T.li[T.invisible(data=x[0],
+                                                render=T.directive("hostname")),
+                                    " "] for x in results ] ]]
+
+class SearchRemoteVlan(SearchVlan):
+
+    type = 'remote'
+
+    def render_nvlan(self, ctx, results):
+        if not results:
+            return ctx.tag["This VLAN has not been seen remotely."]
+        return ctx.tag["This VLAN has been seen remotely by:",
+                       T.ul [[ T.li[T.invisible(data=x[0],
+                                                render=T.directive("hostname")),
+                                    " "] for x in results ] ]]
 
 class SearchMacResource(JsonPage, RenderMixIn):
 

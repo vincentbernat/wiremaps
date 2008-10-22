@@ -24,6 +24,9 @@ class RenderMixIn:
                       T.a(href="search/%s/" % name) [ name ])
         return d    
 
+    def render_vlan(self, ctx, vlan):
+        return T.a(href="search/%s/" % vlan) [ vlan ]
+
     def render_sonmpport(self, ctx, port):
         if port < 64:
             return ctx.tag[port]
