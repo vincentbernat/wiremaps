@@ -5,7 +5,7 @@ from twisted.internet import defer
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.fdb import FdbCollector
+from wiremaps.collector.fdb import CiscoFdbCollector
 from wiremaps.collector.cdp import CdpCollector
 
 class Cisco:
@@ -16,17 +16,22 @@ class Cisco:
     def handleEquipment(self, oid):
         return oid.startswith('.1.3.6.1.4.1.9.')
 
-    def collectData(self, ip, proxy, dbpool):
-        self.ports = PortCollector(proxy, dbpool)
+    def normport(self, port):
+        if port not in self.ports.portNames:
+            return None
+        return port
 
+    def collectData(self, ip, proxy, dbpool):
         # On Cisco, ifName is more revelant than ifDescr, especially
         # on Catalyst switches
+        self.ports = PortCollector(proxy, dbpool)
         tmp = self.ports.ifDescr
         self.ports.ifDescr = self.ports.ifName
         self.ports.ifName = tmp
 
+        fdb = CiscoFdbCollector(proxy, dbpool, self.config, self.normport)
+
         arp = ArpCollector(proxy, dbpool, self.config)
-        fdb = FdbCollector(proxy, dbpool, self.config)
         cdp = CdpCollector(proxy, dbpool)
         vlan = CiscoVlanCollector(proxy, dbpool, self.ports)
         d = self.ports.collectData()

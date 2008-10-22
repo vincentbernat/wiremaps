@@ -47,6 +47,13 @@ class FdbCollector:
         for oid in results:
             self.portif[int(oid.split(".")[-1])] = int(results[oid])
 
+    def collectFdbData(self):
+        d = self.proxy.walk(self.dot1dBasePortIfIndex)
+        d.addCallback(self.gotPortIf)
+        d.addCallback(lambda x: self.proxy.walk(self.dot1dTpFdbPort))
+        d.addCallback(self.gotFdb)
+        return d
+
     def collectData(self, write=True):
         """Collect data from SNMP using dot1dTpFdbPort.
 
@@ -73,14 +80,56 @@ class FdbCollector:
 
 
         print "Collecting FDB for %s" % self.proxy.ip
-        d = self.proxy.walk(self.dot1dBasePortIfIndex)
-        d.addCallback(self.gotPortIf)
-        d.addCallback(lambda x: self.proxy.walk(self.dot1dTpFdbPort))
-        d.addCallback(self.gotFdb)
+        d = self.collectFdbData()
         if write:
             d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
                                                                self.fdb,
                                                                self.proxy.ip))
+        return d
+
+class CiscoFdbCollector(FdbCollector):
+    """Collect FDB for Cisco switch
+
+    On Cisco, FDB is retrieved one VLAN at a time using mechanism
+    called CSI (Community String Indexing):
+     U{http://www.cisco.com/en/US/tech/tk648/tk362/technologies_tech_note09186a00801576ff.shtml}
+
+    So, we need to change the community string of the proxy. The
+    resulting string is still valid, so we don't have concurrency
+    problem.
+    """
+
+    vtpVlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4'
+
+    def getFdbForVlan(self, community):
+        self.proxy.community = community
+        d = self.proxy.walk(self.dot1dBasePortIfIndex)
+        d.addCallback(self.gotPortIf)
+        d.addCallback(lambda x: self.proxy.walk(self.dot1dTpFdbPort))
+        return d
+
+    def gotVlans(self, results):
+        vlans = []
+        for oid in results:
+            vid = int(oid.split(".")[-1])
+            # Some VLAN seem special
+            if results[oid] not in ["fddi-default", "token-ring-default",
+                                    "fddinet-default", "trnet-default"]:
+                vlans.append(vid)
+        # We ask FDB for each VLAN
+        origcommunity = self.proxy.community
+        d = defer.succeed(None)
+        for vlan in vlans:
+            d.addCallback(lambda x,y: self.getFdbForVlan("%s@%d" % (origcommunity,
+                                                                    y)), vlan)
+            d.addCallbacks(self.gotFdb, lambda x: None) # Ignore FDB error
+        # Reset original community when done (errors have been ignored)
+        d.addBoth(lambda x: setattr(self.proxy, "community", origcommunity))
+        return d
+
+    def collectFdbData(self):
+        d = self.proxy.walk(self.vtpVlanName)
+        d.addCallback(self.gotVlans)
         return d
 
 class ExtremeFdbCollector(FdbCollector):
