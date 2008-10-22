@@ -91,15 +91,16 @@ ORDER BY vvid;
             return ctx.tag["No VLAN information available on this port."]
         r = []
         i = 0
+        notpresent = T.td(_class="notpresent")[
+            T.acronym(title="Not present or no information from remote")["N/A"]]
         for row in data:
             if row[1] is None:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")[
-                        T.td[row[0]], T.td(_class="notpresent")["Not present"],
+                        T.td[row[0]], notpresent,
                         T.td[row[2]]])
             elif row[2] is None:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
-                         [T.td[row[0]], T.td[row[1]],
-                          T.td(_class="notpresent")["Not present"]])
+                         [T.td[row[0]], T.td[row[1]], notpresent])
             elif row[1] == row[2]:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
                          [T.td[row[0]], T.td(colspan=2)[row[1]]])
