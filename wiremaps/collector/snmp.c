@@ -232,7 +232,7 @@ Snmp_init(SnmpObject *self, PyObject *args, PyObject *kwds)
 	}
 	if ((ccommunity = PyString_AsString(community)) == NULL)
 		return -1;
-	session.community_len = PyString_Size(community);
+	session.community_len = strlen(ccommunity);
 	session.community = (u_char*)malloc(strlen(ccommunity)+1);
 	session.peername = (char*)malloc(strlen(chost)+1);
 	if ((session.community == NULL) || (session.peername == NULL)) {
@@ -651,9 +651,41 @@ Snmp_getbulk(PyObject *self, PyObject *args)
 }
 
 static PyObject*
-Snmp_getip(SnmpObject *self)
+Snmp_getip(SnmpObject *self, void *closure)
 {
 	return PyString_FromString(self->ss->peername);
+}
+
+static PyObject*
+Snmp_getcommunity(SnmpObject *self, void *closure)
+{
+	return PyString_FromStringAndSize((char*)self->ss->community,
+	    self->ss->community_len);
+}
+
+static int
+Snmp_setcommunity(SnmpObject *self, PyObject *value, void *closure)
+{
+	char *newcommunity;
+	ssize_t size;
+
+	if (value == NULL) {
+		PyErr_SetString(PyExc_TypeError, "cannot delete community");
+		return -1;
+	}
+	if (!PyString_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, 
+                    "community should be a string");
+		return -1;
+	}
+
+	if (PyString_AsStringAndSize(value, &newcommunity, &size) == -1)
+		return -1;
+
+	free(self->ss->community);
+	self->ss->community = (u_char*)strdup(newcommunity);
+	self->ss->community_len = size;
+	return 0;
 }
 
 static PyObject*
@@ -722,10 +754,10 @@ static PyMethodDef Snmp_methods[] = {
 };
 
 static PyGetSetDef Snmp_getseters[] = {
-    {"ip", 
-     (getter)Snmp_getip, NULL,
-     "ip",
-     NULL},
+    {"ip", (getter)Snmp_getip, NULL, "ip", NULL},
+    {"community",
+     (getter)Snmp_getcommunity, (setter)Snmp_setcommunity,
+     "community", NULL},
     {NULL}  /* Sentinel */
 };
 

@@ -149,14 +149,15 @@ class CollectorService(service.Service):
         @param ip: ip of the equipment to test
         @param communities: list of communities to test
         """
-        if proxy:
-            del proxy
         if not communities:
             raise exception.NoCommunity("unable to guess community")
         community = communities[0]
-        proxy = AgentProxy(ip=str(ip),
-                           community=community,
-                           version=2)
+        if proxy:
+            proxy.community=community
+        else:
+            proxy = AgentProxy(ip=str(ip),
+                               community=community,
+                               version=2)
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])
         d.addCallbacks(callback=lambda x,y: y, callbackArgs=(proxy,),
                        errback=self.guessCommunity, errbackArgs=(proxy, ip,
