@@ -33,8 +33,12 @@ class PortCollector:
             port = int(oid.split(".")[-1])
             if self.filter is not None and self.filter(port) is None:
                 continue
-            # Ethernet ?
-            if results[oid] == 6:
+            # Ethernet (ethernetCsmacd or some obsolote values) ?
+            if results[oid] in [6,    # ethernetCsmacd
+                                62,   # fastEther
+                                69,   # fastEtherFX
+                                117,  # gigabitEthernet
+                                ]:
                 self.ports.append(port)
 
     def gotIfDescrs(self, results):
@@ -104,6 +108,10 @@ class PortCollector:
         """
 
         def fileIntoDb(txn, names, aliases, status, address, ip):
+            # Merge names with aliases
+            tmp = aliases.copy()
+            tmp.update(names)
+            names = tmp
             newports = names.keys()
             txn.execute("SELECT index FROM port WHERE equipment = %(ip)s",
                         {'ip': str(ip)})
