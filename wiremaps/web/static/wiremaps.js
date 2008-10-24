@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    $.historyInit(loadHistory);
     if ($("div#message").css("position") != "fixed") {
 	// Should be this jerk of IE
 	$("div#message").css("position", "absolute");
@@ -42,6 +41,7 @@ $(document).ready(function() {
     $("div#application").css("visibility", "visible");
     hideMessage();
     loadEquipments();
+    $.historyInit(loadHistory);
 });
 
 function loadEquipments()
@@ -58,18 +58,37 @@ function loadEquipments()
 		$("div#equipments select")
 		    .append( function(data) {
 				 return $.map(data, function(x) {
-					   return "<option _ip='"+x[1]+
+					   return "<option "+
+						      " _ip='"+x[1]+
 						      "' _hostname='"+x[0]+
 						      "'>"+x.join(" - ")+"</option>";
 				       }).join("\n");
 			     }(data) );
+	        cur = $("div#photo img").attr("src").split("/")[1];
+		if (cur)
+		  selectEquipment(cur);
 		hideMessage();
 	    }});
 }
 
+function selectEquipment(ip)
+{
+    $("div#equipments select option")
+      .each(function() {
+	      tip = this.text.split(" - ")[1];
+	      if (ip == tip) {
+		this.selected = true;
+		return;
+	      }
+	    });
+}
+
 function loadHistory(hash)
 {
-  if (hash) loadEquipment(hash);
+  if (hash) {
+    selectEquipment(hash);
+    loadEquipment(hash);
+  }
 }
 
 function loadEquipment(ip)
