@@ -69,6 +69,7 @@ class VlanCollector:
     vlanIfDescr = '.1.3.6.1.4.1.1916.1.2.1.2.1.2'
     vlanIfVlanId = '.1.3.6.1.4.1.1916.1.2.1.2.1.10'
     vlanOpaque = '.1.3.6.1.4.1.1916.1.2.6.1.1'
+    extremeSlotNumber = '.1.3.6.1.4.1.1916.1.1.2.2.1.1'
 
     def __init__(self, proxy, dbpool):
         self.proxy = proxy
@@ -99,8 +100,18 @@ class VlanCollector:
                     continue
                 for j in range(0, 8):
                     if ord(ports[i]) & (1 << j):
-                        l.append(8-j + 8*i + 1000*slot)
+                        if self.slots:
+                            l.append(8-j + 8*i + 1000*slot)
+                        else:
+                            l.append(8-j + 8*i)
             self.vlanPorts[vlan] = l
+
+    def gotSlots(self, results):
+        """Callback handling reception of slots
+
+        @param results: C{EXTREME-SYSTEM-MIB::extremeSlotNumber}
+        """
+        self.slots = len(results)
 
     def collectData(self):
         """Collect VLAN data from SNMP"""
@@ -124,10 +135,13 @@ class VlanCollector:
         self.vlanDescr = {}
         self.vlanId = {}
         self.vlanPorts = {}
+        self.slots = 0
         d = self.proxy.walk(self.vlanIfDescr)
         d.addCallback(self.gotVlan, self.vlanDescr)
         d.addCallback(lambda x: self.proxy.walk(self.vlanIfVlanId))
         d.addCallback(self.gotVlan, self.vlanId)
+        d.addCallback(lambda x: self.proxy.walk(self.extremeSlotNumber))
+        d.addCallback(self.gotSlots)
         d.addCallback(lambda x: self.proxy.walk(self.vlanOpaque))
         d.addCallback(self.gotVlanMembers)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
