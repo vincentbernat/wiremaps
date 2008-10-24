@@ -154,7 +154,12 @@ Snmp_updatereactor(void)
 	Py_DECREF(keys);
 	/* Setup timeout */
 	if (timeoutId) {
-		tmp = PyObject_CallMethod(timeoutId, "cancel", NULL);
+		if ((tmp = PyObject_CallMethod(timeoutId, "cancel", NULL)) == NULL) {
+			/* Don't really know what to do. It seems better to
+			 * raise an exception at this point. */
+			Py_CLEAR(timeoutId);
+			return -1;
+		}
 		Py_DECREF(tmp);
 		Py_CLEAR(timeoutId);
 	}
