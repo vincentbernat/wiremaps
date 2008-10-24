@@ -24,14 +24,9 @@ class Cisco:
     def collectData(self, ip, proxy, dbpool):
         # On Cisco, ifName is more revelant than ifDescr, especially
         # on Catalyst switches
-        ports = PortCollector(proxy, dbpool)
-        tmp = ports.ifDescr
-        ports.ifDescr = ports.ifName
-        ports.ifName = tmp
-
+        ports = PortCollector(proxy, dbpool, invert=True)
         fdb = CiscoFdbCollector(proxy, dbpool, self.config,
                                 lambda x: self.normport(x, ports))
-
         arp = ArpCollector(proxy, dbpool, self.config)
         cdp = CdpCollector(proxy, dbpool)
         vlan = CiscoVlanCollector(proxy, dbpool, ports)

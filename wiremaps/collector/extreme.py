@@ -23,7 +23,7 @@ class ExtremeSummit:
                         ])
 
     def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool)
+        ports = PortCollector(proxy, dbpool, invert=True)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         edp = EdpCollector(proxy, dbpool)

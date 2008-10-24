@@ -10,18 +10,20 @@ class PortCollector:
     ifPhysAddress = '.1.3.6.1.2.1.2.2.1.6'
 
 
-    def __init__(self, proxy, dbpool, norm=None, filter=None):
+    def __init__(self, proxy, dbpool, norm=None, filter=None, invert=False):
         """Create a collector for port information
 
         @param proxy: proxy to use to query SNMP
         @param dbpool: pool of database connections
         @param norm: function to normalize port name
         @param filter: filter out those ports
+        @param invert: invert ifName and ifDescr
         """
         self.proxy = proxy
         self.dbpool = dbpool
         self.norm = norm
         self.filter = filter
+        self.invert = invert
 
     def gotIfTypes(self, results):
         """Callback handling retrieving of interface types.
@@ -156,9 +158,9 @@ class PortCollector:
         print "Collecting port information for %s" % self.proxy.ip
         d = self.proxy.walk(self.ifType)
         d.addCallback(self.gotIfTypes)
-        d.addCallback(lambda x: self.proxy.walk(self.ifDescr))
+        d.addCallback(lambda x: self.proxy.walk(self.invert and self.ifName or self.ifDescr))
         d.addCallback(self.gotIfDescrs)
-        d.addCallback(lambda x: self.proxy.walk(self.ifName))
+        d.addCallback(lambda x: self.proxy.walk(self.invert and self.ifDescr or self.ifName))
         d.addCallback(self.gotIfNames)
         d.addCallback(lambda x: self.proxy.walk(self.ifOperStatus))
         d.addCallback(self.gotOperStatus)
