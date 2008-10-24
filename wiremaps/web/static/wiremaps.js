@@ -1,4 +1,5 @@
 $(document).ready(function() {
+    $.historyInit(loadHistory);
     if ($("div#message").css("position") != "fixed") {
 	// Should be this jerk of IE
 	$("div#message").css("position", "absolute");
@@ -24,7 +25,7 @@ $(document).ready(function() {
     $("div#equipments select")
 	.bind("change", function(event) {
 	    event.preventDefault();
-	    loadEquipment(this.value.split(" - ")[1]);
+	    $.historyLoad(this.value.split(" - ")[1]);
 	});
     $("div#actions #details a")
 	.bind("click", function(event) {
@@ -64,6 +65,11 @@ function loadEquipments()
 			     }(data) );
 		hideMessage();
 	    }});
+}
+
+function loadHistory(hash)
+{
+  if (hash) loadEquipment(hash);
 }
 
 function loadEquipment(ip)
