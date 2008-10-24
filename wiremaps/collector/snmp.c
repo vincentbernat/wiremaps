@@ -154,7 +154,8 @@ Snmp_updatereactor(void)
 	Py_DECREF(keys);
 	/* Setup timeout */
 	if (timeoutId) {
-		Py_DECREF(PyObject_CallMethod(timeoutId, "cancel", NULL));
+		tmp = PyObject_CallMethod(timeoutId, "cancel", NULL);
+		Py_DECREF(tmp);
 		Py_CLEAR(timeoutId);
 	}
 	if (!block) {
