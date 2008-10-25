@@ -46,7 +46,12 @@ class CollectorService(service.Service):
             def exploreNext(self):
                 if self.remaining:
                     ip = self.remaining.pop()
-                    d = self.collector.startExploreIP(ip)
+                    try:
+                        d = self.collector.startExploreIP(ip)
+                    except e:
+                        self.collector.reportError(e, ip)
+                        self.exploreNext()
+                        return
                     d.addErrback(self.collector.reportError, ip)
                     d.addCallback(lambda x: self.exploreNext())
                 else:
