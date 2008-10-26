@@ -695,6 +695,12 @@ Snmp_setcommunity(SnmpObject *self, PyObject *value, void *closure)
 }
 
 static PyObject*
+SnmpReader_repr(SnmpReaderObject *self)
+{
+	return PyString_FromFormat("<SnmpReader fd:%d>", self->fd);
+}
+
+static PyObject*
 SnmpReader_doRead(SnmpReaderObject *self)
 {
 	fd_set fdset;
@@ -834,7 +840,7 @@ static PyTypeObject SnmpReaderType = {
 	0,                         /*tp_getattr*/
 	0,                         /*tp_setattr*/
 	0,                         /*tp_compare*/
-	0,			   /*tp_repr*/
+	(reprfunc)SnmpReader_repr, /*tp_repr*/
 	0,                         /*tp_as_number*/
 	0,                         /*tp_as_sequence*/
 	0,                         /*tp_as_mapping*/
