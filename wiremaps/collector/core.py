@@ -46,12 +46,7 @@ class CollectorService(service.Service):
             def exploreNext(self):
                 if self.remaining:
                     ip = self.remaining.pop()
-                    try:
-                        d = self.collector.startExploreIP(ip)
-                    except e:
-                        self.collector.reportError(e, ip)
-                        self.exploreNext()
-                        return
+                    d = self.collector.startExploreIP(ip)
                     d.addErrback(self.collector.reportError, ip)
                     d.addCallback(lambda x: self.exploreNext())
                 else:
@@ -160,9 +155,12 @@ class CollectorService(service.Service):
         if proxy:
             proxy.community=community
         else:
-            proxy = AgentProxy(ip=str(ip),
-                               community=community,
-                               version=2)
+            try:
+                proxy = AgentProxy(ip=str(ip),
+                                   community=community,
+                                   version=2)
+            except e:
+                return defer.fail(e)
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])
         d.addCallbacks(callback=lambda x,y: y, callbackArgs=(proxy,),
                        errback=self.guessCommunity, errbackArgs=(proxy, ip,
