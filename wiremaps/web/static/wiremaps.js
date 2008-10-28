@@ -231,6 +231,7 @@ function displaySearchResults(data, elt) {
     ul.find("a").bind("click", searchOrShow);
     $("div#searchresults").show();
     hideMessage();
+    $(document).scrollTop(0);
 }
 
 function searchOrShow(event) {
