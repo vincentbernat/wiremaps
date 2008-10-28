@@ -56,7 +56,7 @@ class PortDetailsRemoteLldp(PortRelatedFragment):
 
     def render_lldp(self, ctx, data):
         if not data:
-            return ctx.tag["I don't find this port in the LLDP table of another equipment"]
+            return ""
         return ctx.tag["This port was detected on ",
                        T.invisible(data=data[0][1],
                                    render=T.directive("hostname")),
@@ -88,7 +88,7 @@ ORDER BY vvid;
 
     def render_vlans(self, ctx, data):
         if not data:
-            return ctx.tag["No VLAN information available on this port."]
+            return ""
         r = []
         i = 0
         notpresent = T.td(_class="notpresent")[
@@ -131,7 +131,7 @@ class PortDetailsFdb(PortRelatedFragment):
 
     def render_fdb(self, ctx, data):
         if not data:
-            return ctx.tag["There is nothing in the FDB about this port."]
+            return ""
         if len(data) == 20:
             intro = "At least the"
             small = T.small
@@ -164,7 +164,7 @@ class PortDetailsMac(PortRelatedFragment):
 
     def render_macaddr(self, ctx, data):
         if not data:
-            return ctx.tag["I don't know the MAC address of this port."]
+            return ""
         return ctx.tag["The MAC address of this port is ",
                        T.invisible(data=data[0][0],
                                    render=T.directive("mac")),
@@ -184,7 +184,7 @@ class PortDetailsSonmp(PortRelatedFragment):
 
     def render_sonmp(self, ctx, data):
         if not data:
-            return ctx.tag["This port did not receive anything with SONMP."]
+            return ""
         return ctx.tag[
             "A device with IP ",
             T.invisible(data=data[0][0],
@@ -207,7 +207,7 @@ class PortDetailsEdp(PortRelatedFragment):
 
     def render_edp(self, ctx, data):
         if not data:
-            return ctx.tag["This port did not receive anything with EDP."]
+            return ""
         return ctx.tag[
             "A device named ",
             T.invisible(data=data[0][0],
@@ -222,9 +222,7 @@ class PortDetailsDiscovery(PortRelatedFragment):
 
     def render_discovery(self, ctx, data):
         if not data:
-            return ctx.tag[
-                "This port did not receive anything with %s." % self.discovery_name
-                ]
+            return ""
         return ctx.tag[
             "The device ",
             T.invisible(data=data[0][2],

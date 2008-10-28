@@ -208,9 +208,15 @@ function replacePorts(ports)
 
 function displayPortInformation(portdetails, data) {
     var ul = portdetails.children("ul");
+    var j=0;
     for (var i = 0; i < data.length; i++) {
+      if (data[i]!="") {
 	ul.append("<li>"+data[i]+"</li>");
+	j++;
+      }
     }
+    if (j==0)
+      ul.append("<li>No information on this port</li>");
     portdetails.find("a").bind("click", searchOrShow);
     portdetails.show();
 }
