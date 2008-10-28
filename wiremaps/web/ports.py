@@ -20,6 +20,8 @@ class PortDetailsResource(JsonPage):
 
     def data_json(self, ctx, data):
         return [ PortDetailsMac(self.ip, self.index, self.dbpool),
+                 PortDetailsTrunkComponents(self.ip, self.index, self.dbpool),
+                 PortDetailsTrunkMember(self.ip, self.index, self.dbpool),
                  PortDetailsLldp(self.ip, self.index, self.dbpool),
                  PortDetailsRemoteLldp(self.ip, self.index, self.dbpool),
                  PortDetailsVlan(self.ip, self.index, self.dbpool),
@@ -169,6 +171,47 @@ class PortDetailsMac(PortRelatedFragment):
                        T.invisible(data=data[0][0],
                                    render=T.directive("mac")),
                        "."]
+
+class PortDetailsTrunkComponents(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("trunk"),
+                                     data=T.directive("trunk")))
+
+    def data_trunk(self, ctx, data):
+        return self.dbpool.runQuery("SELECT p.name "
+                                    "FROM trunk t, port p "
+                                    "WHERE t.equipment=%(ip)s AND t.port=%(port)s "
+                                    "AND p.equipment=t.equipment "
+                                    "AND p.index=t.member "
+                                    "ORDER BY p.index",
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
+
+    def render_trunk(self, ctx, data):
+        if not data:
+            return ""
+        return ctx.tag["This port is a trunk containing the following ports:",
+                       T.ul [ [ T.li[T.span(_class="data")[x[0]]] for x in data]]]
+
+class PortDetailsTrunkMember(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("trunk"),
+                                     data=T.directive("trunk")))
+
+    def data_trunk(self, ctx, data):
+        return self.dbpool.runQuery("SELECT p.name "
+                                    "FROM trunk t, port p "
+                                    "WHERE t.equipment=%(ip)s AND t.member=%(port)s "
+                                    "AND p.equipment=t.equipment "
+                                    "AND p.index=t.port LIMIT 1",
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
+
+    def render_trunk(self, ctx, data):
+        if not data:
+            return ""
+        return ctx.tag["This port is a member of trunk ",
+                       T.span(_class="data")[data[0][0]], "." ]
 
 class PortDetailsSonmp(PortRelatedFragment):
 

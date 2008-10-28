@@ -10,7 +10,9 @@ class PortCollector:
     ifPhysAddress = '.1.3.6.1.2.1.2.2.1.6'
 
 
-    def __init__(self, proxy, dbpool, norm=None, filter=None, invert=False):
+    def __init__(self, proxy, dbpool,
+                 norm=None, filter=None, invert=False,
+                 trunk=None):
         """Create a collector for port information
 
         @param proxy: proxy to use to query SNMP
@@ -18,12 +20,14 @@ class PortCollector:
         @param norm: function to normalize port name
         @param filter: filter out those ports
         @param invert: invert ifName and ifDescr
+        @param trunk: collected trunk information
         """
         self.proxy = proxy
         self.dbpool = dbpool
         self.norm = norm
         self.filter = filter
         self.invert = invert
+        self.trunk = trunk
 
     def gotIfTypes(self, results):
         """Callback handling retrieving of interface types.
@@ -40,7 +44,7 @@ class PortCollector:
                                 62,   # fastEther
                                 69,   # fastEtherFX
                                 117,  # gigabitEthernet
-                                ]:
+                                ] or (self.trunk and port in self.trunk):
                 self.ports.append(port)
 
     def gotIfDescrs(self, results):
@@ -155,6 +159,16 @@ class PortCollector:
                              'address': address[port],
                              })
 
+        def fileTrunkIntoDb(txn, trunk, ip):
+            txn.execute("DELETE FROM trunk WHERE equipment=%(ip)s", {'ip': str(ip)})
+            for t in trunk:
+                for port in trunk[t]:
+                    txn.execute("INSERT INTO trunk VALUES (%(ip)s, %(trunk)s, %(port)s)",
+                                {'ip': str(ip),
+                                 'trunk': t,
+                                 'port': port
+                                 })
+
         print "Collecting port information for %s" % self.proxy.ip
         d = self.proxy.walk(self.ifType)
         d.addCallback(self.gotIfTypes)
@@ -172,4 +186,8 @@ class PortCollector:
                                                            self.portStatus,
                                                            self.portAddress,
                                                            self.proxy.ip))
+        if self.trunk:
+            d.addCallback(lambda x: self.dbpool.runInteraction(fileTrunkIntoDb,
+                                                               self.trunk,
+                                                               self.proxy.ip))
         return d

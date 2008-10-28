@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS fdb CASCADE;
 DROP TABLE IF EXISTS port CASCADE;
 DROP TABLE IF EXISTS equipment CASCADE;
 DROP TABLE IF EXISTS vlan CASCADE;
+DROP TABLE IF EXISTS trunk CASCADE;
 
 -- DROP TYPE IF EXISTS state CASCADE;
 -- CREATE TYPE state AS ENUM ('up', 'down');
@@ -142,3 +143,13 @@ WHERE EXISTS
 (SELECT 1 FROM vlan
 WHERE equipment=new.equipment AND port=new.port AND vid=new.vid AND type=new.type)
 DO INSTEAD NOTHING;
+
+-- Info about trunk
+CREATE TABLE trunk (
+  equipment inet   	       REFERENCES equipment(ip) ON DELETE CASCADE,
+  port	    int		       NOT NULL, -- Index of this trunk
+  member    int		       NOT NULL, -- Member of this trunk
+  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  FOREIGN KEY (equipment, member) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  PRIMARY KEY (equipment, port, member)
+);

@@ -16,21 +16,18 @@ class Cisco:
     def handleEquipment(self, oid):
         return oid.startswith('.1.3.6.1.4.1.9.')
 
-    def normport(self, port, ports):
-        if port not in ports.portNames:
-            return None
-        return port
-
     def collectData(self, ip, proxy, dbpool):
         # On Cisco, ifName is more revelant than ifDescr, especially
         # on Catalyst switches
-        ports = PortCollector(proxy, dbpool, invert=True)
-        fdb = CiscoFdbCollector(proxy, dbpool, self.config,
-                                lambda x: self.normport(x, ports))
+        t = {}
+        trunk = CiscoTrunkCollector(proxy, dbpool, t)
+        ports = PortCollector(proxy, dbpool, invert=True, trunk=t)
+        fdb = CiscoFdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         cdp = CdpCollector(proxy, dbpool)
         vlan = CiscoVlanCollector(proxy, dbpool, ports)
-        d = ports.collectData()
+        d = trunk.collectData()
+        d.addCallback(lambda x: ports.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: cdp.collectData())
@@ -38,6 +35,54 @@ class Cisco:
         return d
 
 cisco = Cisco()
+
+class CiscoTrunkCollector:
+    """Collect trunk (i.e ether channel) information for Cisco switchs.
+
+    This class uses C{CISCO-PAGP-MIB} which happens to provide
+    necessary information.
+    """
+
+    pagpEthcOperationMode = '.1.3.6.1.4.1.9.9.98.1.1.1.1.1'
+    pagpGroupIfIndex = '.1.3.6.1.4.1.9.9.98.1.1.1.1.8'
+
+    def __init__(self, proxy, dbpool, trunk):
+        self.proxy = proxy
+        self.dbpool = dbpool
+        self.trunk = trunk
+
+    def gotOperationMode(self, results):
+        """Callback handling reception for port operation mode
+
+        @param results: C{CISCO-PAGP-MIB::pagpEthcOperationMode}
+        """
+        self.trunked = []
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if results[oid] != 1: # 1 = off
+                self.trunked.append(port)
+
+    def gotGroup(self, results):
+        """Callback handling reception for port trunk group
+        
+        @param results: C{CISCO-PAGP-MIB::pagpGroupIfIndex}
+        """
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if port in self.trunked:
+                if results[oid] not in self.trunk:
+                    self.trunk[results[oid]] = [port]
+                else:
+                    self.trunk[results[oid]].append(port)
+
+    def collectData(self):
+        """Collect cisco trunk information using C{CISCO-PAGP-MIB}"""
+        print "Collecting trunk information for %s" % self.proxy.ip
+        d = self.proxy.walk(self.pagpEthcOperationMode)
+        d.addCallback(self.gotOperationMode)
+        d.addCallback(lambda x: self.proxy.walk(self.pagpGroupIfIndex))
+        d.addCallback(self.gotGroup)
+        return d
 
 class CiscoVlanCollector:
     """Collect VLAN information for Cisco switchs"""

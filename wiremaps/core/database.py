@@ -113,3 +113,17 @@ WHERE equipment=new.equipment AND port=new.port AND vid=new.vid AND type=new.typ
 DO INSTEAD NOTHING;
 """))
         return d
+
+    def upgradeDatabase_08(self):
+        """add 'trunk' table"""
+        d = self.pool.runOperation("SELECT 1 FROM trunk LIMIT 1")
+        d.addErrback(lambda x: self.pool.runOperation("""
+CREATE TABLE trunk (
+  equipment inet   	       REFERENCES equipment(ip) ON DELETE CASCADE,
+  port	    int		       NOT NULL,
+  member    int		       NOT NULL,
+  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  FOREIGN KEY (equipment, member) REFERENCES port (equipment, index) ON DELETE CASCADE,
+  PRIMARY KEY (equipment, port, member)
+)"""))
+        return d
