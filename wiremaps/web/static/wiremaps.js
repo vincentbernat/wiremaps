@@ -128,6 +128,7 @@ function loadEquipment(ip)
 		$("div#actions #details").show();
 		$("div#actions #vlans").show();
 		hideMessage();
+	        $(document).scrollTop($("div#application").offset().top);
 	    }});
 }
 
@@ -231,7 +232,7 @@ function displaySearchResults(data, elt) {
     ul.find("a").bind("click", searchOrShow);
     $("div#searchresults").show();
     hideMessage();
-    $(document).scrollTop(0);
+    $(document).scrollTop($("div#searchresults").offset().top);
 }
 
 function searchOrShow(event) {
