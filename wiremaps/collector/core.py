@@ -129,6 +129,8 @@ class CollectorService(service.Service):
         @param info: C{(proxy, oid)} tuple
         """
         proxy, oid = info
+        proxy.version = 2       # Switch to version 2. Plugins should
+                                # switch back to version 1 if needed.
         plugins = [ plugin for plugin in getPlugins(ICollector, wiremaps.collector)
                     if plugin.handleEquipment(str(oid)) ]
         if not plugins:
@@ -158,7 +160,7 @@ class CollectorService(service.Service):
             try:
                 proxy = AgentProxy(ip=str(ip),
                                    community=community,
-                                   version=2)
+                                   version=1) # Start with version 1 for maximum compatibility
             except e:
                 return defer.fail(e)
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])

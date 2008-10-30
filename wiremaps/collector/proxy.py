@@ -11,7 +11,7 @@ class AgentProxy(original_AgentProxy):
     use_getbulk = True
 
     def getbulk(self, oid, *args):
-        if self.use_getbulk:
+        if self.use_getbulk and self.version == 2:
             return original_AgentProxy.getbulk(self, oid, *args)
         d = self.getnext(oid)
         d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
@@ -54,7 +54,9 @@ class Walker(object):
             self.results[o] = x[o]
             if translateOid(self.lastoid) < translateOid(o):
                 self.lastoid = o
-        if stop or not x or (self.proxy.use_getbulk and len(x) < 10):
+        if stop or not x or (self.proxy.use_getbulk and
+                             self.proxy.version == 2 and
+                             len(x) < 10):
             self.defer.callback(self.results)
             self.defer = None
             return

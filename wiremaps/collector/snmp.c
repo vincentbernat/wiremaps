@@ -695,6 +695,53 @@ Snmp_setcommunity(SnmpObject *self, PyObject *value, void *closure)
 }
 
 static PyObject*
+Snmp_getversion(SnmpObject *self, void *closure)
+{
+	switch (self->ss->version) {
+	case SNMP_VERSION_1:
+		return PyInt_FromLong(1);
+	case SNMP_VERSION_2c:
+		return PyInt_FromLong(2);
+	}
+	PyErr_Format(SnmpException, "Unkown SNMP version: %ld",
+	    self->ss->version);
+	return NULL;
+}
+
+static int
+Snmp_setversion(SnmpObject *self, PyObject *value, void *closure)
+{
+	int version;
+
+	if (value == NULL) {
+		PyErr_SetString(PyExc_TypeError, "cannot delete version");
+		return -1;
+	}
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError, 
+                    "version should be 1 or 2");
+		return -1;
+	}
+
+	version = PyInt_AsLong(value);
+	if (PyErr_Occurred())
+		return -1;
+	switch (version) {
+	case 1:
+		self->ss->version = SNMP_VERSION_1;
+		break;
+	case 2:
+		self->ss->version = SNMP_VERSION_2c;
+		break;
+	default:
+		PyErr_Format(PyExc_ValueError, "version should be 1 or 2, not %d",
+		    version);
+		return -1;
+	}
+	return 0;
+}
+
+static PyObject*
 SnmpReader_repr(SnmpReaderObject *self)
 {
 	return PyString_FromFormat("<SnmpReader fd:%d>", self->fd);
@@ -769,6 +816,9 @@ static PyGetSetDef Snmp_getseters[] = {
     {"ip", (getter)Snmp_getip, NULL, "ip", NULL},
     {"community",
      (getter)Snmp_getcommunity, (setter)Snmp_setcommunity,
+     "community", NULL},
+    {"version",
+     (getter)Snmp_getversion, (setter)Snmp_setversion,
      "community", NULL},
     {NULL}  /* Sentinel */
 };
