@@ -186,7 +186,7 @@ class PortCollector:
                                                            self.portStatus,
                                                            self.portAddress,
                                                            self.proxy.ip))
-        if self.trunk:
+        if self.trunk is not None:
             d.addCallback(lambda x: self.dbpool.runInteraction(fileTrunkIntoDb,
                                                                self.trunk,
                                                                self.proxy.ip))
