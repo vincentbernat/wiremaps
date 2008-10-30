@@ -125,8 +125,6 @@ class PortCollector:
             for port in ports:
                 port = int(port[0])
                 alias = None
-                if port not in address:
-                    continue
                 if port in aliases:
                     alias = aliases[port]
                 if port not in newports:
@@ -141,12 +139,10 @@ class PortCollector:
                                                           'index': port,
                                                           'name': names[port],
                                                           'alias': alias,
-                                                          'address': address[port],
+                                                          'address': address.get(port, None),
                                                           'state': status[port]})
             for port in newports:
                 alias = None
-                if port not in address:
-                    continue
                 if port in aliases:
                     alias = aliases[port]
                 txn.execute("INSERT INTO port VALUES (%(ip)s, %(port)s, "
@@ -156,7 +152,7 @@ class PortCollector:
                              'name': names[port],
                              'alias': alias,
                              'state': status[port],
-                             'address': address[port],
+                             'address': address.get(port, None),
                              })
 
         def fileTrunkIntoDb(txn, trunk, ip):
