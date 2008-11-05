@@ -23,11 +23,12 @@ class RenderMixIn:
         return d
 
     def render_solvedip(self, ctx, name):
-        if name is None:
+        try:
+            return ctx.tag[" ", E.harr, " ",
+                           str(name[0][0].payload.name),
+                           ]
+        except:
             return ctx.tag
-        return ctx.tag[" ", E.harr, " ",
-                       str(name[0][0].payload.name),
-                       ]
 
     def render_mac(self, ctx, mac):
         return T.a(href="search/%s/" % mac) [ mac ]
