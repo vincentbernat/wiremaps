@@ -172,6 +172,11 @@ div#ports li.down
     padding: 5px;
     background: url(down.png) no-repeat;
 }
+div#ports li.loading
+{
+    padding: 5px;
+    background: url(loading.gif) no-repeat;
+}
 div.portbasics, div.portname, div.portalias, div.portactions, 
 div.portactions > ul, div.portactions > ul > li
 {

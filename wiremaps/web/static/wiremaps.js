@@ -165,6 +165,7 @@ function displayPortDetails(event)
     var ip = $("div#photo img")
 	.attr("src").match(/.*\/([0-9.]+)$/)[1];
     portdetails.find("li").remove();
+    portdetails.parent().addClass("loading");
     $.ajax({type: "GET",
 	    cache: false,
 	    url: "equipment/"+ip+"/"+port+"/",
@@ -187,7 +188,7 @@ function replacePorts(ports)
     for (var i = 0; i < ports.length; i++) {
 	var port = portReference.clone().appendTo("div#ports > ul");
 	port
-	    .removeClass("up").removeClass("down")
+	    .removeClass("up").removeClass("down").removeClass("loading")
 	    .addClass(ports[i][3])
 	    .find("div.portname").html(ports[i][1]).end()
 	    .find("div.portactions .portexpand")
@@ -220,6 +221,7 @@ function displayPortInformation(portdetails, data) {
       ul.append("<li>No information on this port</li>");
     portdetails.find("a").bind("click", searchOrShow);
     portdetails.show();
+    portdetails.parent().removeClass("loading");
 }
 
 function displaySearchResults(data, elt) {
