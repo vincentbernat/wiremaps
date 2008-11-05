@@ -33,7 +33,8 @@ if __name__ == "__main__":
           packages=["wiremaps", "wiremaps.collector", "wiremaps.web", "wiremaps.core",
                     "twisted.plugins"],
           package_data={'twisted': ['plugins/wiremaps_plugin.py'],
-                        'wiremaps.web': ["static/*.png", "static/*.css", "static/*.js",
+                        'wiremaps.web': ["static/*.png", "static/*.gif",
+                                         "static/*.css", "static/*.js",
                                          "main.xhtml",
                                          "images/1.*.png", "images/unknown.png"],},
           )
