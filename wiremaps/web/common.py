@@ -1,5 +1,6 @@
+from twisted.names import client
 from nevow import rend
-from nevow import tags as T
+from nevow import tags as T, entities as E
 
 class RenderMixIn:
     """Helper class that provide some builtin fragments"""
@@ -7,10 +8,26 @@ class RenderMixIn:
     def render_ip(self, ctx, ip):
         d = self.dbpool.runQuery("SELECT ip FROM equipment WHERE ip=%(ip)s",
                                  {'ip': ip})
-        d.addCallback(lambda x: x and
-                      T.a(href="equipment/%s/" % ip) [ ip ] or
-                      T.a(href="search/%s/" % ip) [ ip ])
+        d.addCallback(lambda x: T.invisible[
+                x and
+                T.a(href="equipment/%s/" % ip) [ ip ] or
+                T.a(href="search/%s/" % ip) [ ip ],
+                T.invisible(data=self.data_solvedip, # Dunno why we can't use T.directive here
+                            render=T.directive("solvedip"))])
         return d
+
+    def data_solvedip(self, ctx, ip):
+        ptr = '.'.join(ip.split('.')[::-1]) + '.in-addr.arpa'
+        d = client.lookupPointer(ptr)
+        d.addErrback(lambda x: None)
+        return d
+
+    def render_solvedip(self, ctx, name):
+        if name is None:
+            return ctx.tag
+        return ctx.tag[" ", E.harr, " ",
+                       T.span(_class="data")[str(name[0][0].payload.name)],
+                       ]
 
     def render_mac(self, ctx, mac):
         return T.a(href="search/%s/" % mac) [ mac ]
