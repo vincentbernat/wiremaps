@@ -134,22 +134,28 @@ class PortDetailsFdb(PortRelatedFragment):
     def render_fdb(self, ctx, data):
         if not data:
             return ""
-        if len(data) == 20:
+        r = []
+        i = 0
+        notpresent = T.td(_class="notpresent")[
+            T.acronym(title="Unable to get IP from ARP tables")["N/A"]]
+        for row in data:
+            mac = T.td[T.span(data=row[0], render=T.directive("mac"))]
+            if row[1] is not None:
+                r.append(T.tr(_class=(i%2) and "odd" or "even")
+                         [mac, T.td[T.invisible(data=row[1],
+                                                render=T.directive("ip"))]])
+            else:
+                r.append(T.tr(_class=(i%2) and "odd" or "even")
+                         [mac, notpresent])
+            i += 1
+        if len(r) == 20:
             intro = "At least the"
-            small = T.small
         else:
             intro = "The"
-            small = T.invisible
         return ctx.tag[intro,
                        " following MAC addresses are present in FDB: ",
-                       small [
-                       [T.invisible[T.invisible(data=x[0],
-                                                render=T.directive("mac")),
-                                    x[1] and T.invisible[
-                                    " (",
-                                    T.invisible(data=x[1],
-                                                render=T.directive("ip")),
-                                    ") "] or " "] for x in data]]]
+                       T.table(_class="mac")[
+                T.thead[T.td["MAC"], T.td["IP"]], r]]
 
 class PortDetailsMac(PortRelatedFragment):
 

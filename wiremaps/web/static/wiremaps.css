@@ -215,12 +215,16 @@ table.vlan
     border: 2px;
     text-align: center;
 }
-table.vlan td
+table.mac tbody
+{
+    font-size: 80%;
+}
+table.vlan td, table.mac td
 {
     padding-left: 1em;
     padding-right: 1em;
 }
-table.vlan thead td
+table.vlan thead td, table.mac thead td
 {
     font-weight: bold;
     background-color: #ccc;
@@ -233,7 +237,7 @@ tr.even td
 {
     background-color: #a6ef7b;
 }
-table.vlan tr td.notpresent
+table.vlan tr td.notpresent, table.mac tr td.notpresent
 {
     background-color: #EF9398;
 }

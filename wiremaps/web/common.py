@@ -26,7 +26,7 @@ class RenderMixIn:
         if name is None:
             return ctx.tag
         return ctx.tag[" ", E.harr, " ",
-                       T.span(_class="data")[str(name[0][0].payload.name)],
+                       str(name[0][0].payload.name),
                        ]
 
     def render_mac(self, ctx, mac):
