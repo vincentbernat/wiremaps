@@ -7,6 +7,7 @@ from wiremaps.collector.port import PortCollector
 from wiremaps.collector.fdb import FdbCollector
 from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.alteon import AlteonVlanCollector
+from wiremaps.collector.vlan import VlanCollector
 
 class NortelEthernetSwitch:
     """Collector for Nortel Ethernet Switch Module for BladeCenter"""
@@ -30,4 +31,34 @@ class NortelEthernetSwitch:
         d.addCallback(lambda x: vlan.collectData())
         return d
 
-blade = NortelEthernetSwitch()
+blade1 = NortelEthernetSwitch()
+
+class BladeEthernetSwitch:
+    """Collector for Nortel Blade Ethernet Switch, new generation.
+
+    This seems almost identical to precedent generation but OID are
+    not rooted in the same tree...
+    """
+
+    implements(ICollector, IPlugin)
+
+    def handleEquipment(self, oid):
+        return (oid in ['.1.3.6.1.4.1.26543.1.18.5', # Nortel 1/10Gb Uplink Ethernet Switch Module
+                        ])
+
+    def collectData(self, ip, proxy, dbpool):
+        ports = PortCollector(proxy, dbpool)
+        fdb = FdbCollector(proxy, dbpool, self.config)
+        arp = ArpCollector(proxy, dbpool, self.config)
+        vlan = BladeVlanCollector(proxy, dbpool, lambda x: x+127)
+        d = ports.collectData()
+        d.addCallback(lambda x: fdb.collectData())
+        d.addCallback(lambda x: arp.collectData())
+        d.addCallback(lambda x: vlan.collectData())
+        return d
+
+blade2 = BladeEthernetSwitch()
+
+class BladeVlanCollector(VlanCollector):
+    oidVlanNames = '.1.3.6.1.4.1.26543.2.5.2.1.1.3.1.2' # vlanNewCfgVlanName
+    oidVlanPorts = '.1.3.6.1.4.1.26543.2.5.2.1.1.3.1.3' # vlanNewCfgPorts
