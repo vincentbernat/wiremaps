@@ -77,6 +77,41 @@ div#searchactions, div#vlanactions
     float: right;
 }
 
+div#search input.autocomplete-loading
+{
+    background-image:url(autocomplete.gif);
+    background-position: center right;
+    background-repeat:no-repeat;
+}
+div#search ul.autocomplete 
+{
+    position: absolute;
+    overflow: hidden;
+    background-color: #fff;
+    border: 1px solid ButtonShadow;
+    margin: 0px;
+    padding: 0px;
+    list-style: none;
+    color: #000;
+    display: none;
+    z-index: 1000;
+    text-align: left;
+}
+div#search ul.autocomplete li 
+{
+    display: block; 
+    padding: 0.3em; 
+    overflow: hidden;
+    width: 100%;
+    cursor:pointer;
+}
+
+div#search ul.autocomplete li.selected 
+{
+    background-color: Highlight ; 
+    color: #fff;
+}
+
 /* Global application */
 
 div#application

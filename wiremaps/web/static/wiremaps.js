@@ -39,6 +39,7 @@ $(document).ready(function() {
     /* Unhide application on load */
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
+    $("div#search input#search").autocomplete("complete");
     hideMessage();
     loadEquipments();
     $.historyInit(loadHistory);
