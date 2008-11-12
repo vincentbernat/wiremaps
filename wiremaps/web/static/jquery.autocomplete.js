@@ -49,7 +49,7 @@ jQuery.fn.autocomplete = function(url, settings )
 					  function(data)
 				{
 					var items = '';
-					if (data)
+					if (data && data.length > 0)
 					{
 						size = data.length;
 						for (i = 0; i < data.length; i++)//iterate over all options
