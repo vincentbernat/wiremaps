@@ -25,6 +25,7 @@ class SearchResource(rend.Page):
          - a MAC address
          - an IP address
          - an hostname
+         - a VLAN
         """
         if re.match(r'^\d+$', name):
             vlan = int(name)
