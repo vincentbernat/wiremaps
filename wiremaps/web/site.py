@@ -8,6 +8,7 @@ from nevow import static
 from wiremaps.web.images import ImageResource
 from wiremaps.web.equipment import EquipmentResource
 from wiremaps.web.search import SearchResource
+from wiremaps.web.complete import CompleteResource
 
 class MainPage(rend.Page):
 
@@ -39,3 +40,5 @@ class MainPage(rend.Page):
     def child_search(self, ctx):
         return SearchResource(self.dbpool)
 
+    def child_complete(self, ctx):
+        return CompleteResource(self.dbpool)
