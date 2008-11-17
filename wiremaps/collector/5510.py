@@ -41,8 +41,8 @@ class Nortel5510:
                                    normPort=lambda x: x-1,
                                    clean=False) # cleaning is done by LLDP
         d = ports.collectData()
-        d.addCallback(lambda x: fdb.collectData(write=False))
-        d.addCallback(lambda x: arp.collectData(write=False))
+        d.addCallback(lambda x: fdb.collectData())
+        d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: sonmp.collectData())
         d.addCallback(lambda x: vlan.collectData())
