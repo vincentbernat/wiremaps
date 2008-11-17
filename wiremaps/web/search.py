@@ -27,6 +27,7 @@ class SearchResource(rend.Page):
          - an hostname
          - a VLAN
         """
+        name = name.strip()
         if re.match(r'^\d+$', name):
             vlan = int(name)
             if int(name) >= 1 and int(name) <= 4096:
