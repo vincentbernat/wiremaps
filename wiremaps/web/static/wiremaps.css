@@ -77,39 +77,58 @@ div#searchactions, div#vlanactions
     float: right;
 }
 
-div#search input.autocomplete-loading
+.ac_results
 {
-    background-image:url(autocomplete.gif);
-    background-position: center right;
-    background-repeat:no-repeat;
-}
-div#search ul.autocomplete 
-{
-    position: absolute;
-    overflow: hidden;
-    background-color: #fff;
-    border: 1px solid ButtonShadow;
-    margin: 0px;
     padding: 0px;
-    list-style: none;
-    color: #000;
-    display: none;
-    z-index: 1000;
-    text-align: left;
-}
-div#search ul.autocomplete li 
-{
-    display: block; 
-    padding: 0.3em; 
+    border: 1px solid WindowFrame;
+    border-left: 3px solid InfoBackground;
+    background-color: Window;
     overflow: hidden;
-    width: 100%;
-    cursor:pointer;
 }
 
-div#search ul.autocomplete li.selected 
+.ac_results ul
 {
-    background-color: Highlight ; 
-    color: #fff;
+    width: 100%;
+    list-style-position: outside;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.ac_results iframe
+{
+    display:none;/*sorry for IE5*/
+    display/**/:block;/*sorry for IE5*/
+    position:absolute;
+    top:0;
+    left:0;
+    z-index:-1;
+    filter:mask();
+    width:3000px;
+    height:3000px;
+}
+
+.ac_results li
+{
+    margin: 0px;
+    padding: 2px 5px;
+    cursor: pointer;
+    display: block;
+    width: 100%;
+    font: menu;
+    font-size: 12px;
+    overflow: hidden;
+}
+
+.ac_loading
+{
+    background : Window url('autocomplete.gif') right center no-repeat;
+}
+
+.ac_over
+{
+    background-color: Highlight;
+    color: HighlightText;
 }
 
 /* Global application */
