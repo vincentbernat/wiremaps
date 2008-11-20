@@ -90,7 +90,7 @@ class SearchVlan(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_nvlan(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT e.name, p.name "
+        return self.dbpool.runQuery("SELECT e.name, p.name "
                                     "FROM vlan v, port p, equipment e "
                                     "WHERE v.equipment=e.ip "
                                     "AND p.equipment=e.ip "
@@ -108,7 +108,8 @@ class SearchVlan(rend.Fragment, RenderMixIn):
         for equip, port in results:
             if equip not in ports:
                 ports[equip] = []
-            ports[equip].append(port)
+            if port not in ports[equip]:
+                ports[equip].append(port)
         return ctx.tag["This VLAN can be found %sly on:" % self.type,
                        T.ul [
                 [ T.li[
