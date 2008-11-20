@@ -48,7 +48,7 @@ class ExtremeWare:
                         ])
 
     def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool)
+        ports = PortCollector(proxy, dbpool, invert=True)
         vlan = VlanCollector(proxy, dbpool)
         fdb = ExtremeFdbCollector(vlan, proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
