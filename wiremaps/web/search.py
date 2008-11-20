@@ -90,37 +90,44 @@ class SearchVlan(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_nvlan(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT e.name "
-                                    "FROM vlan v, equipment e "
+        return self.dbpool.runQuery("SELECT DISTINCT e.name, p.name "
+                                    "FROM vlan v, port p, equipment e "
                                     "WHERE v.equipment=e.ip "
+                                    "AND p.equipment=e.ip "
+                                    "AND v.port=p.index "
                                     "AND v.vid=%(vid)s "
-                                    "AND v.type=%(type)s",
+                                    "AND v.type=%(type)s "
+                                    "ORDER BY v.vid, p.index",
                                     {'vid': self.vlan,
                                      'type': self.type})
+
+    def render_nvlan(self, ctx, results):
+        if not results:
+            return ctx.tag["This VLAN is not known %sly." % self.type]
+        ports = {}
+        for equip, port in results:
+            if equip not in ports:
+                ports[equip] = []
+            ports[equip].append(port)
+        return ctx.tag["This VLAN can be found %sly on:" % self.type,
+                       T.ul [
+                [ T.li[
+                        T.invisible(data=equip,
+                                   render=T.directive("hostname")),
+                        T.small[" (on port%s " % (len(ports[equip]) > 1 and "s: " or ""),
+                                T.invisible(data=ports[equip],
+                                            render=T.directive("ports")),
+                                ")"]
+                        ] for equip in ports ]
+                ] ]
 
 class SearchLocalVlan(SearchVlan):
 
     type = 'local'
 
-    def render_nvlan(self, ctx, results):
-        if not results:
-            return ctx.tag["This VLAN is not known locally."]
-        return ctx.tag["This VLAN can be found locally on:",
-                       T.ul [[ T.li[T.invisible(data=x[0],
-                                                render=T.directive("hostname")),
-                                    " "] for x in results ] ]]
-
 class SearchRemoteVlan(SearchVlan):
 
     type = 'remote'
-
-    def render_nvlan(self, ctx, results):
-        if not results:
-            return ctx.tag["This VLAN has not been seen remotely."]
-        return ctx.tag["This VLAN has been seen remotely by:",
-                       T.ul [[ T.li[T.invisible(data=x[0],
-                                                render=T.directive("hostname")),
-                                    " "] for x in results ] ]]
 
 class SearchMacResource(JsonPage, RenderMixIn):
 

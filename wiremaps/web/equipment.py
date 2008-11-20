@@ -1,5 +1,3 @@
-import re
-
 from nevow import rend, loaders, tags as T
 from wiremaps.web.common import RenderMixIn
 from wiremaps.web.json import JsonPage
@@ -62,37 +60,12 @@ class EquipmentVlansResource(rend.Page, RenderMixIn):
         i = 0
         vlans = list(vlans.iteritems())
         vlans.sort()
-        lastdigit = re.compile("^(.*?)(\d+-)?(\d+)$")
         for (vid, name), ports in vlans:
-            results = []
-            for p in ports:
-                if not results:
-                    results.append(p)
-                    continue
-                lmo = lastdigit.match(results[-1])
-                if not lmo:
-                    results.append(p)
-                    continue
-                cmo = lastdigit.match(p)
-                if not cmo:
-                    results.append(p)
-                    continue
-                if int(lmo.group(3)) + 1 != int(cmo.group(3)) or \
-                        lmo.group(1) != cmo.group(1):
-                    results.append(p)
-                    continue
-                if lmo.group(2):
-                    results[-1] = "%s%s%s" % (lmo.group(1),
-                                              lmo.group(2),
-                                              cmo.group(3))
-                else:
-                    results[-1] = "%s%s-%s" % (lmo.group(1),
-                                               lmo.group(3),
-                                               cmo.group(3))
             r.append(T.tr(_class=(i%2) and "odd" or "even")[
                     T.td[T.span(data=vid, render=T.directive("vlan"))],
                     T.td[name],
-                    T.td[", ".join(results)]])
+                    T.td(render=T.directive("ports"),
+                         data=ports)])
             i += 1
         return T.table(_class="vlan")[
             T.thead[T.td["VID"], T.td["Name"], T.td["Ports"]], r]

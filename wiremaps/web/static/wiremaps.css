@@ -3,6 +3,11 @@ body
     background-color: #efd7ca;
 }
 
+small
+{
+    font-size: 80%;
+}
+
 /* Informational message */
 
 div#message
