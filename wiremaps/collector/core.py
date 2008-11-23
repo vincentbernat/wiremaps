@@ -74,7 +74,9 @@ class CollectorService(service.Service):
         @param ip: IP to explore
         """
         print "Explore IP %s" % ip
-        d = self.guessCommunity(None, None, ip, self.config['community'])
+        d = defer.maybeDeferred(self.guessCommunity,
+                                None, None, ip,
+                                self.config['community'])
         d.addCallback(self.getInformations)
         return d
 
@@ -157,12 +159,9 @@ class CollectorService(service.Service):
         if proxy:
             proxy.community=community
         else:
-            try:
-                proxy = AgentProxy(ip=str(ip),
-                                   community=community,
-                                   version=1) # Start with version 1 for maximum compatibility
-            except e:
-                return defer.fail(e)
+            proxy = AgentProxy(ip=str(ip),
+                               community=community,
+                               version=1) # Start with version 1 for maximum compatibility
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])
         d.addCallbacks(callback=lambda x,y: y, callbackArgs=(proxy,),
                        errback=self.guessCommunity, errbackArgs=(proxy, ip,
