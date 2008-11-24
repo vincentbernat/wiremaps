@@ -193,8 +193,10 @@ function replacePorts(ports)
     for (var i = 0; i < ports.length; i++) {
 	var port = portReference.clone().appendTo("div#ports > ul");
 	port
-	    .removeClass("up").removeClass("down").removeClass("loading")
-	    .addClass(ports[i][3])
+	    .removeClass("loading")
+	    .css("background",
+		 "url(static/port-"+ports[i][3]+"-"+ports[i][4]+"-"+ports[i][5]+
+		 "-"+ports[i][6]+".png) no-repeat")
 	    .find("div.portname").html(ports[i][1]).end()
 	    .find("div.portactions .portexpand")
 		.attr("_index", ports[i][0]).parents("div.portbasics")

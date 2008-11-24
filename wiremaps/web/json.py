@@ -38,6 +38,10 @@ class JsonPage(rend.Page):
             """
             if type(data) in [list, tuple] or isinstance(data, PgSQL.PgResultSet):
                 return [sanitize(x, d) for x in data]
+            if isinstance(data, PgSQL.PgBooleanType):
+                if data:
+                    return u"true"
+                return u"false"
             if type(data) == str:
                 return unicode(data, errors='ignore')
             if isinstance(data, rend.Fragment):

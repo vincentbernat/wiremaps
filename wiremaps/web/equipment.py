@@ -89,7 +89,7 @@ class EquipmentDetailResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return self.dbpool.runQuery("SELECT index, name, alias, cstate "
+        return self.dbpool.runQuery("SELECT index, name, alias, cstate, speed, duplex, autoneg "
                                     "FROM port WHERE equipment=%(ip)s "
                                     "ORDER BY index",
                                     {'ip': str(self.ip)})

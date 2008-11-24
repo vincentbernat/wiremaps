@@ -220,21 +220,11 @@ div#ports ul li.port
     width: 45%;
     margin-right: 1%;
     min-height: 35px;
-}
-div#ports li.up
-{
     padding: 5px;
-    background: url(up.png) no-repeat;
-}
-div#ports li.down
-{
-    padding: 5px;
-    background: url(down.png) no-repeat;
 }
 div#ports li.loading
 {
-    padding: 5px;
-    background: url(loading.gif) no-repeat;
+    background: url(loading.gif) no-repeat !important;
 }
 div.portbasics, div.portname, div.portalias, div.portactions, 
 div.portactions > ul, div.portactions > ul > li

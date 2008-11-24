@@ -1,0 +1,64 @@
+#!/usr/bin/python
+
+SPEEDS = { 10: "#FF9955",
+           100: "#008000",
+           1000: "#00FF00",
+           10000: "#AADE87",
+           "null": "#ACA793" }
+LINKS = { "up": "#99ff55",
+          "down": "#D40000" }
+AUTONEGS = { "true": "#00FF00",
+             "false": "#FF6600",
+             "null": "#ACA793" }
+
+from lxml import etree
+import sys
+
+orig = etree.parse(file("port.svg"))
+ns={'svg': 'http://www.w3.org/2000/svg'}
+
+def setstyle(s, keyword, value):
+    styles = s.get("style")
+    if styles is None:
+        styles = []
+    else:
+        styles = styles.split(";")
+    tstyles = ["%s:%s" % (keyword, value)]
+    for ss in styles:
+        if not ss.startswith("%s:" % keyword):
+            tstyles.append(ss)
+    s.set("style", ";".join(tstyles))
+
+for speed in SPEEDS:
+    for link in LINKS:
+        for duplex in ["half", "full", "null"]:
+            for autoneg in ["true", "false", "null"]:
+                name = "port-%s-%s-%s-%s.svg" % (link, speed, duplex, autoneg)
+                print "Building %s..." % name
+
+                # Speed
+                s = orig.xpath('//svg:*[@id="Speed"]', namespaces=ns)[0]
+                setstyle(s, "fill", SPEEDS[speed])
+                    
+                # Link
+                s = orig.xpath('//svg:*[@id="Link"]', namespaces=ns)[0]
+                setstyle(s, "fill", LINKS[link])
+
+                # Duplex
+                a1 = orig.xpath('//svg:*[@id="Arrow1"]', namespaces=ns)[0]
+                a2 = orig.xpath('//svg:*[@id="Arrow2"]', namespaces=ns)[0]
+                if duplex is "null":
+                    setstyle(a1, "display", "none")
+                    setstyle(a2, "display", "none")
+                elif duplex == "half":
+                    setstyle(a1, "display", "inline")
+                    setstyle(a2, "display", "none")
+                else:
+                    setstyle(a1, "display", "inline")
+                    setstyle(a2, "display", "inline")
+
+                # autoneg
+                a1 = orig.xpath('//svg:*[@id="AutoNeg"]', namespaces=ns)[0]
+                setstyle(a1, "fill", AUTONEGS[autoneg])
+
+                orig.write(file(name, "w"))
