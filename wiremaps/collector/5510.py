@@ -9,6 +9,7 @@ from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.sonmp import SonmpCollector
 from wiremaps.collector.lldp import LldpCollector
 from wiremaps.collector.vlan import VlanCollector
+from wiremaps.collector.nortel import NortelSpeedCollector
 
 class Nortel5510:
     """Collector for Nortel 55x0 and Nortel 425"""
@@ -33,6 +34,7 @@ class Nortel5510:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool, self.normPortName)
+        speed = NortelSpeedCollector(proxy, dbpool)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
@@ -41,6 +43,7 @@ class Nortel5510:
                                    normPort=lambda x: x-1,
                                    clean=False) # cleaning is done by LLDP
         d = ports.collectData()
+        d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())

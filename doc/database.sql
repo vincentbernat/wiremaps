@@ -45,11 +45,14 @@ CREATE TABLE port (
   index     int		      NOT NULL,
   name	    text	      NOT NULL,
   alias	    text	      NULL,
---  cstate    state	      NOT NULL,
   cstate    text              NOT NULL,
   mac	    macaddr	      NULL,
+  duplex    text	      NULL,
+  speed	    int		      NULL,
+  autoneg   boolean	      NULL,
   PRIMARY KEY (equipment, index),
-  CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down')
+  CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down'),
+  CONSTRAINT duplex_check CHECK (duplex = 'full' OR duplex = 'half'),
 );
 
 -- Just a dump of FDB for a given port

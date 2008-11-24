@@ -8,6 +8,8 @@ class PortCollector:
     ifType = '.1.3.6.1.2.1.2.2.1.3'
     ifOperStatus = '.1.3.6.1.2.1.2.2.1.8'
     ifPhysAddress = '.1.3.6.1.2.1.2.2.1.6'
+    ifSpeed = '.1.3.6.1.2.1.2.2.1.5'
+    ifHighSpeed = '.1.3.6.1.2.1.31.1.1.1.15'
 
 
     def __init__(self, proxy, dbpool,
@@ -105,6 +107,38 @@ class PortCollector:
             else:
                 self.portStatus[port] = 'up'
 
+    def gotSpeed(self, results):
+        """Callback handling retrieving of interface speed.
+
+        @param result: result of walking C{IF-MIB::ifSpeed}
+        """
+        self.speed = {}
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if port not in self.ports:
+                continue
+            s = results[oid]
+            if s == 2**32 - 1:
+                # Overflow, let's say that it is 10G
+                s = 10000
+            else:
+                s /= 1000000
+            if s:
+                self.speed[port] = s
+
+    def gotHighSpeed(self, results):
+        """Callback handling retrieving of interface high speed.
+
+        @param result: result of walking C{IF-MIB::ifHighSpeed}
+        """
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if port not in self.ports:
+                continue
+            s = results[oid]
+            if s:
+                self.speed[port] = s
+
     def collectData(self):
         """Collect data.
 
@@ -113,7 +147,7 @@ class PortCollector:
         - Using IF-MIB::ifOperStatus for port status
         """
 
-        def fileIntoDb(txn, names, aliases, status, address, ip):
+        def fileIntoDb(txn, names, aliases, status, address, speed, ip):
             # Merge names with aliases
             tmp = aliases.copy()
             tmp.update(names)
@@ -134,25 +168,30 @@ class PortCollector:
                 else:
                     newports.remove(port)
                     txn.execute("UPDATE port SET name=%(name)s, alias=%(alias)s, "
-                                "cstate=%(state)s, mac=%(address)s WHERE equipment = %(ip)s "
+                                "cstate=%(state)s, mac=%(address)s, speed=%(speed)s "
+                                "WHERE equipment = %(ip)s "
                                 "AND index = %(index)s", {'ip': str(ip),
                                                           'index': port,
                                                           'name': names[port],
                                                           'alias': alias,
                                                           'address': address.get(port, None),
+                                                          'speed': speed.get(port, None),
                                                           'state': status[port]})
             for port in newports:
                 alias = None
                 if port in aliases:
                     alias = aliases[port]
-                txn.execute("INSERT INTO port VALUES (%(ip)s, %(port)s, "
-                            "%(name)s, %(alias)s, %(state)s, %(address)s)",
+                txn.execute("INSERT INTO port "
+                            "(equipment, index, name, alias, cstate, mac, speed) "
+                            "VALUES (%(ip)s, %(port)s, "
+                            "%(name)s, %(alias)s, %(state)s, %(address)s, %(speed)s)",
                             {'ip': str(ip),
                              'port': port,
                              'name': names[port],
                              'alias': alias,
                              'state': status[port],
                              'address': address.get(port, None),
+                             'speed': speed.get(port, None),
                              })
 
         def fileTrunkIntoDb(txn, trunk, ip):
@@ -176,11 +215,16 @@ class PortCollector:
         d.addCallback(self.gotOperStatus)
         d.addCallback(lambda x: self.proxy.walk(self.ifPhysAddress))
         d.addCallback(self.gotPhysAddress)
+        d.addCallback(lambda x: self.proxy.walk(self.ifSpeed))
+        d.addCallback(self.gotSpeed)
+        d.addCallback(lambda x: self.proxy.walk(self.ifHighSpeed))
+        d.addCallback(self.gotHighSpeed)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
                                                            self.portNames,
                                                            self.portAliases,
                                                            self.portStatus,
                                                            self.portAddress,
+                                                           self.speed,
                                                            self.proxy.ip))
         if self.trunk is not None:
             d.addCallback(lambda x: self.dbpool.runInteraction(fileTrunkIntoDb,

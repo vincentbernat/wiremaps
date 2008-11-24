@@ -127,3 +127,21 @@ CREATE TABLE trunk (
   PRIMARY KEY (equipment, port, member)
 )"""))
         return d
+
+    def upgradeDatabase_09(self):
+        """add 'duplex', 'speed', 'autoneg' to 'port' table"""
+
+        def upgrade():
+            d = self.pool.runOperation(
+                "ALTER TABLE port ADD COLUMN duplex text NULL")
+            d.addCallback(lambda x: self.pool.runOperation(
+                "ALTER TABLE port ADD COLUMN speed int NULL"))
+            d.addCallback(lambda x: self.pool.runOperation(
+                "ALTER TABLE port ADD COLUMN autoneg boolean NULL"))
+            d.addCallback(lambda x: self.pool.runOperation(
+                    "ALTER TABLE port ADD CONSTRAINT duplex_check "
+                    "CHECK (duplex = 'full' OR duplex = 'half')"))
+            return d
+                              
+        d = self.pool.runOperation("SELECT duplex FROM port LIMIT 1")
+        d.addErrback(lambda x: upgrade())

@@ -6,7 +6,7 @@ from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.fdb import FdbCollector
 from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.alteon import AlteonVlanCollector
+from wiremaps.collector.alteon import AlteonVlanCollector, AlteonSpeedCollector
 from wiremaps.collector.vlan import VlanCollector
 
 class NortelEthernetSwitch:
@@ -22,10 +22,12 @@ class NortelEthernetSwitch:
     def collectData(self, ip, proxy, dbpool):
         proxy.use_getbulk = False # Some Blade have bogus GETBULK
         ports = PortCollector(proxy, dbpool)
+        speed = AlteonSpeedCollector(proxy, dbpool, lambda x: x-128)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         vlan = AlteonVlanCollector(proxy, dbpool, lambda x: x+127)
         d = ports.collectData()
+        d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: vlan.collectData())
@@ -48,10 +50,12 @@ class BladeEthernetSwitch:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool)
+        speed = BladeSpeedCollector(proxy, dbpool, lambda x: x-128)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         vlan = BladeVlanCollector(proxy, dbpool, lambda x: x+127)
         d = ports.collectData()
+        d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: vlan.collectData())
@@ -62,3 +66,8 @@ blade2 = BladeEthernetSwitch()
 class BladeVlanCollector(VlanCollector):
     oidVlanNames = '.1.3.6.1.4.1.26543.2.5.2.1.1.3.1.2' # vlanNewCfgVlanName
     oidVlanPorts = '.1.3.6.1.4.1.26543.2.5.2.1.1.3.1.3' # vlanNewCfgPorts
+
+class BladeSpeedCollector(AlteonSpeedCollector):
+    oidDuplex = '.1.3.6.1.4.1.26543.2.5.1.3.2.1.1.3'
+    oidSpeed = '.1.3.6.1.4.1.26543.2.5.1.3.2.1.1.2'
+    oidAutoneg = '.1.3.6.1.4.1.26543.2.5.1.1.2.2.1.11'

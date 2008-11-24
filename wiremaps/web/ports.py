@@ -20,6 +20,7 @@ class PortDetailsResource(JsonPage):
 
     def data_json(self, ctx, data):
         return [ PortDetailsMac(self.ip, self.index, self.dbpool),
+                 PortDetailsSpeed(self.ip, self.index, self.dbpool),
                  PortDetailsTrunkComponents(self.ip, self.index, self.dbpool),
                  PortDetailsTrunkMember(self.ip, self.index, self.dbpool),
                  PortDetailsLldp(self.ip, self.index, self.dbpool),
@@ -156,6 +157,44 @@ class PortDetailsFdb(PortRelatedFragment):
                        " following MAC addresses are present in FDB: ",
                        T.table(_class="mac")[
                 T.thead[T.td["MAC"], T.td["IP"]], r]]
+
+class PortDetailsSpeed(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("speed"),
+                                     data=T.directive("speed")))
+
+    def data_speed(self, ctx, data):
+        return self.dbpool.runQuery("SELECT speed, duplex, autoneg "
+                                    "FROM port "
+                                    "WHERE equipment=%(ip)s AND index=%(port)s",
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
+
+    def render_speed(self, ctx, data):
+        if not data:
+            return ""
+        data = data[0]
+        if data[0] is None and data[1] is None and data[2] is None:
+            return ""
+        speed = ""
+        if data[0]:
+            speed = data[0]
+            if speed % 1000 == 0:
+                speed = "%d Gbit/s" % (speed/1000)
+            else:
+                speed = "%d Mbit/s" % speed
+            speed = T.invisible["The speed of this port is ",
+                                T.span(_class="data")[speed or "unknown"],
+                                ". "]
+        duplex = data[1] and T.invisible["The port is operating in ",
+                                         T.span(_class="data")[data[1]],
+                                         " duplex mode. "]
+        autoneg = None
+        if data[2] is not None:
+            autoneg = T.invisible["Autonegotiation is ",
+                                  T.span(_class="data")[
+                    data[2] and "enabled" or "disabled"], "."]
+        return ctx.tag[speed, duplex or "", autoneg or ""]
 
 class PortDetailsMac(PortRelatedFragment):
 

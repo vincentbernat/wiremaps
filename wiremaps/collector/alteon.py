@@ -8,6 +8,7 @@ from wiremaps.collector.fdb import FdbCollector
 from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.sonmp import SonmpCollector
 from wiremaps.collector.vlan import VlanCollector
+from wiremaps.collector.speed import SpeedCollector
 
 class Alteon2208:
     """Collector for Nortel Alteon 2208 and related"""
@@ -40,11 +41,13 @@ class Alteon2208:
         ports = PortCollector(proxy, dbpool, self.normPortName)
         ports.ifName = ports.ifDescr
         ports.ifDescr = '.1.3.6.1.2.1.2.2.1.1' # ifIndex
+        speed = SpeedCollector(proxy, dbpool)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         vlan = AlteonVlanCollector(proxy, dbpool, lambda x: self.normPortIndex(x-1))
         sonmp = SonmpCollector(proxy, dbpool, self.normPortIndex)
         d = ports.collectData()
+        d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: vlan.collectData())
@@ -58,3 +61,38 @@ class AlteonVlanCollector(VlanCollector):
     # bug with "CurCfg".
     oidVlanNames = '.1.3.6.1.4.1.1872.2.5.2.1.1.3.1.2' # vlanNewCfgVlanName
     oidVlanPorts = '.1.3.6.1.4.1.1872.2.5.2.1.1.3.1.3' # vlanNewCfgPorts
+
+class AlteonSpeedCollector(SpeedCollector):
+
+    oidDuplex = '.1.3.6.1.4.1.1872.2.5.1.3.2.1.1.3'
+    oidSpeed = '.1.3.6.1.4.1.1872.2.5.1.3.2.1.1.2'
+    oidAutoneg = '.1.3.6.1.4.1.1872.2.5.1.1.2.2.1.11'
+
+    def gotDuplex(self, results):
+        """Callback handling duplex"""
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if results[oid] == 3:
+                self.duplex[port] = "half"
+            elif results[oid] == 2:
+                self.duplex[port] = "full"
+
+    def gotSpeed(self, results):
+        """Callback handling speed"""
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if results[oid] == 2:
+                self.speed[port] = 10
+            elif results[oid] == 3:
+                self.speed[port] = 100
+            elif results[oid] == 4:
+                self.speed[port] = 1000
+            elif results[oid] == 6:
+                self.speed[port] = 10000
+
+    def gotAutoneg(self, results):
+        """Callback handling autoneg"""
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            self.autoneg[port] = bool(results[oid] == 2)
+

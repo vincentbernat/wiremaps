@@ -1,5 +1,7 @@
 from twisted.internet import defer
 
+from speed import SpeedCollector
+
 class MltCollector:
     """Collect data using MLT.
 
@@ -55,3 +57,31 @@ class MltCollector:
         d = self.proxy.walk(self.rcMltPortMembers)
         d.addCallback(self.gotMlt)
         return d
+
+class NortelSpeedCollector(SpeedCollector):
+
+    oidDuplex = '.1.3.6.1.4.1.2272.1.4.10.1.1.13'
+    oidSpeed = '.1.3.6.1.4.1.2272.1.4.10.1.1.15'
+    oidAutoneg = '.1.3.6.1.4.1.2272.1.4.10.1.1.18'
+
+    def gotDuplex(self, results):
+        """Callback handling duplex"""
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if results[oid] == 1:
+                self.duplex[port] = "half"
+            elif results[oid] == 2:
+                self.duplex[port] = "full"
+
+    def gotSpeed(self, results):
+        """Callback handling speed"""
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            if results[oid]:
+                self.speed[port] = results[oid]
+
+    def gotAutoneg(self, results):
+        """Callback handling autoneg"""
+        for oid in results:
+            port = int(oid.split(".")[-1])
+            self.autoneg[port] = bool(results[oid] == 1)
