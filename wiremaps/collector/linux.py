@@ -5,7 +5,7 @@ from twisted.internet import defer
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.lldp import LldpCollector
+from wiremaps.collector.lldp import LldpCollector, LldpSpeedCollector
 
 class Linux:
     """Collector for Linux.
@@ -25,9 +25,11 @@ class Linux:
         ports = PortCollector(proxy, dbpool)
         arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
+        speed = LldpSpeedCollector(proxy, dbpool)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())
+        d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: lldp.cleanPorts())
         return d
 

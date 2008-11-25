@@ -21,6 +21,13 @@ class SpeedCollector:
     def collectData(self):
 
         def filePortIntoDb(txn, duplex, speed, autoneg, ip):
+            if not speed:
+                # We did not collect any speed data, we prefer to keep
+                # the default results from ifSpeed
+                txn.execute("UPDATE port SET duplex=NULL, autoneg=NULL "
+                            "WHERE equipment=%(ip)s",
+                            {'ip': str(ip)})
+                return
             txn.execute("SELECT index FROM port WHERE equipment=%(ip)s",
                         {'ip': str(ip)})
             for (port,) in txn.fetchall():
@@ -44,8 +51,10 @@ class SpeedCollector:
         self.autoneg = {}
         d = self.proxy.walk(self.oidDuplex)
         d.addCallback(self.gotDuplex)
-        d.addCallback(lambda x: self.proxy.walk(self.oidSpeed))
-        d.addCallback(self.gotSpeed)
+        if hasattr(self, "oidSpeed"):
+            # Sometimes, speed comes with duplex
+            d.addCallback(lambda x: self.proxy.walk(self.oidSpeed))
+            d.addCallback(self.gotSpeed)
         d.addCallback(lambda x: self.proxy.walk(self.oidAutoneg))
         d.addCallback(self.gotAutoneg)
         d.addCallback(lambda x: self.dbpool.runInteraction(filePortIntoDb,

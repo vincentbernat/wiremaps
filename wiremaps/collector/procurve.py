@@ -6,7 +6,7 @@ from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.fdb import FdbCollector
 from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.lldp import LldpCollector
+from wiremaps.collector.lldp import LldpCollector, LldpSpeedCollector
 from wiremaps.collector.vlan import Rfc2674VlanCollector
 
 class Procurve:
@@ -29,6 +29,7 @@ class Procurve:
                            lambda x: self.normport(x, ports))
         arp = ArpCollector(proxy, dbpool, self.config)
         lldp = LldpCollector(proxy, dbpool)
+        speed = LldpSpeedCollector(proxy, dbpool)
         vlan = Rfc2674VlanCollector(proxy, dbpool,
                                     normPort=lambda x: self.normport(x, ports),
                                     clean=False)
@@ -36,6 +37,7 @@ class Procurve:
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())
+        d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: vlan.collectData())
         return d
 
