@@ -3,7 +3,7 @@
 SPEEDS = { 10: "#FF9955",
            100: "#008000",
            1000: "#00FF00",
-           10000: "#AADE87",
+           10000: "#00FF00",
            "null": "#ACA793" }
 LINKS = { "up": "#99ff55",
           "down": "#D40000" }
@@ -39,6 +39,11 @@ for speed in SPEEDS:
                 # Speed
                 s = orig.xpath('//svg:*[@id="Speed"]', namespaces=ns)[0]
                 setstyle(s, "fill", SPEEDS[speed])
+                a = orig.xpath('//svg:*[@id="10G"]', namespaces=ns)[0]
+                if speed == 10000:
+                    setstyle(a, "display", "inline")
+                else:
+                    setstyle(a, "display", "none")
                     
                 # Link
                 s = orig.xpath('//svg:*[@id="Link"]', namespaces=ns)[0]
