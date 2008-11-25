@@ -74,6 +74,13 @@ class CiscoTrunkCollector:
                     self.trunk[results[oid]] = [port]
                 else:
                     self.trunk[results[oid]].append(port)
+        # Filter out bogus results: trunk that are not yet trunks and trunk 0
+        for k in self.trunk.keys():
+            if k == 0:
+                del self.trunk[0]
+                continue
+            if self.trunk[k] == [k]:
+                del self.trunk[k]
 
     def collectData(self):
         """Collect cisco trunk information using C{CISCO-PAGP-MIB}"""
