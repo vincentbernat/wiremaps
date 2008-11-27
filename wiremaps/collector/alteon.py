@@ -41,7 +41,8 @@ class Alteon2208:
         ports = PortCollector(proxy, dbpool, self.normPortName)
         ports.ifName = ports.ifDescr
         ports.ifDescr = '.1.3.6.1.2.1.2.2.1.1' # ifIndex
-        speed = AlteonSpeedCollector(proxy, dbpool)
+        # There seems to be no way to match port index in PortInfoTable and ifIndex...
+        # speed = AlteonSpeedCollector(proxy, dbpool)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         vlan = AlteonVlanCollector(proxy, dbpool, lambda x: self.normPortIndex(x-1))
