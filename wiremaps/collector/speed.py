@@ -24,9 +24,6 @@ class SpeedCollector:
             if not speed:
                 # We did not collect any speed data, we prefer to keep
                 # the default results from ifSpeed
-                txn.execute("UPDATE port SET duplex=NULL, autoneg=NULL "
-                            "WHERE equipment=%(ip)s",
-                            {'ip': str(ip)})
                 return
             txn.execute("SELECT index FROM port WHERE equipment=%(ip)s",
                         {'ip': str(ip)})
@@ -35,7 +32,7 @@ class SpeedCollector:
                     oport = self.normport(port)
                 else:
                     oport = port
-                if oport:
+                if oport and speed.get(oport, None):
                     txn.execute("UPDATE port "
                                 "SET duplex=%(duplex)s, autoneg=%(autoneg)s, speed=%(speed)s "
                                 "WHERE equipment=%(ip)s AND index=%(port)s",
@@ -44,6 +41,13 @@ class SpeedCollector:
                                  'duplex': duplex.get(oport, None),
                                  'speed': speed.get(oport, None),
                                  'autoneg': autoneg.get(oport, None)})
+                else:
+                    # When we don't get speed, we prefer to keep the original information
+                    txn.execute("UPDATE port SET duplex=NULL, autoneg=NULL "
+                                "WHERE equipment=%(ip)s AND index=%(port)s",
+                                {'ip': str(ip),
+                                 'port': port})
+
 
         print "Collecting port speed/duplex for %s" % self.proxy.ip
         self.speed = {}
