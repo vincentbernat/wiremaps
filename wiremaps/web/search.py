@@ -39,7 +39,8 @@ class SearchResource(rend.Page):
         except ValueError:
             pass
         else:
-            return SearchIPResource(self.dbpool, str(ip))
+            if "." in name:
+                return SearchIPResource(self.dbpool, str(ip))
         # Should be a hostname then
         return SearchHostnameResource(self.dbpool, name)
 
