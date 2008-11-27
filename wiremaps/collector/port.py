@@ -102,10 +102,10 @@ class PortCollector:
             port = int(oid.split(".")[-1])
             if port not in self.ports:
                 continue
-            if results[oid] == 2:
-                self.portStatus[port] = 'down'
-            else:
+            if results[oid] == 1:
                 self.portStatus[port] = 'up'
+            else:
+                self.portStatus[port] = 'down'
 
     def gotSpeed(self, results):
         """Callback handling retrieving of interface speed.
