@@ -245,7 +245,35 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
         fragments.append(SearchHostnameInLldp(self.dbpool, self.name))
         fragments.append(SearchHostnameInCdp(self.dbpool, self.name))
         fragments.append(SearchHostnameInEdp(self.dbpool, self.name))
+        fragments.append(SearchInDescription(self.dbpool, self.name))
         return fragments
+
+class SearchInDescription(rend.Fragment, RenderMixIn):
+
+    docFactory = loaders.stan(T.span(render=T.directive("description"),
+                                     data=T.directive("description")))
+
+    def __init__(self, dbpool, name):
+        self.dbpool = dbpool
+        self.name = name
+        rend.Fragment.__init__(self)
+
+    def data_description(self, ctx, data):
+        return self.dbpool.runQuery("SELECT DISTINCT name, description "
+                                    "FROM equipment "
+                                    "WHERE description ILIKE '%%' || %(name)s || '%%'",
+                                    {'name': self.name })
+
+    def render_description(self, ctx, data):
+        if not data:
+            return ctx.tag["Nothing was found in descriptions"]
+        return ctx.tag["The following descriptions match the request:",
+                       T.ul[ [ T.li [
+                    T.span(_class="data") [d[1]],
+                    " from ",
+                    T.span(data=d[0],
+                           render=T.directive("hostname")), "." ]
+                               for d in data ] ] ]
 
 class SearchIPInDNS(rend.Fragment, RenderMixIn):
 
