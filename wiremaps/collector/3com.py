@@ -1,3 +1,5 @@
+import re
+
 from zope.interface import implements
 from twisted.plugin import IPlugin
 from twisted.internet import defer
@@ -20,7 +22,11 @@ class SuperStack:
 
     def normPortName(self, descr):
         if descr.startswith("RMON:10/100 "):
-            return descr[len("RMON:10/100 "):]
+            descr = descr[len("RMON:10/100 "):]
+        mo = re.match("^Port (\d+) on Unit (\d+)$", descr)
+        if mo:
+            return "Unit %s/Port %s" % (mo.group(2),
+                                        mo.group(1))
         return descr
 
     def collectData(self, ip, proxy, dbpool):
