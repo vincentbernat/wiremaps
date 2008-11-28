@@ -6,7 +6,7 @@ from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector
+from wiremaps.collector.fdb import CommunityFdbCollector
 from wiremaps.collector.arp import ArpCollector
 
 class SuperStack:
@@ -32,7 +32,7 @@ class SuperStack:
     def collectData(self, ip, proxy, dbpool):
         proxy.version = 1       # Use SNMPv1
         ports = PortCollector(proxy, dbpool, self.normPortName)
-        fdb = FdbCollector(proxy, dbpool, self.config)
+        fdb = SuperStackFdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         vlan = SuperStackVlanCollector(proxy, dbpool)
         d = ports.collectData()
@@ -42,6 +42,14 @@ class SuperStack:
         return d
 
 superstack = SuperStack()
+
+class SuperStackFdbCollector(CommunityFdbCollector):
+
+    vlanName = '.1.3.6.1.4.1.43.10.1.14.1.1.1.2' # Not really names
+                                                 # but this will work
+                                                 # out.
+    filterOut = []
+
 
 class SuperStackVlanCollector:
     """VLAN collector for 3Com SuperStack.

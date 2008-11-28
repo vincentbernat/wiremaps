@@ -87,8 +87,8 @@ class FdbCollector:
                                                                self.proxy.ip))
         return d
 
-class CiscoFdbCollector(FdbCollector):
-    """Collect FDB for Cisco switch
+class CommunityFdbCollector(FdbCollector):
+    """Collect FDB for switch using indexed community
 
     On Cisco, FDB is retrieved one VLAN at a time using mechanism
     called CSI (Community String Indexing):
@@ -98,8 +98,6 @@ class CiscoFdbCollector(FdbCollector):
     resulting string is still valid, so we don't have concurrency
     problem.
     """
-
-    vtpVlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4'
 
     def getFdbForVlan(self, community):
         self.proxy.community = community
@@ -113,8 +111,7 @@ class CiscoFdbCollector(FdbCollector):
         for oid in results:
             vid = int(oid.split(".")[-1])
             # Some VLAN seem special
-            if results[oid] not in ["fddi-default", "token-ring-default",
-                                    "fddinet-default", "trnet-default"]:
+            if results[oid] not in self.filterOut:
                 vlans.append(vid)
         # We ask FDB for each VLAN
         origcommunity = self.proxy.community
@@ -128,7 +125,7 @@ class CiscoFdbCollector(FdbCollector):
         return d
 
     def collectFdbData(self):
-        d = self.proxy.walk(self.vtpVlanName)
+        d = self.proxy.walk(self.vlanName)
         d.addCallback(self.gotVlans)
         return d
 

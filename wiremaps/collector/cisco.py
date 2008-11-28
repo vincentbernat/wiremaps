@@ -5,7 +5,7 @@ from twisted.internet import defer
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.port import PortCollector
 from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.fdb import CiscoFdbCollector
+from wiremaps.collector.fdb import CommunityFdbCollector
 from wiremaps.collector.cdp import CdpCollector
 
 class Cisco:
@@ -35,6 +35,12 @@ class Cisco:
         return d
 
 cisco = Cisco()
+
+class CiscoFdbCollector(CommunityFdbCollector):
+
+    vlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4'
+    filterOut = ["fddi-default", "token-ring-default",
+                 "fddinet-default", "trnet-default"]
 
 class CiscoTrunkCollector:
     """Collect trunk (i.e ether channel) information for Cisco switchs.
