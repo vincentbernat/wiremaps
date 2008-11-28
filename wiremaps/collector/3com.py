@@ -65,6 +65,8 @@ class SuperStackVlanCollector:
     search for a match in a3ComVlanEncapsIfTag. You should get several
     match. You need to choose the one where a3ComVlanEncapsIfTag is
     equal to 2. Then, get the port using ifStackStatus.
+
+    If the VLAN is untagged, x=y
     """
 
     ifGlobalIdentifier = '.1.3.6.1.4.1.43.10.1.14.1.2.1.4'
@@ -96,14 +98,20 @@ class SuperStackVlanCollector:
         for oid in results:
             if results[oid] == 1: # active
                 port = int(oid.split(".")[-1])
+                if port > 10000:
+                    # Those are logical ports
+                    continue
                 y = int(oid.split(".")[-2])
                 if y not in self.vlanEncapsType:
-                    continue
-                if self.vlanEncapsType[y] == 2: # vlanEncaps8021q
+                    # This VLAN can be untagged
+                    if y not in self.vlanVid:
+                        continue
+                    vid = self.vlanVid[y]
+                elif self.vlanEncapsType[y] == 2: # vlanEncaps8021q
                     vid = self.vlanEncapsTag[y]
-                    if vid not in self.vlanPorts:
-                        self.vlanPorts[vid] = []
-                    self.vlanPorts[vid].append(port)
+                if vid not in self.vlanPorts:
+                    self.vlanPorts[vid] = []
+                self.vlanPorts[vid].append(port)
 
     def collectData(self):
         """Collect VLAN data from SNMP"""
