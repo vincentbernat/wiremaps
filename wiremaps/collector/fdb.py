@@ -1,5 +1,4 @@
-from pyPgSQL import PgSQL
-from twisted.internet import reactor, defer
+from twisted.internet import defer
 
 class FdbCollector:
     """Collect data using FDB"""
