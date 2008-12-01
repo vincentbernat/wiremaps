@@ -23,6 +23,8 @@ class SuperStack:
     def normPortName(self, descr):
         if descr.startswith("RMON:10/100 "):
             descr = descr[len("RMON:10/100 "):]
+        if descr.startswith("RMON "):
+            descr = descr[len("RMON "):]
         mo = re.match("^Port (\d+) on Unit (\d+)$", descr)
         if mo:
             return "Unit %s/Port %s" % (mo.group(2),
