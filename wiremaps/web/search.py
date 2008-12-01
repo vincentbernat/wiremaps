@@ -465,7 +465,7 @@ class SearchMacInFdb(rend.Fragment, RenderMixIn):
                                     "AND f.port=p.index AND f.equipment=e.ip "
                                     "AND p.equipment=e.ip "
                                     "AND (SELECT COUNT(*) FROM fdb WHERE port=p.index "
-                                    "AND equipment=e.ip) <= 60"
+                                    "AND equipment=e.ip) <= 100"
                                     "ORDER BY e.name, p.index",
                                     {'mac': self.mac})
 
