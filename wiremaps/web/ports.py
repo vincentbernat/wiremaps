@@ -21,6 +21,7 @@ class PortDetailsResource(JsonPage):
     def data_json(self, ctx, data):
         return [ PortDetailsMac(self.ip, self.index, self.dbpool),
                  PortDetailsSpeed(self.ip, self.index, self.dbpool),
+                 PortDetailsStp(self.ip, self.index, self.dbpool),
                  PortDetailsTrunkComponents(self.ip, self.index, self.dbpool),
                  PortDetailsTrunkMember(self.ip, self.index, self.dbpool),
                  PortDetailsLldp(self.ip, self.index, self.dbpool),
@@ -195,6 +196,27 @@ class PortDetailsSpeed(PortRelatedFragment):
                                   T.span(_class="data")[
                     data[2] and "enabled" or "disabled"], "."]
         return ctx.tag[speed, duplex or "", autoneg or ""]
+
+class PortDetailsStp(PortRelatedFragment):
+
+    docFactory = loaders.stan(T.span(render=T.directive("stp"),
+                                     data=T.directive("stp")))
+
+    def data_stp(self, ctx, data):
+        return self.dbpool.runQuery("SELECT state, dbridge "
+                                    "FROM stpport "
+                                    "WHERE equipment=%(ip)s AND port=%(port)s",
+                                    {'ip': str(self.ip),
+                                     'port': self.index})
+
+    def render_stp(self, ctx, data):
+        if not data:
+            return ""
+        return ctx.tag["This port is ",
+                       T.span(_class="data")[data[0][0]],
+                       " frames. The designated bridge for this port is ",
+                       T.span(data=data[0][1], render=T.directive("mac")),
+                       "." ]
 
 class PortDetailsMac(PortRelatedFragment):
 
