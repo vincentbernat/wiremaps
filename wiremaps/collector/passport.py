@@ -9,7 +9,6 @@ from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.sonmp import SonmpCollector
 from wiremaps.collector.nortel import MltCollector, NortelSpeedCollector
 from wiremaps.collector.vlan import VlanCollector
-from wiremaps.collector.stp import StpCollector
 
 class NortelPassport:
     """Collector for ERS8600 Nortel Passport routing switches"""
@@ -45,7 +44,6 @@ class NortelPassport:
         arp = ArpCollector(proxy, dbpool, self.config)
         sonmp = SonmpCollector(proxy, dbpool, lambda x: x+63)
         vlan = NortelVlanCollector(proxy, dbpool, lambda x: x-1)
-        stp = StpCollector(proxy, dbpool, lambda x: self.normPortIndex(x, mlt))
         d = ports.collectData()
         d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: mlt.collectData())
@@ -53,7 +51,6 @@ class NortelPassport:
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: sonmp.collectData())
         d.addCallback(lambda x: vlan.collectData())
-        d.addCallback(lambda x: stp.collectData())
         return d
 
 passport = NortelPassport()

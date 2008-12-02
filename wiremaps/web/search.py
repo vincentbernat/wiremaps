@@ -165,9 +165,7 @@ class SearchMacResource(JsonPage, RenderMixIn):
             results.append(SearchIPInSonmp(self.dbpool, ip))
             results.append(SearchIPInLldp(self.dbpool, ip))
             results.append(SearchIPInCdp(self.dbpool, ip))
-            results.append(SearchIpInStp(self.dbpool, ip))
         results.append(SearchMacInFdb(self.dbpool, self.mac))
-        results.append(SearchMacInStp(self.dbpool, self.mac))
         return results
 
 class SearchIPResource(JsonPage, RenderMixIn):
@@ -200,11 +198,9 @@ class SearchIPResource(JsonPage, RenderMixIn):
               SearchIPInSonmp(self.dbpool, self.ip),
               SearchIPInLldp(self.dbpool, self.ip),
               SearchIPInCdp(self.dbpool, self.ip),
-              SearchIpInStp(self.dbpool, self.ip) ]
         if macs:
             l.append(SearchMacInInterfaces(self.dbpool, self.mac))
             l.append(SearchMacInFdb(self.dbpool, self.mac))
-            l.append(SearchMacInStp(self.dbpool, self.mac))
         return l
 
 class SearchHostnameResource(JsonPage, RenderMixIn):
@@ -343,109 +339,6 @@ class SearchHostnameInCdp(SearchHostnameWithDiscovery):
 class SearchHostnameInEdp(SearchHostnameWithDiscovery):
     table = "edp"
     protocolname = "EDP"
-
-class SearchIpInStp(rend.Fragment, RenderMixIn):
-
-    docFactory = loaders.stan(T.span(render=T.directive("bridgeid"),
-                                     data=T.directive("bridgeid")))
-
-    def __init__(self, dbpool, ip):
-        self.ip = ip
-        self.dbpool = dbpool
-        rend.Fragment.__init__(self)
-
-    def data_bridgeid(self, ctx, data):
-        return self.dbpool.runQuery("SELECT bridgeid "
-                                    "FROM stp s "
-                                    "WHERE s.equipment=%(ip)s "
-                                    "AND s.vlan=0",
-                                    {'ip': self.ip})
-
-    def render_bridgeid(self, ctx, data):
-        if not data:
-            return ctx.tag["This equipment does not seem to have a bridge ID."]
-        return ctx.tag["The bridge ID of this equipment is ",
-                       T.invisible(data=data[0][0],
-                                   render=T.directive("mac")),
-                       "."]
-
-class SearchMacInStp(rend.Fragment, RenderMixIn):
-
-    docFactory = loaders.stan(T.invisible[T.span(render=T.directive("bridgeid"),
-                                                 data=T.directive("bridgeid")),
-                                          T.span(render=T.directive("stp"),
-                                                 data=T.directive("stp")),
-                                          T.span(render=T.directive("bridge"),
-                                                 data=T.directive("bridge"))
-                                          ])
-
-    def __init__(self, dbpool, mac):
-        self.mac = mac
-        self.dbpool = dbpool
-        rend.Fragment.__init__(self)
-
-    def data_bridgeid(self, ctx, data):
-        return self.dbpool.runQuery("SELECT e.name, s.root "
-                                    "FROM equipment e, stp s "
-                                    "WHERE e.ip=s.equipment "
-                                    "AND s.bridgeid=%(mac)s "
-                                    "AND s.vlan=0",
-                                    {'mac': self.mac})
-
-    def render_bridgeid(self, ctx, data):
-        if not data:
-            return ctx.tag["This MAC is not found as a bridge ID. "]
-        return ctx.tag["This MAC is the bridge ID of ",
-                       T.invisible(data=data[0][0],
-                                   render=T.directive("hostname")),
-                       " whose root is ",
-                       T.invisible(data=data[0][1],
-                                   render=T.directive("mac")),
-                       ". "]
-
-    def data_stp(self, ctx, data):
-        return self.dbpool.runQuery("SELECT e.name, s.bridgeid, p.name "
-                                    "FROM equipment e, stp s, port p "
-                                    "WHERE e.ip=s.equipment "
-                                    "AND e.ip=p.equipment "
-                                    "AND p.index=s.rootport "
-                                    "AND s.root=%(mac)s "
-                                    "AND s.vlan=0",
-                                    {'mac': self.mac})
-
-    def render_stp(self, ctx, data):
-        if not data:
-            return ctx.tag["This MAC does not seem to be root in STP. "]
-        return ctx.tag["This MAC is STP root for the following equipments:",
-                       T.ul[ [ T.li[T.invisible(data=l[0],
-                                                render=T.directive("hostname")),
-                                    " whose bridge id is ",
-                                    T.invisible(data=l[1],
-                                                render=T.directive("mac")),
-                                    (l[2] is not None) and 
-                                    T.invisible[" and root port is ",
-                                                T.span(_class="data")[l[2]]] or
-                                    ""] for l in data ] ] ]
-
-    def data_bridge(self, ctx, data):
-        return self.dbpool.runQuery("SELECT e.name, p.name "
-                                    "FROM stpport s, port p, equipment e "
-                                    "WHERE s.dbridge=%(mac)s "
-                                    "AND e.ip=s.equipment "
-                                    "AND e.ip=p.equipment "
-                                    "AND p.index=s.port "
-                                    "AND s.vlan=0",
-                                    {'mac': self.mac})
-
-    def render_bridge(self, ctx, data):
-        if not data:
-            return ctx.tag[" This MAC is not a designated bridge for any port."]
-        return ctx.tag[" This MAC is designated bridge for following equipments:",
-                       T.ul[ [ T.li[T.invisible(data=l[0],
-                                                render=T.directive("hostname")),
-                                    " port ",
-                                    T.span(_class="data")[l[1]]]
-                               for l in data ] ] ]
 
 class SearchMacInFdb(rend.Fragment, RenderMixIn):
 

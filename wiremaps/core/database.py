@@ -145,37 +145,3 @@ CREATE TABLE trunk (
                               
         d = self.pool.runOperation("SELECT duplex FROM port LIMIT 1")
         d.addErrback(lambda x: upgrade())
-
-    def upgradeDatabase_10(self):
-        """add 'stp' table"""
-
-        d = self.pool.runOperation("SELECT 1 FROM stp LIMIT 1")
-        d.addErrback(lambda x: self.pool.runOperation("""
-CREATE TABLE stp (
-  equipment inet   	       REFERENCES equipment(ip) ON DELETE CASCADE,
-  bridgeid  macaddr	       NOT NULL,
-  root	    macaddr	       NOT NULL,
-  rootport  int		       NULL,
-  vlan	    int		       NOT NULL DEFAULT 0,
-  PRIMARY KEY (equipment, bridgeid, vlan),
-  FOREIGN KEY (equipment, rootport) REFERENCES port (equipment, index) ON DELETE CASCADE
-)"""))
-        return d
-
-    def upgradeDatabase_11(self):
-        """add 'stpport' table"""
-
-        d = self.pool.runOperation("SELECT 1 FROM stpport LIMIT 1")
-        d.addErrback(lambda x: self.pool.runOperation("""
-CREATE TABLE stpport (
-  equipment inet   	        REFERENCES equipment(ip) ON DELETE CASCADE,
-  port	    int		        NOT NULL,
-  state     text		NOT NULL,
-  dbridge   macaddr		NOT NULL,
-  vlan	    int			NOT NULL DEFAULT 0,
-  PRIMARY KEY (equipment, port, vlan),
-  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
-  CONSTRAINT state_check CHECK (state = 'blocking' OR state = 'listening' OR
-  	     		        state = 'learning' OR state = 'forwarding')
-)"""))
-        return d
