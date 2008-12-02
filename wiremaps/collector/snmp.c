@@ -474,7 +474,7 @@ Snmp_handle(int operation, netsnmp_session *session, int reqid,
 		case ASN_OPAQUE_COUNTER64:
 #endif                          /* NETSNMP_WITH_OPAQUE_SPECIAL_TYPES */
 			counter64 = ((unsigned long long)(vars->val.counter64->high) << 32) +
-			    (unsigned long long)(vars->val.counter64->high);
+			    (unsigned long long)(vars->val.counter64->low);
 			resultvalue = PyLong_FromUnsignedLongLong(counter64);
 			break;
 #ifdef NETSNMP_WITH_OPAQUE_SPECIAL_TYPES
