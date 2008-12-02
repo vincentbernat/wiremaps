@@ -197,7 +197,7 @@ class SearchIPResource(JsonPage, RenderMixIn):
               SearchIPInDNS(self.dbpool, self.ip),
               SearchIPInSonmp(self.dbpool, self.ip),
               SearchIPInLldp(self.dbpool, self.ip),
-              SearchIPInCdp(self.dbpool, self.ip),
+              SearchIPInCdp(self.dbpool, self.ip) ]
         if macs:
             l.append(SearchMacInInterfaces(self.dbpool, self.mac))
             l.append(SearchMacInFdb(self.dbpool, self.mac))
