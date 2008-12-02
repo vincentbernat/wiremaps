@@ -8,6 +8,7 @@ from wiremaps.collector.fdb import FdbCollector, ExtremeFdbCollector
 from wiremaps.collector.arp import ArpCollector
 from wiremaps.collector.lldp import LldpCollector
 from wiremaps.collector.edp import EdpCollector
+from wiremaps.collector.vlan import IfMibVlanCollector
 
 class ExtremeSummit:
     """Collector for Extreme switches and routers"""
@@ -15,19 +16,21 @@ class ExtremeSummit:
     implements(ICollector, IPlugin)
 
     def handleEquipment(self, oid):
-        return (oid in ['.1.3.6.1.4.1.1916.2.40', # Extreme Summit 24e
-                        '.1.3.6.1.4.1.1916.2.28', # Extreme Summit 48si
+        return (oid in ['.1.3.6.1.4.1.1916.2.28', # Extreme Summit 48si
                         '.1.3.6.1.4.1.1916.2.54', # Extreme Summit 48e
                         '.1.3.6.1.4.1.1916.2.76', # Extreme Summit 48t
                         '.1.3.6.1.4.1.1916.2.62', # Black Diamond 8810
                         ])
+
+    def vlanFactory(self):
+        return ExtremeVlanCollector
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool, invert=True)
         fdb = FdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         edp = EdpCollector(proxy, dbpool)
-        vlan = VlanCollector(proxy, dbpool)
+        vlan = self.vlanFactory()(proxy, dbpool)
         # LLDP disabled due to unstability
         # lldp = LldpCollector(proxy, dbpool)
         d = ports.collectData()
@@ -37,6 +40,18 @@ class ExtremeSummit:
         d.addCallback(lambda x: vlan.collectData())
         # d.addCallback(lambda x: lldp.collectData())
         return d
+
+class OldExtremeSummit(ExtremeSummit):
+    """Collector for old Extreme summit switches"""
+
+    implements(ICollector, IPlugin)
+
+    def handleEquipment(self, oid):
+        return (oid in ['.1.3.6.1.4.1.1916.2.40', # Extreme Summit 24e
+                        ])
+
+    def vlanFactory(self):
+        return IfMibVlanCollector
 
 class ExtremeWare:
     """Collector for ExtremeWare chassis"""
@@ -49,7 +64,7 @@ class ExtremeWare:
 
     def collectData(self, ip, proxy, dbpool):
         ports = PortCollector(proxy, dbpool, invert=True)
-        vlan = VlanCollector(proxy, dbpool)
+        vlan = ExtremeVlanCollector(proxy, dbpool)
         fdb = ExtremeFdbCollector(vlan, proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         edp = EdpCollector(proxy, dbpool)
@@ -63,7 +78,7 @@ class ExtremeWare:
         # d.addCallback(lambda x: lldp.collectData())
         return d
 
-class VlanCollector:
+class ExtremeVlanCollector:
     """Collect local VLAN for Extreme switchs"""
 
     vlanIfDescr = '.1.3.6.1.4.1.1916.1.2.1.2.1.2'
@@ -153,5 +168,6 @@ class VlanCollector:
 
 
 
+osummit = OldExtremeSummit()
 summit = ExtremeSummit()
 eware = ExtremeWare()
