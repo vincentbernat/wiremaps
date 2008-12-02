@@ -71,7 +71,6 @@ class StpCollector:
     def collectData(self):
 
         def fileIntoDb(txn, bridgeid, root, rootport, states, bridges, ip):
-            print bridgeid, root, rootport, states, bridges
             txn.execute("DELETE FROM stp WHERE equipment=%(ip)s AND vlan=0",
                         {'ip': str(ip)})
             txn.execute("DELETE FROM stpport WHERE equipment=%(ip)s AND vlan=0",
