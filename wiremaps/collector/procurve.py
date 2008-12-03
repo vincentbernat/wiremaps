@@ -35,7 +35,8 @@ class Procurve:
         vlan = Rfc2674VlanCollector(proxy, dbpool,
                                     normPort=lambda x: self.normport(x, ports),
                                     clean=False)
-        d = ports.collectData()
+        d = trunk.collectData()
+        d.addCallback(lambda x: ports.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())
