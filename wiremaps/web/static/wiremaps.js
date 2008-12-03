@@ -162,9 +162,9 @@ function showVlans(event)
 
 function displayPortDetails(event)
 {
-    // "this" should be a .portexpand
+    // "this" should be a .portbasics
     event.preventDefault();
-    var port = $(this).find("li.portexpand").attr("_index");
+    var port = $(this).find(".portname").attr("_index");
     var portdetails = $(this).parent()
 	.find("div.portdetails");
     var ip = $("div#photo img")
@@ -199,10 +199,11 @@ function replacePorts(ports)
 	    .removeClass("loading")
 	    .css("background",
 		 "url(static/port-"+ports[i][3]+"-"+speed+"-"+ports[i][5]+
-		 "-"+ports[i][6]+".png) no-repeat")
-	    .find("div.portname").html(ports[i][1]).end()
-	    .find("div.portactions .portexpand")
-		.attr("_index", ports[i][0]).parents("div.portbasics")
+		 "-"+ports[i][6]+".png) no-repeat scroll 0 5px")
+	    .find("div.portname")
+	        .find("a").html(ports[i][1]).end()
+		.attr("_index", ports[i][0])
+		.parent()
 		.toggle(displayPortDetails,
 			function(event) {
 			    event.preventDefault();

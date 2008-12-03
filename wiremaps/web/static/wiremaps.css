@@ -226,8 +226,7 @@ div#ports li.loading
 {
     background: url(loading.gif) no-repeat !important;
 }
-div.portbasics, div.portname, div.portalias, div.portactions, 
-div.portactions > ul, div.portactions > ul > li
+div.portbasics, div.portname
 {
     display: inline;
 }
@@ -241,18 +240,13 @@ div.portname
     font-weight: bold;
     font-style: oblique;
 }
-div.portactions
-{
-    font-size: x-small;
-}
 div.portalias
 { 
     font-size: x-small;
-    margin-left: 3ex;
+    margin-left: 40px;
 }
 div.portdetails
 {
-    padding-top: 1em;
     margin-left: 0.5em;
 }
 div.portdetails ul
