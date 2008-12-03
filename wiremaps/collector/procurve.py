@@ -27,6 +27,7 @@ class Procurve:
         t = {}
         trunk = ProcurveTrunkCollector(proxy, dbpool, t)
         ports = PortCollector(proxy, dbpool, trunk=t)
+        ports.ifName = ports.ifAlias
         fdb = FdbCollector(proxy, dbpool, self.config,
                            lambda x: self.normport(x, ports))
         arp = ArpCollector(proxy, dbpool, self.config)

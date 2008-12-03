@@ -22,6 +22,7 @@ class Cisco:
         t = {}
         trunk = CiscoTrunkCollector(proxy, dbpool, t)
         ports = PortCollector(proxy, dbpool, invert=True, trunk=t)
+        ports.ifDescr = ports.ifAlias
         fdb = CiscoFdbCollector(proxy, dbpool, self.config)
         arp = ArpCollector(proxy, dbpool, self.config)
         cdp = CdpCollector(proxy, dbpool)
