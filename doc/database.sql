@@ -54,7 +54,7 @@ CREATE TABLE port (
   autoneg   boolean	      NULL,
   PRIMARY KEY (equipment, index),
   CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down'),
-  CONSTRAINT duplex_check CHECK (duplex = 'full' OR duplex = 'half'),
+  CONSTRAINT duplex_check CHECK (duplex = 'full' OR duplex = 'half')
 );
 
 -- Just a dump of FDB for a given port
