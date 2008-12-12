@@ -14,20 +14,22 @@ class PortCollector:
 
 
     def __init__(self, proxy, dbpool,
-                 norm=None, filter=None, invert=False,
+                 normName=None, normPort=None, filter=None, invert=False,
                  trunk=None):
         """Create a collector for port information
 
         @param proxy: proxy to use to query SNMP
         @param dbpool: pool of database connections
-        @param norm: function to normalize port name
+        @param normName: function to normalize port name
+        @param normPort: function to normalize port index
         @param filter: filter out those ports
         @param invert: invert ifName and ifDescr
         @param trunk: collected trunk information
         """
         self.proxy = proxy
         self.dbpool = dbpool
-        self.norm = norm
+        self.normName = normName
+        self.normPort = normPort
         self.filter = filter
         self.invert = invert
         self.trunk = trunk
@@ -40,6 +42,10 @@ class PortCollector:
         self.ports = []
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
+                if port is None:
+                    continue
             if self.filter is not None and self.filter(port) is None:
                 continue
             # Ethernet (ethernetCsmacd or some obsolote values) ?
@@ -58,11 +64,13 @@ class PortCollector:
         self.portNames = {}
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
             if port not in self.ports:
                 continue
             descr = str(results[oid]).strip()
-            if self.norm is not None:
-                descr = self.norm(descr).strip()
+            if self.normName is not None:
+                descr = self.normName(descr).strip()
             self.portNames[port] = descr
 
     def gotIfNames(self, results):
@@ -73,6 +81,8 @@ class PortCollector:
         self.portAliases = {}
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
             if port not in self.ports:
                 continue
             name = str(results[oid]).strip()
@@ -87,6 +97,8 @@ class PortCollector:
         self.portAddress = {}
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
             if port not in self.ports:
                 continue
             address = [ "%x" % ord(a) for a in str(results[oid])]
@@ -101,6 +113,8 @@ class PortCollector:
         self.portStatus = {}
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
             if port not in self.ports:
                 continue
             if results[oid] == 1:
@@ -116,6 +130,8 @@ class PortCollector:
         self.speed = {}
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
             if port not in self.ports:
                 continue
             s = results[oid]
@@ -134,6 +150,8 @@ class PortCollector:
         """
         for oid in results:
             port = int(oid.split(".")[-1])
+            if self.normPort is not None:
+                port = self.normPort(port)
             if port not in self.ports:
                 continue
             s = results[oid]

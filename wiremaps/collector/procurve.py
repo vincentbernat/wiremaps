@@ -16,7 +16,8 @@ class Procurve:
 
     def handleEquipment(self, oid):
         # Complete list is in hpicfOid.mib
-        return oid.startswith('.1.3.6.1.4.1.11.2.3.7.11.')
+        return oid.startswith('.1.3.6.1.4.1.11.2.3.7.11.') and \
+            not oid.startswith('.1.3.6.1.4.1.11.2.3.7.11.33.4.') # This is a Blade Switch
 
     def normport(self, port, ports):
         if port not in ports.portNames:
