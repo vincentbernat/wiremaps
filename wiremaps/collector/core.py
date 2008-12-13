@@ -14,6 +14,7 @@ import wiremaps.collector
 from wiremaps.collector import exception
 from wiremaps.collector.proxy import AgentProxy
 from wiremaps.collector.icollector import ICollector
+from wiremaps.collector.generic import generic
 
 class CollectorService(service.Service):
     """Service to collect data from SNMP"""
@@ -136,7 +137,8 @@ class CollectorService(service.Service):
         plugins = [ plugin for plugin in getPlugins(ICollector, wiremaps.collector)
                     if plugin.handleEquipment(str(oid)) ]
         if not plugins:
-            raise exception.UnknownEquipment("unknown equipment with OID %s" % oid)
+            print "No plugin found for OID %s, using generic one" % oid
+            plugins = [generic]
         print "Using %s to collect data from %s" % ([str(plugin.__class__)
                                                      for plugin in plugins],
                                                     proxy.ip)
