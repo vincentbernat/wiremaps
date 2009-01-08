@@ -352,14 +352,18 @@ class SearchMacInFdb(rend.Fragment, RenderMixIn):
 
     def data_macfdb(self, ctx, data):
         # We filter out port with too many MAC
-        return self.dbpool.runQuery("SELECT DISTINCT e.name, e.ip, p.name, p.index "
-                                    "FROM fdb f, equipment e, port p "
-                                    "WHERE f.mac=%(mac)s "
-                                    "AND f.port=p.index AND f.equipment=e.ip "
-                                    "AND p.equipment=e.ip "
-                                    "AND (SELECT COUNT(*) FROM fdb WHERE port=p.index "
-                                    "AND equipment=e.ip) <= 100"
-                                    "ORDER BY e.name, p.index",
+        return self.dbpool.runQuery("""
+SELECT DISTINCT e.name, e.ip, p.name, p.index, COUNT(f2.mac) as c
+FROM fdb f, equipment e, port p, fdb f2
+WHERE f.mac=%(mac)s
+AND f.port=p.index AND f.equipment=e.ip
+AND p.equipment=e.ip
+AND (SELECT COUNT(*) FROM fdb WHERE port=p.index
+AND equipment=e.ip) <= 100
+AND f2.port=f.port AND f2.equipment=f.equipment
+GROUP BY e.name, e.ip, p.name, p.index
+ORDER BY c, e.name, p.index
+""",
                                     {'mac': self.mac})
 
     def render_macfdb(self, ctx, data):
@@ -371,7 +375,8 @@ class SearchMacInFdb(rend.Fragment, RenderMixIn):
                                 render=T.directive("hostname")),
                     " (", T.invisible(data=l[1],
                                       render=T.directive("ip")), ") "
-                    "on port ", T.span(_class="data") [ l[2] ] ]
+                    "on port ", T.span(_class="data") [ l[2] ],
+                    " (out of %d MAC address%s)" % (l[4], l[4]>1 and "es" or "") ]
                          for l in data] ] ]
 
 class SearchMacInInterfaces(rend.Fragment, RenderMixIn):
