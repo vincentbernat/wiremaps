@@ -54,9 +54,7 @@ class Walker(object):
             self.results[o] = x[o]
             if translateOid(self.lastoid) < translateOid(o):
                 self.lastoid = o
-        if stop or not x or (self.proxy.use_getbulk and
-                             self.proxy.version == 2 and
-                             len(x) < 10):
+        if stop or not x:
             self.defer.callback(self.results)
             self.defer = None
             return
