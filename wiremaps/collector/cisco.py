@@ -105,8 +105,9 @@ class CiscoVlanCollector:
     vlanTrunkPortDynamicStatus = '.1.3.6.1.4.1.9.9.46.1.6.1.1.14'
     # If yes, which VLAN are present on the given trunk
     vlanTrunkPortVlansEnabled = '.1.3.6.1.4.1.9.9.46.1.6.1.1.4'
-    # If no, what is the native VLAN?
-    vmVlan = '.1.3.6.1.4.1.9.9.46.1.6.1.1.5'
+    vlanTrunkPortNativeVlan = '.1.3.6.1.4.1.9.9.46.1.6.1.1.5'
+    # If no, maybe the interface has a vlan?
+    vmVlan = '.1.3.6.1.4.1.9.9.68.1.2.2.1.2'
     # Vlan names
     vtpVlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4'
 
@@ -154,7 +155,9 @@ class CiscoVlanCollector:
     def gotNativeVlan(self, results):
         """Callback handling reception of native VLAN for a port
 
-        @param results: native VLAN from C{CISCO-VTP-MIB::vlanTrunkPortNativeVlan}
+        @param results: native VLAN from
+           C{CISCO-VTP-MIB::vlanTrunkPortNativeVlan} or
+           C{CISCO-VLAN-MEMBERSHIP-MIB::vmVlan}
         """
         for oid in results:
             port = int(oid.split(".")[-1])
@@ -193,6 +196,8 @@ class CiscoVlanCollector:
         d.addCallback(lambda x: self.proxy.walk(self.vlanTrunkPortVlansEnabled))
         d.addCallback(self.gotTrunkVlans)
         d.addCallback(lambda x: self.proxy.walk(self.vmVlan))
+        d.addCallback(self.gotNativeVlan)
+        d.addCallback(lambda x: self.proxy.walk(self.vlanTrunkPortNativeVlan))
         d.addCallback(self.gotNativeVlan)
         d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
                                                            self.names,
