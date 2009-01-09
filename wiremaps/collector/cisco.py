@@ -158,7 +158,7 @@ class CiscoVlanCollector:
         """
         for oid in results:
             port = int(oid.split(".")[-1])
-            if port not in self.trunked:
+            if port not in self.vlans:
                 self.vlans[port] = [results[oid]]
 
     def collectData(self):
