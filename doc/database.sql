@@ -158,27 +158,3 @@ CREATE TABLE trunk (
   FOREIGN KEY (equipment, member) REFERENCES port (equipment, index) ON DELETE CASCADE,
   PRIMARY KEY (equipment, port, member)
 );
-
--- Info about STP
-CREATE TABLE stp (
-  equipment inet   	       REFERENCES equipment(ip) ON DELETE CASCADE,
-  bridgeid  macaddr	       NOT NULL,
-  root	    macaddr	       NOT NULL,
-  rootport  int		       NULL,
-  vlan	    int		       NOT NULL DEFAULT 0,
-  PRIMARY KEY (equipment, bridgeid, vlan),
-  FOREIGN KEY (equipment, rootport) REFERENCES port (equipment, index) ON DELETE CASCADE
-);
-
--- Info about STP for one port
-CREATE TABLE stpport (
-  equipment inet   	        REFERENCES equipment(ip) ON DELETE CASCADE,
-  port	    int		        NOT NULL,
-  state     text		NOT NULL,
-  dbridge   macaddr		NOT NULL,
-  vlan	    int			NOT NULL DEFAULT 0,
-  PRIMARY KEY (equipment, port, vlan),
-  FOREIGN KEY (equipment, port) REFERENCES port (equipment, index) ON DELETE CASCADE,
-  CONSTRAINT state_check CHECK (state = 'blocking' OR state = 'listening' OR
-  	     		        state = 'learning' OR state = 'forwarding')
-);
