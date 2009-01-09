@@ -106,7 +106,7 @@ class CiscoVlanCollector:
     # If yes, which VLAN are present on the given trunk
     vlanTrunkPortVlansEnabled = '.1.3.6.1.4.1.9.9.46.1.6.1.1.4'
     # If no, what is the native VLAN?
-    vmVlan = '.1.3.6.1.4.1.9.9.68.1.2.2.1.2'
+    vmVlan = '.1.3.6.1.4.1.9.9.46.1.6.1.1.5'
     # Vlan names
     vtpVlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4'
 
@@ -154,7 +154,7 @@ class CiscoVlanCollector:
     def gotNativeVlan(self, results):
         """Callback handling reception of native VLAN for a port
 
-        @param results: native VLAN from C{CISCO-VLAN-MEMBERSHIP-MIB::vmVlan}
+        @param results: native VLAN from C{CISCO-VTP-MIB::vlanTrunkPortNativeVlan}
         """
         for oid in results:
             port = int(oid.split(".")[-1])
