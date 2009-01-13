@@ -256,7 +256,7 @@ function searchOrShow(event) {
     else if (target[0].match(/equipment/)) {
 	var a = $("div#equipments select option").filter(function() {
 		    return (($(this).attr("_ip") == target[1]) ||
-			    ($(this).attr("_hostname") == target[1])); });
+			    ($(this).attr("_hostname").toLowerCase() == target[1].toLowerCase())); });
 	if (a.length == 0) {
 	    sendMessage("alert", "Unable to find equipment, please reload");
 	    return;
