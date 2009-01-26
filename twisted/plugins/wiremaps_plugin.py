@@ -14,6 +14,7 @@ else:
         optParameters = [
             ['config', 'c', '/etc/wiremaps/wiremaps.cfg'],
             ['port', 'p', 8087],
+            ['interface', 'i', '127.0.0.1'],
             ]
 
     class WiremapsServiceMaker(object):

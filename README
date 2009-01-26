@@ -59,6 +59,9 @@ You can launch the application by hand
 or
  twistd -no wiremaps --config=/etc/wiremaps/wiremaps.cfg
 
+By default, wiremaps only listens on localhost. You can change this using:
+ twistd -no wiremaps --interface=0.0.0.0
+
 You can also use debian/init.d as a base for an init script (work only
 if the application is installed). The init.d script also allows to use
 older version of Twisted (2.4).
