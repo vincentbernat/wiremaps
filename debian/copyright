@@ -27,12 +27,16 @@ Copyright: © 2008 Vincent Bernat <bernat@luffy.cx>
 License: Creative Commons Attribution 3.0
 
 Files: wiremaps/web/static/jquery.js
-Copyright: (c) 2005-2008 by John Resig, Brandon Aaron & Jörn Zaefferer.
+Copyright: © 2005-2008 by John Resig, Brandon Aaron & Jörn Zaefferer.
 License: MIT
 
 Files: wiremaps/web/static/jquery.autocomplete.js
-Copyright: (C) 2008 Ziadin Givan www.CodeAssembly.com
+Copyright: © 2008 Ziadin Givan www.CodeAssembly.com
 License: GPL3+
+
+Files: wiremaps/web/static/jquery.tablesorter.min.js
+Copyright: © 2007 Christian Bach
+License: MIT
 
 Files: debian/*
 Copyright: © 2008 Vincent Bernat <bernat@debian.org>
