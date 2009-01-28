@@ -48,9 +48,11 @@ class NortelEthernetSwitch(BladeEthernetSwitch):
 
     baseoid = '.1.3.6.1.4.1.1872.2.5'
     def handleEquipment(self, oid):
-        return (oid in ['.1.3.6.1.4.1.1872.1.18.1', # Nortel Layer2-3 GbE Switch Module(Copper)
-                        '.1.3.6.1.4.1.1872.1.18.3', # Nortel 10Gb Uplink Ethernet Switch Module
-                        ])
+        return (oid in [
+                '.1.3.6.1.4.1.1872.1.18.1', # Nortel Layer2-3 GbE Switch Module(Copper)
+                '.1.3.6.1.4.1.1872.1.18.2', # Nortel Layer2-3 GbE Switch Module(Fiber)
+                '.1.3.6.1.4.1.1872.1.18.3', # Nortel 10Gb Uplink Ethernet Switch Module
+                ])
 
 blade1 = NortelEthernetSwitch()
 
