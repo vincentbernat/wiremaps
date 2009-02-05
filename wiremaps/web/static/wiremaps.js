@@ -198,7 +198,7 @@ function displayPortDetails(event)
 	  dataType: "json",
 	  error: function(xmlh, textstatus, error) {
 	    sendMessage("alert",
-	                "Unable to get detailed info for port " + port);
+	                "Unable to get detailed info for port " + port.find("td.name a").text());
 	  },
 	  success: function(data) {
 	    displayPortInformation(port, data);
