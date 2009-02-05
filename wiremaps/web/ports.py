@@ -3,13 +3,18 @@ from nevow import loaders, rend
 from nevow import tags as T
 
 from wiremaps.web.json import JsonPage
-from wiremaps.web.common import RenderMixIn
+from wiremaps.web.common import FragmentMixIn
 
 class PortDetailsResource(JsonPage):
     """Give some details on the port.
 
     Those details contain what is seen from this port but may also
     contain how this port is seen from other systems.
+
+    The data returned is a JSON array. Each element is a triple
+    C{column, value, sortable}, where C{column} is the column name,
+    C{value} is HTML code to put into this column and C{sortable} is
+    either C{None} or a string/int value to sort on.
     """
 
     def __init__(self, ip, index, dbpool):
@@ -18,85 +23,125 @@ class PortDetailsResource(JsonPage):
         self.index = index
         JsonPage.__init__(self)
 
-    def data_json(self, ctx, data):
-        return [ PortDetailsMac(self.ip, self.index, self.dbpool),
-                 PortDetailsSpeed(self.ip, self.index, self.dbpool),
-                 PortDetailsTrunkComponents(self.ip, self.index, self.dbpool),
-                 PortDetailsTrunkMember(self.ip, self.index, self.dbpool),
-                 PortDetailsLldp(self.ip, self.index, self.dbpool),
-                 PortDetailsRemoteLldp(self.ip, self.index, self.dbpool),
-                 PortDetailsVlan(self.ip, self.index, self.dbpool),
-                 PortDetailsSonmp(self.ip, self.index, self.dbpool),
-                 PortDetailsEdp(self.ip, self.index, self.dbpool),
-                 PortDetailsFdb(self.ip, self.index, self.dbpool),
-                 PortDetailsCdp(self.ip, self.index, self.dbpool),
-                 ]
+    def flattenList(self, data):
+        result = []
+        errors = []
+        for (success, value) in data:
+            if success:
+                for r in value:
+                    result.append(r)
+            else:
+                print "While getting details for %s, port %d:" % (self.ip, self.index)
+                value.printTraceback()
+                errors.append(T.span(_class="error")
+                              ["%s" % value.getErrorMessage()])
+        if errors:
+            result.append(("Errors",
+                           rend.Fragment(
+                        docFactory=loaders.stan(errors))))
+        return result
 
-class PortRelatedFragment(rend.Fragment, RenderMixIn):
+    def data_json(self, ctx, data):
+        l = []
+        for c in [ PortDetailsMac,
+                   PortDetailsSpeed,
+                   PortDetailsTrunkComponents,
+                   PortDetailsTrunkMember,
+                   PortDetailsLldp,
+                   PortDetailsRemoteLldp,
+                   PortDetailsVlan,
+                   PortDetailsSonmp,
+                   PortDetailsEdp,
+                   PortDetailsFdb,
+                   PortDetailsCdp,
+                   ]:
+            detail = c(self.ip, self.index, self.dbpool)
+            l.append(detail.collectDetails())
+        d = defer.DeferredList(l, consumeErrors=True)
+        d.addCallback(self.flattenList)
+        return d
+
+class PortRelatedDetails:
+    """Return a list of port related details.
+
+    This list is built from one SQL query. The result of this query is
+    passed to C{render} method which should output a list of triple
+    C{column, value, sort} where C{value} will be turned into a
+    C{rend.Fragment}.
+    """
 
     def __init__(self, ip, index, dbpool):
         self.dbpool = dbpool
         self.ip = ip
         self.index = index
-        rend.Fragment.__init__(self, dbpool)
 
-class PortDetailsRemoteLldp(PortRelatedFragment):
+    def render(self, data):
+        raise NotImplementedError
 
-    docFactory = loaders.stan(T.span(render=T.directive("lldp"),
-                                     data=T.directive("lldp")))
-
-    def data_lldp(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT re.ip, re.name, rp.name "
-                                    "FROM lldp l, equipment re, equipment le, port lp, port rp "
-                                    "WHERE (l.mgmtip=le.ip OR l.sysname=le.name) "
-                                    "AND le.ip=%(ip)s AND lp.equipment=le.ip "
-                                    "AND l.portdesc=lp.name "
-                                    "AND lp.index=%(port)s "
-                                    "AND l.equipment=re.ip "
-                                    "AND l.port=rp.index AND rp.equipment=re.ip",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
-
-    def render_lldp(self, ctx, data):
+    def convertFragments(self, data):
+        result = []
         if not data:
-            return ""
-        return ctx.tag["This port was detected on ",
-                       T.invisible(data=data[0][1],
-                                   render=T.directive("hostname")),
-                       " (",
-                       T.invisible(data=data[0][0],
-                                   render=T.directive("ip")), ") ",
-                       "on port ",
-                       T.span(_class="data")[ data[0][2] ],
-                       " by LLDP."]
+            return []
+        for column, value, sort in data:
+            result.append((column,
+                           FragmentMixIn(self.dbpool,
+                                         docFactory=loaders.stan(value)),
+                           sort))
+        return result
 
-class PortDetailsVlan(PortRelatedFragment):
+    def collectDetails(self):
+        d = self.dbpool.runQuery(self.query,
+                                 { 'ip': str(self.ip),
+                                   'port': self.index })
+        d.addCallback(lambda x: x and self.render(x) or None)
+        d.addCallback(self.convertFragments)
+        return d
 
-    docFactory = loaders.stan(T.span(render=T.directive("vlans"),
-                                     data=T.directive("vlans")))
+class PortDetailsRemoteLldp(PortRelatedDetails):
 
-    def data_vlans(self, ctx, data):
-        q = """
+    query = """
+SELECT DISTINCT re.name, rp.name
+FROM lldp l, equipment re, equipment le, port lp, port rp
+WHERE (l.mgmtip=le.ip OR l.sysname=le.name)
+AND le.ip=%(ip)s AND lp.equipment=le.ip
+AND l.portdesc=lp.name
+AND lp.index=%(port)s
+AND l.equipment=re.ip
+AND l.port=rp.index AND rp.equipment=re.ip
+"""
+
+    def render(self, data):
+        return [
+            ('LLDP (remote) / Host',
+             T.invisible(data=data[0][0],
+                         render=T.directive("hostname")),
+             data[0][0]),
+            ('LLDP (remote) / Port',
+             data[0][1], None)
+            ]
+
+class PortDetailsVlan(PortRelatedDetails):
+
+    
+    query = """
 SELECT COALESCE(l.vid, r.vid) as vvid, l.name, r.name
 FROM
 (SELECT * FROM vlan WHERE equipment=%(ip)s AND port=%(port)s AND type='local') l
 FULL OUTER JOIN
 (SELECT * FROM vlan WHERE equipment=%(ip)s AND port=%(port)s AND type='remote') r
 ON l.vid = r.vid
-ORDER BY vvid;
+ORDER BY vvid
 """
-        return self.dbpool.runQuery(q,
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
 
-    def render_vlans(self, ctx, data):
-        if not data:
-            return ""
+    def render(self, data):
         r = []
         i = 0
+        vlanlist = []
         notpresent = T.td(_class="notpresent")[
             T.acronym(title="Not present or no information from remote")["N/A"]]
         for row in data:
+            if row[1] is not None:
+                vlanlist.append(str(row[0]))
             vid = T.td[T.span(data=row[0], render=T.directive("vlan"))]
             if row[1] is None:
                 r.append(T.tr(_class=(i%2) and "odd" or "even")[
@@ -112,29 +157,28 @@ ORDER BY vvid;
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
                          [vid, T.td[row[1]], T.td[row[2]]])
             i += 1
-        return ctx.tag["Here are the VLAN available on this port:",
-                       T.table(_class="vlan")[
-                T.thead[T.td["VID"], T.td["Local"], T.td["Remote"]], r]]
+        vlantable = T.table(_class="vlan")[
+            T.thead[T.td["VID"], T.td["Local"], T.td["Remote"]], r]
+        return [('VLAN',
+                 [[ [T.span(data=v, render=T.directive("vlan")), " "]
+                    for v in vlanlist ],
+                  T.span(render=T.directive("tooltip"),
+                         data=vlantable)],
+                 ", ".join(vlanlist))]
 
-class PortDetailsFdb(PortRelatedFragment):
+class PortDetailsFdb(PortRelatedDetails):
 
-    docFactory = loaders.stan(T.span(render=T.directive("fdb"),
-                                     data=T.directive("fdb")))
+    query = """
+SELECT DISTINCT f.mac, a.ip
+FROM fdb f LEFT OUTER JOIN arp a
+ON a.mac = f.mac
+WHERE f.equipment=%(ip)s
+AND f.port=%(port)s
+ORDER BY a.ip ASC, f.mac
+LIMIT 20
+"""
 
-    def data_fdb(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT f.mac, a.ip "
-                                    "FROM fdb f LEFT OUTER JOIN arp a "
-                                    "ON a.mac = f.mac "
-                                    "WHERE f.equipment=%(ip)s "
-                                    "AND f.port=%(port)s "
-                                    "ORDER BY a.ip ASC, f.mac "
-                                    "LIMIT 20",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
-
-    def render_fdb(self, ctx, data):
-        if not data:
-            return ""
+    def render(self, data):
         r = []
         i = 0
         notpresent = T.td(_class="notpresent")[
@@ -149,202 +193,159 @@ class PortDetailsFdb(PortRelatedFragment):
                 r.append(T.tr(_class=(i%2) and "odd" or "even")
                          [mac, notpresent])
             i += 1
-        if len(r) == 20:
-            intro = "At least the"
-        else:
-            intro = "The"
-        return ctx.tag[intro,
-                       " following MAC addresses are present in FDB: ",
-                       T.table(_class="mac")[
-                T.thead[T.td["MAC"], T.td["IP"]], r]]
+        if len(r) == 1:
+            return [('FDB',
+                     [T.span(data=data[0][0], render=T.directive("mac")),
+                      data[0][1] and [", ", T.span(data=data[0][1],
+                                                   render=T.directive("ip"))] or ""],
+                     1)]
+        return [('FDB',
+                 [len(r) == 20 and "20+" or len(r),
+                  T.span(render=T.directive("tooltip"),
+                         data=T.table(_class="mac")[
+                        T.thead[T.td["MAC"], T.td["IP"]], r])],
+                 len(r) == 20 and 21 or len(r))]
 
-class PortDetailsSpeed(PortRelatedFragment):
+class PortDetailsSpeed(PortRelatedDetails):
 
-    docFactory = loaders.stan(T.span(render=T.directive("speed"),
-                                     data=T.directive("speed")))
+    query = """
+SELECT speed, duplex, autoneg
+FROM port
+WHERE equipment=%(ip)s AND index=%(port)s
+"""
 
-    def data_speed(self, ctx, data):
-        return self.dbpool.runQuery("SELECT speed, duplex, autoneg "
-                                    "FROM port "
-                                    "WHERE equipment=%(ip)s AND index=%(port)s",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
-
-    def render_speed(self, ctx, data):
-        if not data:
-            return ""
+    def render(self, data):
+        result = []
         data = data[0]
         if data[0] is None and data[1] is None and data[2] is None:
-            return ""
+            return None
         speed = ""
         if data[0]:
             speed = data[0]
-            if speed % 1000 == 0:
-                speed = "%d Gbit/s" % (speed/1000)
+            if speed >= 1000:
+                speed = "%s Gbit/s" % (str(speed/1000.))
             else:
                 speed = "%d Mbit/s" % speed
-            speed = T.invisible["The speed of this port is ",
-                                T.span(_class="data")[speed or "unknown"],
-                                ". "]
-        duplex = data[1] and T.invisible["The port is operating in ",
-                                         T.span(_class="data")[data[1]],
-                                         " duplex mode. "]
-        autoneg = None
+            if speed:
+                result.append(("Speed / Speed",
+                               speed,
+                               data[0]))
+        if data[1]:
+            result.append(("Speed / Duplex",
+                           data[1], None))
         if data[2] is not None:
-            autoneg = T.invisible["Autonegotiation is ",
-                                  T.span(_class="data")[
-                    data[2] and "enabled" or "disabled"], "."]
-        return ctx.tag[speed, duplex or "", autoneg or ""]
+            result.append(("Speed / Autoneg",
+                            data[2] and "enabled" or "disabled",
+                            data[2]))
+        return result
 
-class PortDetailsMac(PortRelatedFragment):
+class PortDetailsMac(PortRelatedDetails):
 
-    docFactory = loaders.stan(T.span(render=T.directive("macaddr"),
-                                     data=T.directive("macaddr")))
+    query = """
+SELECT mac
+FROM port
+WHERE equipment=%(ip)s AND index=%(port)s
+AND mac IS NOT NULL
+"""
 
-    def data_macaddr(self, ctx, data):
-        return self.dbpool.runQuery("SELECT mac "
-                                    "FROM port "
-                                    "WHERE equipment=%(ip)s AND index=%(port)s "
-                                    "AND mac IS NOT NULL",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
+    def render(self, data):
+        return [("MAC", T.invisible(data=data[0][0],
+                                    render=T.directive("mac")),
+                 data[0][0])]
 
-    def render_macaddr(self, ctx, data):
-        if not data:
-            return ""
-        return ctx.tag["The MAC address of this port is ",
-                       T.invisible(data=data[0][0],
-                                   render=T.directive("mac")),
-                       "."]
+class PortDetailsTrunkComponents(PortRelatedDetails):
 
-class PortDetailsTrunkComponents(PortRelatedFragment):
+    query = """
+SELECT p.name
+FROM trunk t, port p
+WHERE t.equipment=%(ip)s AND t.port=%(port)s
+AND p.equipment=t.equipment
+AND p.index=t.member
+ORDER BY p.index
+"""
 
-    docFactory = loaders.stan(T.span(render=T.directive("trunk"),
-                                     data=T.directive("trunk")))
+    def render(self, data):
+        return [("Trunk / Ports",
+                 [[x[0], " "] for x in data],
+                 len(data))]
 
-    def data_trunk(self, ctx, data):
-        return self.dbpool.runQuery("SELECT p.name "
-                                    "FROM trunk t, port p "
-                                    "WHERE t.equipment=%(ip)s AND t.port=%(port)s "
-                                    "AND p.equipment=t.equipment "
-                                    "AND p.index=t.member "
-                                    "ORDER BY p.index",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
+class PortDetailsTrunkMember(PortRelatedDetails):
 
-    def render_trunk(self, ctx, data):
-        if not data:
-            return ""
-        return ctx.tag["This port is a trunk containing the following ports:",
-                       T.ul [ [ T.li[T.span(_class="data")[x[0]]] for x in data]]]
+    query = """
+SELECT p.name
+FROM trunk t, port p
+WHERE t.equipment=%(ip)s AND t.member=%(port)s
+AND p.equipment=t.equipment
+AND p.index=t.port LIMIT 1
+"""
 
-class PortDetailsTrunkMember(PortRelatedFragment):
+    def render(self, data):
+        return [("Trunk / Member of",
+                 data[0][0], None)]
 
-    docFactory = loaders.stan(T.span(render=T.directive("trunk"),
-                                     data=T.directive("trunk")))
+class PortDetailsSonmp(PortRelatedDetails):
 
-    def data_trunk(self, ctx, data):
-        return self.dbpool.runQuery("SELECT p.name "
-                                    "FROM trunk t, port p "
-                                    "WHERE t.equipment=%(ip)s AND t.member=%(port)s "
-                                    "AND p.equipment=t.equipment "
-                                    "AND p.index=t.port LIMIT 1",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
+    query = """
+SELECT DISTINCT remoteip, remoteport
+FROM sonmp WHERE equipment=%(ip)s
+AND port=%(port)s
+"""
 
-    def render_trunk(self, ctx, data):
-        if not data:
-            return ""
-        return ctx.tag["This port is a member of trunk ",
-                       T.span(_class="data")[data[0][0]], "." ]
+    def render(self, data):
+        return [("SONMP / IP",
+                 T.invisible(data=data[0][0],
+                             render=T.directive("ip")),
+                 data[0][0]),
+                ("SONMP / Port",
+                 data[0][1], None)]
 
-class PortDetailsSonmp(PortRelatedFragment):
+class PortDetailsEdp(PortRelatedDetails):
 
-    docFactory = loaders.stan(T.span(render=T.directive("sonmp"),
-                                     data=T.directive("sonmp")))
+    query = """
+SELECT DISTINCT sysname, remoteslot, remoteport
+FROM edp WHERE equipment=%(ip)s
+AND port=%(port)s
+"""
 
-    def data_sonmp(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT remoteip, remoteport "
-                                    "FROM sonmp WHERE equipment=%(ip)s "
-                                    "AND port=%(port)s",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
+    def render(self, data):
+        return [("EDP / Host",
+                 T.invisible(data=data[0][0],
+                             render=T.directive("hostname")),
+                 data[0][0]),
+                ("EDP / Port",
+                 "%d/%d" % (data[0][1], data[0][2]),
+                 data[0][1]*1000 + data[0][2])]
+    
+class PortDetailsDiscovery(PortRelatedDetails):
 
-    def render_sonmp(self, ctx, data):
-        if not data:
-            return ""
-        return ctx.tag[
-            "A device with IP ",
-            T.invisible(data=data[0][0],
-                        render=T.directive("ip")),
-            " was found with SONMP. The remote port is ",
-            T.span(_class="data", data=data[0][1],
-                   render=T.directive("sonmpport")), "."]
-
-class PortDetailsEdp(PortRelatedFragment):
-
-    docFactory = loaders.stan(T.span(render=T.directive("edp"),
-                                     data=T.directive("edp")))
-
-    def data_edp(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT sysname, remoteslot, remoteport "
-                                    "FROM edp WHERE equipment=%(ip)s "
-                                    "AND port=%(port)s",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
-
-    def render_edp(self, ctx, data):
-        if not data:
-            return ""
-        return ctx.tag[
-            "A device named ",
-            T.invisible(data=data[0][0],
-                        render=T.directive("hostname")),
-            " was found with EDP. The remote port is ",
-            T.span(_class="data")["%d/%d" % (data[0][1], data[0][2])], "."]
-
-class PortDetailsDiscovery(PortRelatedFragment):
-
-    docFactory = loaders.stan(T.span(render=T.directive("discovery"),
-                                     data=T.directive("discovery")))
-
-    def render_discovery(self, ctx, data):
-        if not data:
-            return ""
-        return ctx.tag[
-            "The device ",
-            T.invisible(data=data[0][2],
-                        render=T.directive("hostname")),
-            data[0][0] != "0.0.0.0" and T.invisible[
-            " with IP ",
-            T.invisible(data=data[0][0],
-                        render=T.directive("ip")) ] or T.invisible[""],
-            " was found with %s. Its description is " % self.discovery_name,
-            T.span(_class="data") [data[0][1]],
-            " and the remote port is ",
-            T.span(_class="data") [data[0][3]],
-            "."]
+    def render(self, data):
+        return [("%s  / Host" % self.discovery_name,
+                 T.invisible(data=data[0][2],
+                             render=T.directive("hostname")),
+                 data[0][2]),
+                ("%s  / IP" % self.discovery_name,
+                 T.invisible(data=data[0][0],
+                             render=T.directive("ip")),
+                 data[0][0]),
+                ("%s  / Description" % self.discovery_name,
+                 data[0][1], None),
+                ("%s  / Port" % self.discovery_name,
+                 data[0][3], None)]
 
 class PortDetailsLldp(PortDetailsDiscovery):
 
     discovery_name = "LLDP"
-
-    def data_discovery(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT mgmtip, sysdesc, "
-                                    "sysname, portdesc "
-                                    "FROM lldp WHERE equipment=%(ip)s "
-                                    "AND port=%(port)s",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
+    query = """
+SELECT DISTINCT mgmtip, sysdesc, sysname, portdesc
+FROM lldp WHERE equipment=%(ip)s
+AND port=%(port)s
+"""
 
 class PortDetailsCdp(PortDetailsDiscovery):
     
     discovery_name = "CDP"
-
-    def data_discovery(self, ctx, data):
-        return self.dbpool.runQuery("SELECT DISTINCT mgmtip, platform, "
-                                    "sysname, portname "
-                                    "FROM cdp WHERE equipment=%(ip)s "
-                                    "AND port=%(port)s",
-                                    {'ip': str(self.ip),
-                                     'port': self.index})
+    query = """
+SELECT DISTINCT mgmtip, platform, sysname, portname
+FROM cdp WHERE equipment=%(ip)s
+AND port=%(port)s
+"""

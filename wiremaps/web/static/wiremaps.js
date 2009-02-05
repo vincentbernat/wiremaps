@@ -29,8 +29,7 @@ $(document).ready(function() {
     $("div#actions #details a")
 	.bind("click", function(event) {
 	    event.preventDefault();
-	    $("div#ports div.portdetails:hidden")
-		      .parent().find(".portbasics").click();
+   	    $("table#ports tbody tr").not(".expanded").children("td.name").click();
 	    $(this).parent().hide();
 	});
     $("div#actions #vlans a").bind("click", showVlans);
@@ -48,6 +47,31 @@ $(document).ready(function() {
     loadEquipments();
     $.historyInit(loadHistory);
 });
+
+var sortInProgress = false;
+function sortTable()
+{
+  if (sortInProgress) {
+    return;
+  }
+  sortInProgress = true;
+  setTimeout(function() {
+    $("table#ports").tablesorter({
+      textExtraction: function(node) {
+	if ($(node).hasClass("name")) {
+	  var val = $(node).parent().attr("_index");
+	  if (val != null) {
+	    return val;
+	  }
+	}
+	if ($(node).children("span.sortable").size() == 1)
+	  return $(node).children("span.sortable").html();
+	return $(node).html();
+      }
+    });
+    sortInProgress = false;
+  }, 300);
+}
 
 function loadEquipments()
 {
@@ -105,7 +129,7 @@ function loadEquipment(ip)
 	.attr("src", "images/" + ip)
 	.parent().show();
     $("div#actions a").attr("href", "search/" + ip + "/");
-    $("div#ports").hide();
+    $("table#ports").hide();
     $("div#infovlans").hide();
     $.ajax({type: "GET",
 	    cache: false,
@@ -129,7 +153,7 @@ function loadEquipment(ip)
 	    },
 	    success: function(data) {
 		replacePorts(data);
-		$("div#ports").show();
+		$("table#ports").show();
 		$("div#actions #details").show();
 		$("div#actions #vlans").show();
 		hideMessage();
@@ -162,77 +186,108 @@ function showVlans(event)
 
 function displayPortDetails(event)
 {
-    // "this" should be a .portbasics
-    event.preventDefault();
-    var port = $(this).find(".portname").attr("_index");
-    var portdetails = $(this).parent()
-	.find("div.portdetails");
-    var ip = $("div#photo img")
-	.attr("src").match(/.*\/([0-9.]+)$/)[1];
-    portdetails.find("li").remove();
-    portdetails.parent().addClass("loading");
-    $.ajax({type: "GET",
-	    cache: false,
-	    url: "equipment/"+ip+"/"+port+"/",
-	    dataType: "json",
-	    error: function(xmlh, textstatus, error) {
-		sendMessage("alert",
-		"Unable to get detailed info for port " + port);
-	    },
-	    success: function(data) {
-		displayPortInformation(portdetails, data);
-	    }});
+  event.preventDefault();
+  var port = $(this).parent();
+  port.addClass("expanded");
+  var ip = $("div#photo img")
+	     .attr("src").match(/.*\/([0-9.]+)$/)[1];
+  port.find("td.state").addClass("loading");
+  $.ajax({type: "GET",
+	  cache: false,
+	  url: "equipment/"+ip+"/"+port.attr("_index")+"/",
+	  dataType: "json",
+	  error: function(xmlh, textstatus, error) {
+	    sendMessage("alert",
+	                "Unable to get detailed info for port " + port);
+	  },
+	  success: function(data) {
+	    displayPortInformation(port, data);
+	  }});
+}
+
+function hidePortDetails(event)
+{
+  event.preventDefault();
+  var port = $(this).parent();
+  port.removeClass("expanded");
+  port.children(":gt(2)").html("");
 }
 
 function replacePorts(ports)
 {
-    var portUl = $("div#ports > ul");
-    var portReference = portUl.children(":first");
-    portReference.hide();
-    portUl.children(":not(:first)").remove();
+    var portRows = $("table#ports > tbody");
+    var portReference = portRows.children(":first");
+    $("table#ports > thead th:gt(2)").remove();
+    portReference.removeClass("expanded")
+      .hide()
+      .children(":gt(2)").remove();
+    portRows.children(":not(:first)").remove();
     for (var i = 0; i < ports.length; i++) {
-	var port = portReference.clone().appendTo("div#ports > ul");
+	var port = portReference.clone().appendTo("table#ports > tbody");
 	var speed = ports[i][4];
 	if ([10, 100, 1000, 10000].indexOf(speed) == -1)
 	  speed = null;
 	port
-	    .removeClass("loading")
-	    .css("background",
-		 "url(static/port-"+ports[i][3]+"-"+speed+"-"+ports[i][5]+
-		 "-"+ports[i][6]+".png) no-repeat scroll 0 5px")
-	    .find("div.portname")
-	        .find("a").html(ports[i][1]).end()
-		.attr("_index", ports[i][0])
-		.parent()
-		.toggle(displayPortDetails,
-			function(event) {
-			    event.preventDefault();
-			    $(this).parent().find("div.portdetails")
-				.hide();
-			});
+	  .children("td.name").toggle(displayPortDetails, hidePortDetails).end()
+	  .find("td.state img").attr("src","static/port-"+ports[i][3]+
+				     "-"+speed+"-"+ports[i][5]+
+				     "-"+ports[i][6]+".png").end()
+	  .find("td.name a").html(ports[i][1]).end()
+	  .attr("_index", ports[i][0]);
 	if (ports[i][2] === null)
-	    port.find("div.portalias").hide();
+	  port.find("td.description").html("");
 	else
-	    port.find("div.portalias").html(ports[i][2]).show();
+	  port.find("td.description").html(ports[i][2]);
     }
-    portUl.find("div.portdetails").hide();
-    portUl.children(":not(:first)").show();
+    if (ports.length > 0) {
+      portReference.remove();
+    }
+    portRows.children().show();
+    sortTable();
 }
 
-function displayPortInformation(portdetails, data) {
-    var ul = portdetails.children("ul");
-    var j=0;
+
+function displayPortInformation(port, data) {
     for (var i = 0; i < data.length; i++) {
-      if (data[i]!="") {
-	ul.append("<li>"+data[i]+"</li>");
-	j++;
+      var column = data[i][0];
+      var html = data[i][1];
+      var sort = data[i][2];
+      // Does the column already exists?
+      var columns = $("table#ports thead th");
+      var found = false;
+      var index = 3;		// Skip first children
+      while (index < columns.size()) {
+	if (columns.eq(index).text() == column) {
+	  found = true;
+	  break;
+	}
+	if (columns.eq(index).text() > column) {
+	  index--;
+	  break;
+	}
+	index++;
+      }
+      if (index == columns.size())
+	index--;
+      if (!found) {
+	// We need to insert a new column at this index
+	index++;
+	$("#ports > thead > tr > th:nth-child("+index+")")
+	  .after("<th>"+column+"</th>");
+	$("#ports > tbody > tr > td:nth-child("+index+")")
+	  .after("<td class='column'></td>");
+      }
+      port.children().eq(index).html(html);
+      if (sort != null) {
+	var s = $(document.createElement("span"));
+	s.attr("class", "sortable");
+	s.text(sort);
+	s.appendTo(port.children().eq(index));
       }
     }
-    if (j==0)
-      ul.append("<li>No information on this port</li>");
-    portdetails.find("a").bind("click", searchOrShow);
-    portdetails.show();
-    portdetails.parent().removeClass("loading");
+    port.find("td.column a").bind("click", searchOrShow);
+    port.find("td.state").removeClass("loading");
+    sortTable();
 }
 
 function displaySearchResults(data, elt) {

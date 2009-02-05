@@ -93,35 +93,28 @@
       </div>
       
       <!-- Information on each port -->
-      <div id="ports">
-	<ul>
-	  <li class="port">
-	    <div class="portbasics">
-	      <div class="portname">
-		<a href="#">Port 1</a>
-	      </div><div class="portalias">
-		(Port alias)
-	      </div>
-	    </div>
-	    <div class="portdetails">
-	      <ul>
-		<!-- The following li is just an example. It will be
-		     replaced by something sent by the server -->
-		<li>Host
-		  <a href="search/swbg1po01.net.b1.p.fti.net">swbg1po01.net.b1.p.fti.net</a>
-		  (<span class="data">Ethernet Routing Switch 5510-24T</span>)
-		  has been detected on this port with LLDP. Its IP is
-		  <a href="search/172.16.101.21">172.16.101.21</a>. Remote
-		  port is <span class="data">Unit 1 - Port
-		12</span>.
-		</li>
-	      </ul>
-	    </div>
-	  </li>
-
-	</ul>
-      </div>
-      <div id="end"></div>
+      <table id="ports">
+	<thead>
+	  <tr class="category">
+	    <th />
+	    <th>Name</th>
+	    <th>Description</th>
+	  </tr>
+	</thead>
+	<tbody>
+	  <tr>
+	    <td class="state">
+	      <img src="static/port-up-1000-full-true.png" alt="up 1000 full" />
+	    </td>
+	    <td class="name">
+	      <a href="#">Port 2/15</a>
+	    </td>
+	    <td class="description">
+	      Description of port
+	    </td>
+	  </tr>
+	</tbody>
+      </table>
     </div>
   </body>
 </html>

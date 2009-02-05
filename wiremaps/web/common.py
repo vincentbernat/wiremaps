@@ -3,6 +3,7 @@ import re
 from twisted.names import client
 from nevow import rend
 from nevow import tags as T, entities as E
+from nevow.stan import Entity
 
 class RenderMixIn:
     """Helper class that provide some builtin fragments"""
@@ -24,13 +25,21 @@ class RenderMixIn:
         d.addErrback(lambda x: None)
         return d
 
+    zwsp = Entity('zwsp', 8203, 'zero width space')
+    def render_zwsp(self, name):
+        result = []
+        for x in name.replace(".",". ").replace("-","- ").split(" "):
+            result.append(x)
+            result.append(self.zwsp)
+        return result
+
     def render_solvedip(self, ctx, name):
         try:
-            return ctx.tag[" ", E.harr, " ",
-                           str(name[0][0].payload.name),
-                           ]
+            name = str(name[0][0].payload.name)
         except:
             return ctx.tag
+        return ctx.tag[" ", E.harr, " ",
+                       self.render_zwsp(name)]
 
     def render_mac(self, ctx, mac):
         return T.a(href="search/%s/" % mac) [ mac ]
@@ -40,8 +49,8 @@ class RenderMixIn:
                                  "WHERE lower(name)=lower(%(name)s)",
                                  {'name': name})
         d.addCallback(lambda x: x and
-                      T.a(href="equipment/%s/" % name) [ name ] or
-                      T.a(href="search/%s/" % name) [ name ])
+                      T.a(href="equipment/%s/" % name) [ self.render_zwsp(name) ] or
+                      T.a(href="search/%s/" % name) [ self.render_zwsp(name) ])
         return d    
 
     def render_vlan(self, ctx, vlan):
@@ -83,6 +92,14 @@ class RenderMixIn:
                                            lmo.group(3),
                                            cmo.group(3))
         return ctx.tag[", ".join(results)]
+
+    def render_tooltip(self, ctx, data):
+        return T.a(_class="tt")[
+            T.small[" [?] "],
+            T.span(_class="tooltip")[
+                T.span(_class="top"),
+                T.span(_class="middle")[data],
+                T.span(_class="bottom")]]
 
 class FragmentMixIn(rend.Fragment, RenderMixIn):
     def __init__(self, dbpool, *args, **kwargs):

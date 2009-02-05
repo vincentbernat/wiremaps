@@ -127,7 +127,7 @@ div#searchactions, div#vlanactions
 
 .ac_loading
 {
-    background : Window url('autocomplete.gif') right center no-repeat;
+    background : Window url('loading.gif') right center no-repeat;
 }
 
 .ac_over
@@ -206,66 +206,84 @@ div#description
 }
 
 /* Ports */
-div#ports
+table#ports
 { 
+    margin-top: 1em;
     display: none;
 }
-div#ports > ul
+table#ports td
 {
-    list-style-type: none;
+    padding-right: 0.2em;
+    padding-left: 0.1em;
 }
-div#ports ul li.port
+table#ports td.column
 {
-    float: left;
-    width: 45%;
-    margin-right: 1%;
-    min-height: 35px;
-    padding: 5px;
+    border-left: 1px solid #ccc;
 }
-div#ports li.loading
+table#ports thead th
 {
-    background: url(loading.gif) no-repeat !important;
+    padding-right: 16px;
+    font-size: 70%;
 }
-div.portbasics, div.portname
+table#ports thead tr.category th
 {
-    display: inline;
+    text-align: center;
+    padding-left: 0.5em;
 }
-div.portbasics
+table#ports tbody tr:hover
 {
-    vertical-align: middle;
-    margin-left: 35px;
+    background-color: #ace8f3;
 }
-div.portname
+table#ports tbody
+{
+    font-size: 80%;
+}
+table#ports .name
 {
     font-weight: bold;
+}
+table#ports .description
+{
     font-style: oblique;
 }
-div.portalias
-{ 
-    font-size: x-small;
-    margin-left: 40px;
-}
-div.portdetails
+table#ports thead tr .header
 {
-    margin-left: 0.5em;
+	background-image: url(sort.gif);
+	background-repeat: no-repeat;
+	background-position: center right;
+	cursor: pointer;
 }
-div.portdetails ul
+table#ports thead tr .headerSortUp
 {
-    list-style-image: url(bullet.png);
+    background-image: url(sort_asc.gif);
 }
-div#end
+table#ports thead tr .headerSortDown
 {
-    clear: both;
+    background-image: url(sort_desc.gif);
 }
+table#ports thead tr .headerSortDown, table#ports thead tr .headerSortUp
+{
+    background-color: #8dbdd8;
+}
+table#ports td.loading
+{
+    background: url(loading.gif) center center no-repeat;
+}
+table#ports td.loading img
+{
+    visibility: hidden;
+}
+table#ports span.sortable
+{
+    display: none;
+}
+
+/* Vlan */
 table.vlan
 {
     margin-left: 1ex;
     border: 2px;
     text-align: center;
-}
-table.mac tbody
-{
-    font-size: 80%;
 }
 table.vlan td, table.mac td
 {
@@ -277,15 +295,7 @@ table.vlan thead td, table.mac thead td
     font-weight: bold;
     background-color: #ccc;
 }
-tr.odd td
-{
-    background-color: #d6ffab;
-}
-tr.even td
-{
-    background-color: #a6ef7b;
-}
-table.vlan tr td.notpresent, table.mac tr td.notpresent
+table.vlan tbody tr td.notpresent, table.mac tbody tr td.notpresent
 {
     background-color: #EF9398;
 }
@@ -309,3 +319,65 @@ div#infovlans table
     margin-right: auto;
 }
 
+/* MAC table */
+table.mac tbody
+{
+    font-size: 80%;
+}
+
+/* Common MAC and VLAN */
+table.vlan tr.odd td, table.mac tr.odd td
+{
+    background-color: #d6ffab;
+}
+table.vlan tr.even td, table.mac tr.even td
+{
+    background-color: #a6ef7b;
+}
+
+/* Tooltips, stolen and adapted from http://trentrichardson.com/examples/csstooltips/ */
+a.tt
+{
+    position: relative;
+    z-index: 24;
+    font-weight: bold;
+    text-decoration: none;
+}
+a.tt span
+{
+    display: none;
+    font-weight: normal;
+}
+a.tt:hover
+{
+    z-index: 25;
+    background:;
+}
+a.tt:hover span.tooltip
+{
+    display: block;
+    position: absolute;
+    top: 0px;
+    left: -200px;
+    padding: 15px 0 0 0;
+    width: 200px;
+    text-align: center;
+}
+a.tt:hover span.top
+{
+    display: block;
+    padding: 30px 8px 0;
+    background: url(bubble.gif) no-repeat top;
+}
+a.tt:hover span.middle
+{
+    display: block;
+    padding: 0 8px; 
+    background: url(bubble-filler.gif) repeat bottom; 
+}
+a.tt:hover span.bottom
+{
+    display: block;
+    padding: 3px 8px 10px;
+    background: url(bubble.gif) no-repeat bottom;
+}
