@@ -75,7 +75,7 @@ div#searchresults
     border: 1px solid #f1722c;
     display: none;
 }
-div#searchactions, div#vlanactions
+div#searchactions, div#vlanactions, div.tooltipactions
 {
     font-size: x-small;
     text-align: right;
@@ -177,7 +177,7 @@ div#actions
     float: right;
     visibility: hidden;
 }
-div#actions li, div#actions ul, div#searchactions li, div#searchactions ul, div#vlanactions li, div#vlanactions ul
+div#actions li, div#actions ul, div#searchactions li, div#searchactions ul, div#vlanactions li, div#vlanactions ul, div.tooltipactions li, div.tooltipactions ul
 {
     display: inline;
 }
@@ -283,9 +283,9 @@ table#ports span.sortable
 }
 
 /* Vlan */
-table.vlan
+table.vlan, table.mac
 {
-    margin-left: 1ex;
+    margin: 1ex auto;
     border: 2px;
     text-align: center;
 }
@@ -339,49 +339,27 @@ table.vlan tr.even td, table.mac tr.even td
     background-color: #a6ef7b;
 }
 
-/* Tooltips, stolen and adapted from http://trentrichardson.com/examples/csstooltips/ */
 a.tt
 {
-    position: relative;
-    z-index: 24;
     font-weight: bold;
-    text-decoration: none;
+    text-decoration: underline;
 }
-a.tt span
+a.tt span.tooltip
 {
+    overflow: auto;
+    z-index: 24;
     display: none;
     font-weight: normal;
-}
-a.tt:hover
-{
-    z-index: 25;
-    background:;
-}
-a.tt:hover span.tooltip
-{
-    display: block;
-    position: absolute;
-    top: 0px;
-    left: -200px;
-    padding: 15px 0 0 0;
-    width: 200px;
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    margin-left: -20em;
+    width: 40em;
+    padding: 2em;
+    background: #fff;
+    border: 1px solid #000;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
     text-align: center;
-}
-a.tt:hover span.top
-{
-    display: block;
-    padding: 30px 8px 0;
-    background: url(bubble.gif) no-repeat top;
-}
-a.tt:hover span.middle
-{
-    display: block;
-    padding: 0 8px; 
-    background: url(bubble-filler.gif) repeat bottom; 
-}
-a.tt:hover span.bottom
-{
-    display: block;
-    padding: 3px 8px 10px;
-    background: url(bubble.gif) no-repeat bottom;
+    font-size: 120%;
 }

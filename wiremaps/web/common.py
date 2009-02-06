@@ -95,11 +95,15 @@ class RenderMixIn:
 
     def render_tooltip(self, ctx, data):
         return T.a(_class="tt")[
-            T.small[" [?] "],
+            " [?] ",
             T.span(_class="tooltip")[
-                T.span(_class="top"),
-                T.span(_class="middle")[data],
-                T.span(_class="bottom")]]
+                T.div(_class="tooltipactions")[
+                    T.ul[
+                        T.li(_class="closetooltip")[
+                            " [ ",
+                            T.a(href="#")["close"],
+                            " ]"]]],
+                data]]
 
 class FragmentMixIn(rend.Fragment, RenderMixIn):
     def __init__(self, dbpool, *args, **kwargs):

@@ -293,9 +293,25 @@ function displayPortInformation(port, data) {
 	s.appendTo(port.children().eq(index));
       }
     }
-    port.find("td.column a").bind("click", searchOrShow);
+    port.find("td.column a")
+      .not(".tt").bind("click", searchOrShow).end()
+      .filter(".tt").bind("click", displayTooltip)
+      .find(".tooltipactions .closetooltip a").unbind().bind("click", closeTooltip);
+
     port.find("td.state").removeClass("loading");
     sortTable();
+}
+
+function closeTooltip(event) {
+  event.preventDefault();
+  $(this).parents("span.tooltip").css("display","none");
+  return false;
+}
+
+function displayTooltip(event) {
+  event.preventDefault();
+  $("span.tooltip").css("display","none");
+  $(this).children("span.tooltip").css("display","block");
 }
 
 function displaySearchResults(data, elt) {
