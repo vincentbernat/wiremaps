@@ -55,6 +55,12 @@ $(document).ready(function() {
     $.historyInit(loadHistory);
 });
 
+function colorTable() {
+  $("table#ports tbody > tr")
+    .filter(":even").addClass("even").removeClass("odd").end()
+    .filter(":odd").addClass("odd").removeClass("even");
+}
+
 var sortInProgress = false;
 function sortTable()
 {
@@ -65,6 +71,7 @@ function sortTable()
   setTimeout(function() {
     $("table#ports").unbind();
     $("table#ports thead th").unbind();
+    $("table#ports").bind("sortEnd", colorTable);
     $("table#ports").tablesorter({
       textExtraction: function(node) {
 	if ($(node).hasClass("name")) {
@@ -261,6 +268,7 @@ function replacePorts(ports)
     }
     portRows.children().show();
     sortTable();
+    colorTable();
 }
 
 

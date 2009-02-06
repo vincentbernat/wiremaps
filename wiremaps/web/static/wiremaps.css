@@ -238,6 +238,10 @@ table#ports tbody tr:hover
 {
     background-color: #ace8f3;
 }
+table#ports tbody tr.odd
+{
+    background-color: #ccc;
+}
 table#ports tbody
 {
     font-size: 80%;
@@ -250,12 +254,18 @@ table#ports .description
 {
     font-style: oblique;
 }
+table#ports thead
+{
+    background-color: #888;
+}
 table#ports thead tr .header
 {
 	background-image: url(sort.gif);
 	background-repeat: no-repeat;
 	background-position: center right;
 	cursor: pointer;
+	padding-top: 1ex;
+	padding-bottom: 1ex;
 }
 table#ports thead tr .headerSortUp
 {
