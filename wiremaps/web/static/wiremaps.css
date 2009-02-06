@@ -281,6 +281,36 @@ table#ports span.sortable
 {
     display: none;
 }
+div#colswitch1
+{
+    position: relative;
+    bottom: 0; left: 0;
+    margin: 0; padding: 0;
+    display: none;
+}
+div#colswitch2
+{
+    position: absolute;
+    top: -2em;
+    left: -1em;
+    width: 20em;
+    margin: 0; padding: 0;
+}
+div#colswitch2 > img
+{
+    float: left;
+}
+div#colsdisp
+{
+    background-color: #e1c851;
+    border: 1px solid black;
+    margin-left: 50px;
+    display: none;
+}
+div#colsdisp ul li
+{
+    list-style: none;
+}
 
 /* Vlan */
 table.vlan, table.mac

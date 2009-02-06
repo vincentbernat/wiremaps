@@ -1,4 +1,4 @@
-IMAGES=$(patsubst %.svg,%.png,$(wildcard port-*.svg))
+IMAGES=$(patsubst %.svg,%.png,$(wildcard port-*.svg col-*.svg))
 WIDTH=30
 
 all: stamp-ports

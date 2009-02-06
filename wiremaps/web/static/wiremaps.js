@@ -35,6 +35,13 @@ $(document).ready(function() {
     $("div#actions #vlans a").bind("click", showVlans);
     $("div#actions #autosearch a").bind("click", searchOrShow);
     $("div#actions #refresh a").bind("click", refresh);
+    $("#colswitch2 img").toggle(function(event) {
+				  event.preventDefault();
+				  $("#colsdisp").css("display","block");
+				}, function(event) {
+				  event.preventDefault();
+				  $("#colsdisp").css("display","none");
+				});
     /* Unhide application on load */
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
@@ -135,6 +142,7 @@ function loadEquipment(ip)
 	.parent().show();
     $("div#actions a").attr("href", "search/" + ip + "/");
     $("table#ports").hide();
+    $("#colswitch1").hide();
     $("div#infovlans").hide();
     $.ajax({type: "GET",
 	    cache: false,
@@ -222,6 +230,7 @@ function replacePorts(ports)
 {
     var portRows = $("table#ports > tbody");
     var portReference = portRows.children(":first");
+    $("#colsdisp li").remove();
     $("table#ports > thead th:gt(2)").remove();
     portReference.removeClass("expanded")
       .hide()
@@ -284,6 +293,19 @@ function displayPortInformation(port, data) {
 	  .after("<th>"+column+"</th>");
 	$("#ports > tbody > tr > td:nth-child("+index+")")
 	  .after("<td class='column'></td>");
+	// And insert it into colsdisp
+	var content = $(document.createElement("li"));
+	var input = $(document.createElement("input"));
+	input.attr("type", "checkbox");
+	input.attr("checked", "1");
+	input.bind("change", showHideColumn);
+	content.append(input);
+	content.append(column);
+	if (index == 3)
+	  $("#colsdisp ul").prepend(content);
+	else
+	  $("#colsdisp ul > li:nth-child("+(index-3)+")").after(content);
+	$("#colswitch1").show();
       }
       port.children().eq(index).html(html);
       if (sort != null) {
@@ -300,6 +322,15 @@ function displayPortInformation(port, data) {
 
     port.find("td.state").removeClass("loading");
     sortTable();
+}
+
+function showHideColumn(event) {
+  var index = $("#colsdisp ul li").index($(this).parent());
+  var column = $("#ports tr > :nth-child("+(index+4)+")");
+  if ($(this).is(":checked"))
+    column.show();
+  else
+    column.hide();
 }
 
 function closeTooltip(event) {
