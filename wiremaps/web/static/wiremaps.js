@@ -64,6 +64,9 @@ function sortTable()
 	    return val;
 	  }
 	}
+	if ($(node).hasClass("state")) {
+	  return $(node).children("img").attr("alt");
+	}
 	if ($(node).children("span.sortable").size() == 1)
 	  return $(node).children("span.sortable").html();
 	return $(node).html();
@@ -229,9 +232,12 @@ function replacePorts(ports)
 	  speed = null;
 	port
 	  .children("td.name").toggle(displayPortDetails, hidePortDetails).end()
-	  .find("td.state img").attr("src","static/port-"+ports[i][3]+
-				     "-"+speed+"-"+ports[i][5]+
-				     "-"+ports[i][6]+".png").end()
+	  .find("td.state img")
+	    .attr("src","static/port-"+ports[i][3]+
+		  "-"+speed+"-"+ports[i][5]+
+		  "-"+ports[i][6]+".png")
+	    .attr("alt", ports[i][3]+" "+speed+" "+ports[i][5])
+	    .end()
 	  .find("td.name a").html(ports[i][1]).end()
 	  .attr("_index", ports[i][0]);
 	if (ports[i][2] === null)
