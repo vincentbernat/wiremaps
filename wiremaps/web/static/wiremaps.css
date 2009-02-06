@@ -234,7 +234,7 @@ table#ports thead tr.category th
     text-align: center;
     padding-left: 0.5em;
 }
-table#ports tbody tr:hover
+table#ports tbody tr:hover, table#ports tbody tr.odd:hover
 {
     background-color: #ace8f3;
 }
