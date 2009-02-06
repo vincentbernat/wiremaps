@@ -206,6 +206,10 @@ div#description
 }
 
 /* Ports */
+div#portscontainer
+{
+    overflow: auto;
+}
 table#ports
 { 
     margin-top: 1em;
