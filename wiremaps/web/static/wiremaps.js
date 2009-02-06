@@ -56,6 +56,8 @@ function sortTable()
   }
   sortInProgress = true;
   setTimeout(function() {
+    $("table#ports").unbind();
+    $("table#ports thead th").unbind();
     $("table#ports").tablesorter({
       textExtraction: function(node) {
 	if ($(node).hasClass("name")) {
