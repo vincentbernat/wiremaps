@@ -385,6 +385,8 @@ a.tt span.tooltip
     left: 50%;
     margin-left: -20em;
     width: 40em;
+    max-height: 50ex;
+    overflow: auto;
     padding: 2em;
     background: #fff;
     border: 1px solid #000;
