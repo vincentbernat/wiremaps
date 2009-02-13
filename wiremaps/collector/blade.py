@@ -20,6 +20,7 @@ class BladeEthernetSwitch:
         raise NotImplementedError
 
     def collectData(self, ip, proxy, dbpool):
+        proxy.use_getbulk = False # Some Blade have bogus GETBULK
         ports = PortCollector(proxy, dbpool, normPort=lambda x: x%128)
         if self.ifDescr is not None:
             ports.ifDescr = self.ifDescr
