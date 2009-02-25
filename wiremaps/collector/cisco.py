@@ -104,7 +104,10 @@ class CiscoVlanCollector:
     # Is trunking enabled? trunking(1)
     vlanTrunkPortDynamicStatus = '.1.3.6.1.4.1.9.9.46.1.6.1.1.14'
     # If yes, which VLAN are present on the given trunk
-    vlanTrunkPortVlansEnabled = '.1.3.6.1.4.1.9.9.46.1.6.1.1.4'
+    vlanTrunkPortVlansEnabled = ['.1.3.6.1.4.1.9.9.46.1.6.1.1.4',
+                                 '.1.3.6.1.4.1.9.9.46.1.6.1.1.17',
+                                 '.1.3.6.1.4.1.9.9.46.1.6.1.1.18',
+                                 '.1.3.6.1.4.1.9.9.46.1.6.1.1.19']
     vlanTrunkPortNativeVlan = '.1.3.6.1.4.1.9.9.46.1.6.1.1.5'
     # If no, maybe the interface has a vlan?
     vmVlan = '.1.3.6.1.4.1.9.9.68.1.2.2.1.2'
@@ -135,22 +138,26 @@ class CiscoVlanCollector:
             if results[oid] == 1:
                 self.trunked.append(port)
 
-    def gotTrunkVlans(self, results):
+    def gotTrunkVlans(self, results, index=0):
         """Callback handling reception of VLAN membership for a trunked port
         
         @param results: VLAN enabled for given port from
-           C{CISCO-VTP-MIB::vlanTrunkPortVlansEnabled}
+           C{CISCO-VTP-MIB::vlanTrunkPortVlansEnabledXX}
+        @param index: which range the vlan are in (0 for 0 to 1023,
+           1 for 1024 to 2047, 2 for 2048 to 3071 and 3 for 3072 to
+           4095)
         """
         for oid in results:
             port = int(oid.split(".")[-1])
             if port in self.trunked:
-                self.vlans[port] = []
+                if port not in self.vlans:
+                    self.vlans[port] = []
                 for i in range(0, len(results[oid])):
                     if ord(results[oid][i]) == 0:
                             continue
                     for j in range(0, 8):
                         if ord(results[oid][i]) & (1 << j):
-                            self.vlans[port].append(7-j + 8*i)
+                            self.vlans[port].append(7-j + 8*i + index*1024)
     
     def gotNativeVlan(self, results):
         """Callback handling reception of native VLAN for a port
@@ -193,8 +200,9 @@ class CiscoVlanCollector:
         d.addCallback(self.gotVlanNames)
         d.addCallback(lambda x: self.proxy.walk(self.vlanTrunkPortDynamicStatus))
         d.addCallback(self.gotTrunkStatus)
-        d.addCallback(lambda x: self.proxy.walk(self.vlanTrunkPortVlansEnabled))
-        d.addCallback(self.gotTrunkVlans)
+        for v in self.vlanTrunkPortVlansEnabled:
+            d.addCallback(lambda x,vv: self.proxy.walk(vv), v)
+            d.addCallback(self.gotTrunkVlans, self.vlanTrunkPortVlansEnabled.index(v))
         d.addCallback(lambda x: self.proxy.walk(self.vmVlan))
         d.addCallback(self.gotNativeVlan)
         d.addCallback(lambda x: self.proxy.walk(self.vlanTrunkPortNativeVlan))
