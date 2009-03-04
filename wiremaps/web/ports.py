@@ -169,12 +169,13 @@ ORDER BY vvid
 class PortDetailsFdb(PortRelatedDetails):
 
     query = """
-SELECT DISTINCT f.mac, a.ip
+SELECT DISTINCT f.mac, MIN(a.ip::text)::inet AS minip
 FROM fdb f LEFT OUTER JOIN arp a
 ON a.mac = f.mac
 WHERE f.equipment=%(ip)s
 AND f.port=%(port)s
-ORDER BY a.ip ASC, f.mac
+GROUP BY f.mac
+ORDER BY minip ASC, f.mac
 LIMIT 20
 """
 
