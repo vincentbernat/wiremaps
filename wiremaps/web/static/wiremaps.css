@@ -381,6 +381,7 @@ table.vlan tr.even td, table.mac tr.even td
 
 a.tt
 {
+    cursor: pointer;
     font-weight: bold;
     text-decoration: underline;
 }
