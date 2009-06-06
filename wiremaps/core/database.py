@@ -33,8 +33,13 @@ class Database:
             d.addCallback(lambda x,ff: getattr(self, ff)(), f)
         d.addCallbacks(
             lambda x: log.msg("database upgrade completed"),
-            lambda x: log.msg("unable to update database: %s" % str(x)))
+            self.upgradeFailure)
         return d
+
+    def upgradeFailure(self, fail):
+        """When upgrade fails, just stop the reactor..."""
+        log.msg("unable to update database: %s" % str(fail))
+        reactor.stop()
 
     def upgradeDatabase_01(self):
         """add 'last' column to 'equipment' table"""
@@ -145,3 +150,4 @@ CREATE TABLE trunk (
                               
         d = self.pool.runOperation("SELECT duplex FROM port LIMIT 1")
         d.addErrback(lambda x: upgrade())
+        return d
