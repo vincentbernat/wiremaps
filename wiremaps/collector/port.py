@@ -167,12 +167,16 @@ class PortCollector:
         """
 
         def fileIntoDb(txn, names, aliases, status, address, speed, ip):
-            # Merge names with aliases
+            # This table is a bit complicated to use because it is
+            # feeded with data from other sources. Therefore, we need
+            # to make selective update instead of just delete and add
+            # back.
             tmp = aliases.copy()
             tmp.update(names)
             names = tmp
             newports = names.keys()
-            txn.execute("SELECT index FROM port WHERE equipment = %(ip)s",
+            txn.execute("SELECT index FROM port WHERE equipment = %(ip)s "
+                        "AND deleted='infinity'",
                         {'ip': str(ip)})
             ports = txn.fetchall()
             for port in ports:
@@ -181,22 +185,28 @@ class PortCollector:
                 if port in aliases:
                     alias = aliases[port]
                 if port not in newports:
-                    txn.execute("DELETE FROM port WHERE equipment = %(ip)s "
-                                "AND index = %(index)s", {'ip': str(ip),
-                                                          'index': port})
+                    # Delete port
+                    txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
+                                "WHERE equipment = %(ip)s "
+                                "AND index = %(index)s AND deleted='infinity'",
+                                {'ip': str(ip),
+                                 'index': port})
                 else:
+                    # Refresh port
                     newports.remove(port)
                     txn.execute("UPDATE port SET name=%(name)s, alias=%(alias)s, "
                                 "cstate=%(state)s, mac=%(address)s, speed=%(speed)s "
                                 "WHERE equipment = %(ip)s "
-                                "AND index = %(index)s", {'ip': str(ip),
-                                                          'index': port,
-                                                          'name': names[port],
-                                                          'alias': alias,
-                                                          'address': address.get(port, None),
-                                                          'speed': speed.get(port, None),
-                                                          'state': status[port]})
+                                "AND index = %(index)s AND deleted='infinity'",
+                                {'ip': str(ip),
+                                 'index': port,
+                                 'name': names[port],
+                                 'alias': alias,
+                                 'address': address.get(port, None),
+                                 'speed': speed.get(port, None),
+                                 'state': status[port]})
             for port in newports:
+                # Add port
                 alias = None
                 if port in aliases:
                     alias = aliases[port]
@@ -214,7 +224,8 @@ class PortCollector:
                              })
 
         def fileTrunkIntoDb(txn, trunk, ip):
-            txn.execute("DELETE FROM trunk WHERE equipment=%(ip)s", {'ip': str(ip)})
+            txn.execute("UPDATE trunk SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
             for t in trunk:
                 for port in trunk[t]:
                     txn.execute("INSERT INTO trunk VALUES (%(ip)s, %(trunk)s, %(port)s)",

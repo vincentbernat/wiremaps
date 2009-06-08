@@ -12,7 +12,9 @@ class EquipmentResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return self.dbpool.runQuery("SELECT name,ip FROM equipment ORDER BY name")
+        return self.dbpool.runQuery("SELECT name,ip FROM equipment "
+                                    "WHERE deleted='infinity' "
+                                    "ORDER BY name")
 
     def child_refresh(self, ctx):
         self.collector.startExploration()
@@ -33,7 +35,7 @@ class EquipmentDescriptionResource(JsonPage):
 
     def data_json(self, ctx, data):
         return self.dbpool.runQuery("SELECT description FROM equipment "
-                                    "WHERE ip=%(ip)s",
+                                    "WHERE ip=%(ip)s AND deleted='infinity'",
                                     {'ip': str(self.ip)})
 
 class EquipmentVlansResource(rend.Page, RenderMixIn):
@@ -74,8 +76,9 @@ class EquipmentVlansResource(rend.Page, RenderMixIn):
         return self.dbpool.runQuery("SELECT v.vid, v.name, p.name "
                                     "FROM vlan v, port p "
                                     "WHERE v.equipment=%(ip)s AND v.type='local' "
-                                    "AND v.port = p.index AND "
-                                    "p.equipment = v.equipment "
+                                    "AND v.port = p.index "
+                                    "AND p.equipment = v.equipment "
+                                    "AND deleted='infinity' "
                                     "ORDER BY v.vid, p.index",
                                     {'ip': str(self.ip)})
 
@@ -91,6 +94,7 @@ class EquipmentDetailResource(JsonPage):
     def data_json(self, ctx, data):
         return self.dbpool.runQuery("SELECT index, name, alias, cstate, speed, duplex, autoneg "
                                     "FROM port WHERE equipment=%(ip)s "
+                                    "AND deleted='infinity' "
                                     "ORDER BY index",
                                     {'ip': str(self.ip)})
 
@@ -123,7 +127,8 @@ class RefreshEquipmentResource(JsonPage):
         return d
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery("SELECT ip FROM equipment WHERE ip=%(ip)s",
+        d = self.dbpool.runQuery("SELECT ip FROM equipment "
+                                 "WHERE ip=%(ip)s AND deleted='infinity'",
                                  {'ip': str(self.ip)})
         d.addCallback(self.gotEquipment)
         return d

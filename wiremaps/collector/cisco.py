@@ -175,7 +175,8 @@ class CiscoVlanCollector:
         """Collect VLAN data from SNMP"""
     
         def fileVlanIntoDb(txn, names, vlans, ip):
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
+            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND type='local' AND deleted='infinity'",
                         {'ip': str(ip)})
             for port in vlans:
                 if port not in self.ports.portNames:

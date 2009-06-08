@@ -108,6 +108,9 @@ AND l.portdesc=lp.name
 AND lp.index=%(port)s
 AND l.equipment=re.ip
 AND l.port=rp.index AND rp.equipment=re.ip
+AND l.deleted='infinity' AND re.deleted='infinity'
+AND le.deleted='infinity' AND lp.deleted='infinity'
+AND rp.deleted='infinity'
 """
 
     def render(self, data):
@@ -126,9 +129,11 @@ class PortDetailsVlan(PortRelatedDetails):
     query = """
 SELECT COALESCE(l.vid, r.vid) as vvid, l.name, r.name
 FROM
-(SELECT * FROM vlan WHERE equipment=%(ip)s AND port=%(port)s AND type='local') l
+(SELECT * FROM vlan
+ WHERE deleted='infinity' AND equipment=%(ip)s AND port=%(port)s AND type='local') l
 FULL OUTER JOIN
-(SELECT * FROM vlan WHERE equipment=%(ip)s AND port=%(port)s AND type='remote') r
+(SELECT * FROM vlan
+ WHERE deleted='infinity' AND equipment=%(ip)s AND port=%(port)s AND type='remote') r
 ON l.vid = r.vid
 ORDER BY vvid
 """
@@ -174,6 +179,7 @@ FROM fdb f LEFT OUTER JOIN arp a
 ON a.mac = f.mac
 WHERE f.equipment=%(ip)s
 AND f.port=%(port)s
+AND f.deleted='infinity' AND a.deleted='infinity'
 GROUP BY f.mac
 ORDER BY minip ASC, f.mac
 LIMIT 20
@@ -213,6 +219,7 @@ class PortDetailsSpeed(PortRelatedDetails):
 SELECT speed, duplex, autoneg
 FROM port
 WHERE equipment=%(ip)s AND index=%(port)s
+AND deleted='infinity'
 """
 
     def render(self, data):
@@ -247,6 +254,7 @@ SELECT mac
 FROM port
 WHERE equipment=%(ip)s AND index=%(port)s
 AND mac IS NOT NULL
+AND deleted='infinity'
 """
 
     def render(self, data):
@@ -262,6 +270,8 @@ FROM trunk t, port p
 WHERE t.equipment=%(ip)s AND t.port=%(port)s
 AND p.equipment=t.equipment
 AND p.index=t.member
+AND t.deleted='infinity'
+AND p.deleted='infinity'
 ORDER BY p.index
 """
 
@@ -277,7 +287,10 @@ SELECT p.name
 FROM trunk t, port p
 WHERE t.equipment=%(ip)s AND t.member=%(port)s
 AND p.equipment=t.equipment
-AND p.index=t.port LIMIT 1
+AND p.index=t.port
+AND p.deleted='infinity'
+AND t.deleted='infinity'
+LIMIT 1
 """
 
     def render(self, data):
@@ -290,6 +303,7 @@ class PortDetailsSonmp(PortRelatedDetails):
 SELECT DISTINCT remoteip, remoteport
 FROM sonmp WHERE equipment=%(ip)s
 AND port=%(port)s
+AND deleted='infinity'
 """
 
     def render(self, data):
@@ -306,6 +320,7 @@ class PortDetailsEdp(PortRelatedDetails):
 SELECT DISTINCT sysname, remoteslot, remoteport
 FROM edp WHERE equipment=%(ip)s
 AND port=%(port)s
+And deleted='infinity'
 """
 
     def render(self, data):
@@ -340,6 +355,7 @@ class PortDetailsLldp(PortDetailsDiscovery):
 SELECT DISTINCT mgmtip, sysdesc, sysname, portdesc
 FROM lldp WHERE equipment=%(ip)s
 AND port=%(port)s
+AND deleted='infinity'
 """
 
 class PortDetailsCdp(PortDetailsDiscovery):
@@ -349,4 +365,5 @@ class PortDetailsCdp(PortDetailsDiscovery):
 SELECT DISTINCT mgmtip, platform, sysname, portname
 FROM cdp WHERE equipment=%(ip)s
 AND port=%(port)s
+AND deleted='infinity'
 """

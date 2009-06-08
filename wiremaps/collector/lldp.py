@@ -113,9 +113,15 @@ class LldpCollector:
             for port in result:
                 port = port[0]
                 if port not in validports:
+                    # If created less than 30 seconds away, we delete it
                     txn.execute("DELETE FROM port WHERE equipment=%(ip)s "
-                                "AND index=%(index)s", {'ip': str(ip),
-                                                        'index': port})
+                                "AND index=%(index)s AND deleted='infinity' "
+                                "AND CURRENT_TIMESTAMP - interval '30 seconds' < created",
+                                {'ip': str(ip), 'index': port})
+                    # Otherwise, we mark it as deleted
+                    txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP WHERE equipment=%(ip)s "
+                                "AND index=%(index)s AND deleted='infinity' ",
+                                {'ip': str(ip), 'index': port})
 
         d = self.proxy.walk(self.lldpLocPortId)
         d.addCallback(self.gotLldpLocPort)
@@ -129,7 +135,8 @@ class LldpCollector:
     
         def fileIntoDb(txn, sysname, sysdesc, portdesc, mgmtip,
                        ip):
-            txn.execute("DELETE FROM lldp WHERE equipment=%(ip)s",
+            txn.execute("UPDATE lldp SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             for port in sysname.keys():
                 if port not in sysdesc.keys() or port not in portdesc.keys():
@@ -146,7 +153,8 @@ class LldpCollector:
 
         def fileVlanIntoDb(txn, rvlan, lvlan,
                            ip):
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s",
+            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             for vid,port in rvlan.keys():
                 txn.execute("INSERT INTO vlan VALUES (%(ip)s, "

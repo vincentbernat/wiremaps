@@ -71,9 +71,9 @@ class FdbCollector:
                              'port': port,
                              'mac': mac})
             # Expire oldest entries
-            txn.execute("DELETE FROM fdb WHERE "
-                       "timestamp 'now' - interval '%(expire)s hours' > last "
-                       "AND equipment=%(ip)s",
+            txn.execute("UPDATE fdb SET deleted=CURRENT_TIMESTAMP WHERE "
+                       "CURRENT_TIMESTAMP - interval '%(expire)s hours' > updated "
+                       "AND equipment=%(ip)s AND deleted='infinity'",
                        {'ip': str(ip),
                         'expire': self.config.get('fdbexpire', 24)})
 

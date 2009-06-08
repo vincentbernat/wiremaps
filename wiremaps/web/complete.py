@@ -62,9 +62,9 @@ class CompleteMacResource(JsonPage):
 
     def data_json(self, ctx, data):
         d = self.dbpool.runQuery("""SELECT t.mac, COUNT(t.mac) as c FROM
-((SELECT mac FROM port) UNION ALL
-(SELECT mac FROM fdb) UNION ALL
-(SELECT mac FROM arp)) AS t
+((SELECT mac FROM port WHERE deleted='infinity') UNION ALL
+(SELECT mac FROM fdb WHERE deleted='infinity') UNION ALL
+(SELECT mac FROM arp WHERE deleted='infinity')) AS t
 WHERE CAST(t.mac AS text) ILIKE %(name)s||'%%'
 GROUP BY t.mac ORDER BY c DESC LIMIT %(limit)s""",
                                  {'name': self.mac,
@@ -91,11 +91,16 @@ class CompleteIpResource(JsonPage):
     def data_json(self, ctx, data):
         # We favour equipment.ip, then sonmp/cdp/lldp then arp
         d = self.dbpool.runQuery("""SELECT ip FROM
-((SELECT DISTINCT ip FROM equipment WHERE CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT mgmtip FROM lldp WHERE CAST(mgmtip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT mgmtip FROM cdp WHERE CAST(mgmtip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT remoteip FROM sonmp WHERE CAST(remoteip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT ip FROM arp WHERE CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s)) AS foo
+((SELECT DISTINCT ip FROM equipment WHERE deleted='infinity'
+  AND CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
+(SELECT DISTINCT mgmtip FROM lldp WHERE deleted='infinity'
+ AND CAST(mgmtip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
+(SELECT DISTINCT mgmtip FROM cdp WHERE deleted='infinity'
+ AND CAST(mgmtip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
+(SELECT DISTINCT remoteip FROM sonmp WHERE deleted='infinity'
+ AND CAST(remoteip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
+(SELECT DISTINCT ip FROM arp WHERE deleted='infinity'
+ AND CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s)) AS foo
 ORDER BY ip LIMIT %(l)s""", {'ip': self.ip,
                              'l': COMPLETE_LIMIT})
         d.addCallback(lambda x: [y[0] for y in x])
@@ -119,12 +124,12 @@ class CompleteEquipmentResource(JsonPage):
     def data_json(self, ctx, data):
         # We favour equipment.name
         d = self.dbpool.runQuery("""SELECT name FROM
-((SELECT DISTINCT name FROM equipment WHERE name ILIKE %(name)s||'%%'
+((SELECT DISTINCT name FROM equipment WHERE deleted='infinity' AND name ILIKE %(name)s||'%%'
 ORDER BY name LIMIT %(l)s) UNION
 (SELECT DISTINCT sysname FROM
- ((SELECT sysname FROM lldp) UNION
-  (SELECT sysname FROM edp) UNION
-  (SELECT sysname FROM cdp)) AS foo WHERE sysname ILIKE %(name)s||'%%' ORDER BY sysname LIMIT %(l)s))
+ ((SELECT sysname FROM lldp WHERE deleted='infinity') UNION
+  (SELECT sysname FROM edp WHERE deleted='infinity') UNION
+  (SELECT sysname FROM cdp WHERE deleted='infinity')) AS foo WHERE sysname ILIKE %(name)s||'%%' ORDER BY sysname LIMIT %(l)s))
 AS bar ORDER BY name""", {'name': self.name,
                    'l': COMPLETE_LIMIT})
         d.addCallback(lambda x: [y[0] for y in x])

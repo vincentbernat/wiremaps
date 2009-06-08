@@ -30,7 +30,9 @@ class VlanCollector:
     
         def fileVlanIntoDb(txn, names, ports, ip):
             if self.clean:
-                txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
+                txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                            "WHERE equipment=%(ip)s AND type='local' "
+                            "AND deleted='infinity'",
                             {'ip': str(ip)})
             for vid in names:
                 if vid in ports:
@@ -137,7 +139,8 @@ class IfMibVlanCollector:
     
         def fileVlanIntoDb(txn, vids, vlans, ip):
             if self.clean:
-                txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
+                txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                            "WHERE equipment=%(ip)s AND type='local' AND deleted='infinity'",
                             {'ip': str(ip)})
             for id in vids:
                 if id not in vlans:

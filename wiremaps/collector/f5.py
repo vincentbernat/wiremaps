@@ -104,7 +104,8 @@ class F5PortCollector:
                 interfaces.append([x.isdigit() and int(x) or x for x in p.split(".")])
             interfaces.sort()
             interfaces = [".".join([str(y) for y in x]) for x in interfaces]
-            txn.execute("DELETE FROM port WHERE equipment=%(ip)s", {'ip': str(ip)})
+            txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
             for p in data["status"]:
                 txn.execute("""
 INSERT INTO port
@@ -122,14 +123,16 @@ VALUES(%(ip)s, %(index)s, %(name)s, %(state)s, %(mac)s, %(duplex)s, %(speed)s)
                                         2: 'full'}[data["duplex"].get(p, 0)],
                              'speed': data["speed"].get(p, None)})
             # Trunk
-            txn.execute("DELETE FROM trunk WHERE equipment=%(ip)s", {'ip': str(ip)})
+            txn.execute("UPDATE trunk SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
             for trunk, port in association["trunk"]:
                 txn.execute("INSERT INTO trunk VALUES (%(ip)s, %(trunk)s, %(port)s)",
                             {'ip': str(ip),
                              'trunk': interfaces.index(trunk) + 1,
                              'port': interfaces.index(port) + 1})
             # VLAN
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s", {'ip': str(ip)})
+            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
             for vlan, port in association["vlan"]:
                 if vlan not in data["vid"]: continue
                 txn.execute(

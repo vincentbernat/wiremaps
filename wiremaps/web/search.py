@@ -69,6 +69,7 @@ class SearchVlanName(rend.Fragment, RenderMixIn):
     def data_nvlan(self, ctx, data):
         return self.dbpool.runQuery("SELECT count(vid) AS c, name "
                                     "FROM vlan WHERE vid=%(vid)s "
+                                    "AND deleted='infinity' "
                                     "GROUP BY name ORDER BY c DESC "
                                     "LIMIT 1",
                                     {'vid': self.vlan})
@@ -98,6 +99,9 @@ class SearchVlan(rend.Fragment, RenderMixIn):
                                     "AND v.port=p.index "
                                     "AND v.vid=%(vid)s "
                                     "AND v.type=%(type)s "
+                                    "AND v.deleted='infinity' "
+                                    "AND p.deleted='infinity' "
+                                    "AND e.deleted='infinity' "
                                     "ORDER BY v.vid, p.index",
                                     {'vid': self.vlan,
                                      'type': self.type})
@@ -139,7 +143,8 @@ class SearchMacResource(JsonPage, RenderMixIn):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery("SELECT DISTINCT ip FROM arp WHERE mac=%(mac)s",
+        d = self.dbpool.runQuery("SELECT DISTINCT ip FROM arp "
+                                 "WHERE mac=%(mac)s AND deleted='infinity'",
                                  {'mac': self.mac})
         d.addCallback(self.gotIPs)
         return d
@@ -176,7 +181,8 @@ class SearchIPResource(JsonPage, RenderMixIn):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery("SELECT DISTINCT mac FROM arp WHERE ip=%(ip)s",
+        d = self.dbpool.runQuery("SELECT DISTINCT mac FROM arp "
+                                 "WHERE ip=%(ip)s AND deleted='infinity'",
                                  {'ip': self.ip})
         d.addCallback(self.gotMAC)
         return d
@@ -212,8 +218,9 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
 
     def data_json(self, ctx, data):
         d = self.dbpool.runQuery("SELECT DISTINCT name, ip FROM equipment "
-                                 "WHERE name=%(name)s "
-                                 "OR name ILIKE '%%'||%(name)s||'%%' "
+                                 "WHERE deleted='infinity' "
+                                 "AND (name=%(name)s "
+                                 "OR name ILIKE '%%'||%(name)s||'%%') "
                                  "ORDER BY name",
                                  {'name': self.name})
         d.addCallback(self.gotIP)
@@ -262,7 +269,8 @@ class SearchInDescription(rend.Fragment, RenderMixIn):
     def data_description(self, ctx, data):
         return self.dbpool.runQuery("SELECT DISTINCT name, description "
                                     "FROM equipment "
-                                    "WHERE description ILIKE '%%' || %(name)s || '%%'",
+                                    "WHERE deleted='infinity' "
+                                    "AND description ILIKE '%%' || %(name)s || '%%'",
                                     {'name': self.name })
 
     def render_description(self, ctx, data):
@@ -317,6 +325,8 @@ class SearchHostnameWithDiscovery(rend.Fragment, RenderMixIn):
                                     "WHERE (l.sysname=%(name)s OR l.sysname ILIKE %(name)s || '%%') "
                                     "AND l.port=p.index AND p.equipment=e.ip "
                                     "AND l.equipment=e.ip "
+                                    "AND e.deleted='infinity' AND p.deleted='infinity' "
+                                    "AND l.deleted='infinity' "
                                     "ORDER BY e.name", {'name': self.name})
 
     def render_discovery(self, ctx, data):
@@ -359,8 +369,10 @@ WHERE f.mac=%(mac)s
 AND f.port=p.index AND f.equipment=e.ip
 AND p.equipment=e.ip
 AND (SELECT COUNT(*) FROM fdb WHERE port=p.index
-AND equipment=e.ip) <= 100
+AND equipment=e.ip AND deleted='infinity') <= 100
 AND f2.port=f.port AND f2.equipment=f.equipment
+AND f.deleted='infinity' AND e.deleted='infinity'
+AND p.deleted='infinity' AND f2.deleted='infinity'
 GROUP BY e.name, e.ip, p.name, p.index
 ORDER BY c, e.name, p.index
 """,
@@ -394,6 +406,8 @@ class SearchMacInInterfaces(rend.Fragment, RenderMixIn):
                                     "FROM equipment e, port p "
                                     "WHERE p.mac=%(mac)s "
                                     "AND p.equipment=e.ip "
+                                    "AND e.deleted='infinity' "
+                                    "AND p.deleted='infinity' "
                                     "ORDER BY e.name, p.index",
                                     {'mac': self.mac})
 
@@ -421,7 +435,7 @@ class SearchIPInEquipment(rend.Fragment, RenderMixIn):
 
     def data_ipeqt(self, ctx, data):
         return self.dbpool.runQuery("SELECT e.name FROM equipment e "
-                                    "WHERE e.ip=%(ip)s",
+                                    "WHERE e.ip=%(ip)s AND e.deleted='infinity'",
                                     {'ip': self.ip})
 
     def render_ipeqt(self, ctx, data):
@@ -454,6 +468,8 @@ class SearchIPInSonmp(rend.Fragment, RenderMixIn):
                                     "WHERE s.remoteip=%(ip)s "
                                     "AND s.port=p.index AND p.equipment=e.ip "
                                     "AND s.equipment=e.ip "
+                                    "AND e.deleted='infinity' AND p.deleted='infinity' "
+                                    "AND s.deleted='infinity' "
                                     "ORDER BY e.name", {'ip': self.ip})
 
     def render_sonmp(self, ctx, data):
@@ -507,6 +523,9 @@ class SearchIPInLldp(SearchIPInDiscovery):
                                     "WHERE l.mgmtip=%(ip)s "
                                     "AND l.port=p.index AND p.equipment=e.ip "
                                     "AND l.equipment=e.ip "
+                                    "AND e.deleted='infinity' "
+                                    "AND p.deleted='infinity' "
+                                    "AND l.deleted='infinity' "
                                     "ORDER BY e.name", {'ip': self.ip})
 
 class SearchIPInCdp(SearchIPInDiscovery):
@@ -519,4 +538,7 @@ class SearchIPInCdp(SearchIPInDiscovery):
                                     "WHERE c.mgmtip=%(ip)s "
                                     "AND c.port=p.index AND p.equipment=e.ip "
                                     "AND c.equipment=e.ip "
+                                    "AND e.deleted='infinity' "
+                                    "AND p.deleted='infinity' "
+                                    "AND c.deleted='infinity' "
                                     "ORDER BY e.name", {'ip': self.ip})

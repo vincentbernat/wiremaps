@@ -47,9 +47,9 @@ class ArpCollector:
                              'mac': mac,
                              'rip': rip})
             # Expire oldest entries
-            txn.execute("DELETE FROM arp WHERE "
-                       "timestamp 'now' - interval '%(expire)s hours' > last "
-                       "AND equipment=%(ip)s",
+            txn.execute("UPDATE arp SET deleted=CURRENT_TIMESTAMP WHERE "
+                       "CURRENT_TIMESTAMP - interval '%(expire)s hours' > updated "
+                       "AND equipment=%(ip)s AND deleted='infinity'",
                        {'ip': str(ip),
                         'expire': self.config.get('arpexpire', 24)})
 

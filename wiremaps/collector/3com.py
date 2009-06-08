@@ -119,7 +119,9 @@ class SuperStackVlanCollector:
         """Collect VLAN data from SNMP"""
 
         def fileVlanIntoDb(txn, vid, names, ports, ip):
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
+            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND type='local' "
+                        "AND deleted='infinity'",
                         {'ip': str(ip)})
             for x in vid:
                 if vid[x] in ports:

@@ -132,7 +132,8 @@ class ExtremeVlanCollector:
         """Collect VLAN data from SNMP"""
     
         def fileVlanIntoDb(txn, descr, id, ports, ip):
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='local'",
+            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND type='local' AND deleted='infinity'",
                         {'ip': str(ip)})
             for vid in descr:
                 if vid in id and vid in ports:

@@ -37,7 +37,8 @@ class SonmpCollector:
         """Collect data from SNMP using s5EnMsTopNmmSegId"""
     
         def fileIntoDb(txn, sonmp, ip):
-            txn.execute("DELETE FROM sonmp WHERE equipment=%(ip)s",
+            txn.execute("UPDATE sonmp SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             for port in sonmp.keys():
                 rip, rport = self.sonmp[port]

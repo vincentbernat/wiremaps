@@ -107,9 +107,10 @@ class CollectorService(service.Service):
         print "Exploration of %s finished!" % self.config['ips']
         self.exploring = False
         self.cleanUp()
-        self.dbpool.runOperation("DELETE FROM equipment "
-                                 "WHERE timestamp 'now' - interval '%(expire)s days' "
-                                 "> last", {'expire': self.config.get('expire', 1)})
+        self.dbpool.runOperation("UPDATE equipment SET deleted=CURRENT_TIMESTAMP "
+                                 "WHERE CURRENT_TIMESTAMP - interval '%(expire)s days' "
+                                 "> updated AND deleted='infinity'",
+                                 {'expire': self.config.get('expire', 1)})
 
     def cleanUp(self):
         """Clean older entries"""
@@ -179,7 +180,7 @@ class CollectorService(service.Service):
         """
 
         def fileIntoDb(txn, result, ip):
-            txn.execute("SELECT ip FROM equipment WHERE ip = %(ip)s",
+            txn.execute("SELECT ip FROM equipment WHERE ip = %(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             id = txn.fetchall()
             if not id:
@@ -190,8 +191,8 @@ class CollectorService(service.Service):
                              'description': result['.1.3.6.1.2.1.1.1.0']})
             else:
                 txn.execute("UPDATE equipment SET name=%(name)s, oid=%(oid)s, "
-                            "description=%(description)s, last=CURRENT_TIMESTAMP "
-                            "WHERE ip=%(ip)s",
+                            "description=%(description)s, updated=CURRENT_TIMESTAMP "
+                            "WHERE ip=%(ip)s AND deleted='infinity'",
                             {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
                              'oid': result['.1.3.6.1.2.1.1.2.0'],
                              'description': result['.1.3.6.1.2.1.1.1.0'],

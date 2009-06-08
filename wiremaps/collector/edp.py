@@ -50,7 +50,8 @@ class EdpCollector:
         """Collect EDP data from SNMP"""
     
         def fileIntoDb(txn, sysname, remoteslot, remoteport, ip):
-            txn.execute("DELETE FROM edp WHERE equipment=%(ip)s",
+            txn.execute("UPDATE edp SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             for port in sysname.keys():
                 txn.execute("INSERT INTO edp VALUES (%(ip)s, "
@@ -63,7 +64,8 @@ class EdpCollector:
                              'remoteport': int(remoteport[port])})
 
         def fileVlanIntoDb(txn, vlan, ip):
-            txn.execute("DELETE FROM vlan WHERE equipment=%(ip)s AND type='remote'",
+            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND type='remote' AND deleted='infinity'",
                         {'ip': str(ip)})
             for vid,port in vlan.keys():
                 txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
