@@ -464,6 +464,8 @@ function toggleTimeMachine(elt) {
     /* Hide form */
     $("div#timemachine input").hide().attr("value","");
     $("body").css("background-image", "");
+    $("div#application")
+      .css("opacity", "1");
     if (timemachine) {
       timemachine = "";
       travelTime();
@@ -475,6 +477,8 @@ function enableTimeMachine(elt) {
   elt.preventDefault();
   $("body")
     .css("background-image", "url('static/bgclock.png')");
+  $("div#application")
+    .css("opacity", "0.7");
   timemachine = $("div#timemachine input").val();
   travelTime();
 }
