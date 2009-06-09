@@ -58,6 +58,31 @@ div#logo
     float: left;
 }
 
+/* Time machine */
+div#timemachine
+{
+    margin-top: -14px;
+    background: #FFF;
+    border: 1px solid #666;
+    float: left;
+    padding: 1em;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    vertical-align: middle;
+}
+div#timemachine img
+{
+    border: 0px;
+    vertical-align: middle;
+}
+div#timemachine form input
+{
+    margin-left: 1em;
+    margin-right: 0.5em;
+    vertical-align: middle;
+    display: none;
+}
+
 /* Search */
 div#search
 {

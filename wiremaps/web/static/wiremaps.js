@@ -23,7 +23,6 @@ $(document).ready(function() {
 	});
     $("div#equipments select")
 	.bind("change", function(event) {
-	    event.preventDefault();
 	    $.historyLoad(this.value.split(" - ")[1]);
 	});
     $("div#actions #details a")
@@ -42,6 +41,8 @@ $(document).ready(function() {
 				  event.preventDefault();
 				  $("#colsdisp").css("display","none");
 				});
+    $("#timemachine a").bind("click", toggleTimeMachine);
+    $("#timemachine form").bind("submit", enableTimeMachine);
     /* Unhide application on load */
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
@@ -51,7 +52,7 @@ $(document).ready(function() {
 						 $("div#search form").submit();
 					       }});
     hideMessage();
-    loadEquipments();
+    loadEquipments(false);
     $.historyInit(loadHistory);
 });
 
@@ -92,12 +93,12 @@ function sortTable()
   }, 300);
 }
 
-function loadEquipments()
+function loadEquipments(load)
 {
     sendMessage("info", "Loading list of equipments...");
     $.ajax({type: "GET",
 	    cache: false,
-	    url: "equipment/",
+	    url: timeMachineUrl("equipment/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert", "Unable to get the list of equipments");
@@ -113,22 +114,26 @@ function loadEquipments()
 				       }).join("\n");
 			     }(data) );
 	        cur = $("div#photo img").attr("src").split("/")[1];
-		if (cur)
-		  selectEquipment(cur);
+		if (cur) {
+		  if (selectEquipment(cur) && (load))
+		    loadEquipment(cur);
+		}
 		hideMessage();
 	    }});
 }
 
 function selectEquipment(ip)
 {
-    $("div#equipments select option")
+  var found = false;
+  $("div#equipments select option")
       .each(function() {
 	      tip = this.text.split(" - ")[1];
 	      if (ip == tip) {
-		this.selected = true;
-		return;
+		$(this).attr('selected', true);
+		found = true;
 	      }
 	    });
+  return found;
 }
 
 function loadHistory(hash)
@@ -145,7 +150,7 @@ function loadEquipment(ip)
 	.children(".first:first").remove();
     $("div#equipments div#actions").css("visibility", "visible");
     $("div#photo img")
-	.attr("src", "images/" + ip)
+	.attr("src", timeMachineUrl("images/" + ip))
 	.parent().show();
     $("div#actions a").attr("href", "search/" + ip + "/");
     $("table#ports").hide();
@@ -153,7 +158,7 @@ function loadEquipment(ip)
     $("div#infovlans").hide();
     $.ajax({type: "GET",
 	    cache: false,
-	    url: "equipment/"+ip+"/descr/",
+	    url: timeMachineUrl("equipment/"+ip+"/descr/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		$("div#description").hide();
@@ -166,7 +171,7 @@ function loadEquipment(ip)
     sendMessage("info", "Loading list of ports for "+ip);
     $.ajax({type: "GET",
 	    cache: false,
-	    url: "equipment/"+ip+"/",
+	    url: timeMachineUrl("equipment/"+ip+"/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert", "Unable to get the list of ports for "+ip);
@@ -189,7 +194,7 @@ function showVlans(event)
   sendMessage("info", "Loading vlan information for "+ip);
   $.ajax({type: "GET",
 	  cache: false,
-	  url: "equipment/"+ip+"/vlans/",
+	  url: timeMachineUrl("equipment/"+ip+"/vlans/"),
 	  dataType: "html",
 	  error: function(xmlh, textstatus, error) {
 		$("div#infovlans").hide();
@@ -214,7 +219,7 @@ function displayPortDetails(event)
   port.find("td.state").addClass("loading");
   $.ajax({type: "GET",
 	  cache: false,
-	  url: "equipment/"+ip+"/"+port.attr("_index")+"/",
+	  url: timeMachineUrl("equipment/"+ip+"/"+port.attr("_index")+"/"),
 	  dataType: "json",
 	  error: function(xmlh, textstatus, error) {
 	    sendMessage("alert",
@@ -392,7 +397,7 @@ function refresh(event) {
     sendMessage("info", "Refreshing "+target[1]+"...");
     $.ajax({type: "GET",
 	    cache: false,
-	    url: "equipment/"+target[1]+"/refresh/",
+	    url: timeMachineUrl("equipment/"+target[1]+"/refresh/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert",
@@ -412,7 +417,7 @@ function search(elt) {
     sendMessage("info", "Search for "+elt+"...");
     $.ajax({type: "GET",
 	    cache: false,
-	    url: "search/"+elt+"/",
+	    url: timeMachineUrl("search/"+elt+"/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert",
@@ -422,6 +427,75 @@ function search(elt) {
 		displaySearchResults(data, elt);
 	    }});
 }
+
+/* Time machine stuff */
+var timemachine = "";
+
+function timeMachineUrl(url) {
+  /* Adapt the given URL to a time machine compatible one */
+  if (timemachine) {
+    return "past/" + timemachine + "/" + url;
+  }
+  return url;
+}
+
+function getNow() {
+  var now=new Date();
+  var result=now.getFullYear()+"-";
+  if (now.getMonth() < 9) result += "0";
+  result += (now.getMonth() + 1) + "-";
+  if (now.getDate() < 10) result += "0";
+  result += now.getDate() + " ";
+  if (now.getHours() < 10) result += "0";
+  result += now.getHours() + ":";
+  if (now.getMinutes() < 10) result += "0";
+  result += now.getMinutes();
+  return result;
+}
+
+function toggleTimeMachine(elt) {
+  elt.preventDefault();
+  if ($("div#timemachine input").css("display") == "none") {
+    /* Display form */
+    $("div#timemachine input")
+      .attr("value", getNow())
+      .css("display", "inline").focus();
+  } else {
+    /* Hide form */
+    $("div#timemachine input").hide().attr("value","");
+    $("body").css("background-image", "");
+    if (timemachine) {
+      timemachine = "";
+      travelTime();
+    }
+  }
+}
+
+function enableTimeMachine(elt) {
+  elt.preventDefault();
+  $("body")
+    .css("background-image", "url('static/bgclock.png')");
+  timemachine = $("div#timemachine input").val();
+  travelTime();
+}
+
+function travelTime() {
+  /* We just reset the application */
+  $("div#searchresults").hide();
+  $("table#ports").hide();
+  $("div#photo").hide();
+  $("div#description").hide();
+  $("div#infovlans").hide();
+  $("#colswitch1").hide();
+  $("div#equipments div#actions").css("visibility", "hidden");
+  $("div#equipments select")
+    .children().remove().end()
+    .append("<option class=\"first\">Select an equipment</option>");
+  $("div#equipments select option.first").attr("selected", true);
+  loadEquipments(true);
+}
+
+/* Information messages */
 
 function sendMessage(level, msg) {
     $("div#message")
