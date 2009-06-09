@@ -9,6 +9,7 @@ from wiremaps.web.images import ImageResource
 from wiremaps.web.equipment import EquipmentResource
 from wiremaps.web.search import SearchResource
 from wiremaps.web.complete import CompleteResource
+from wiremaps.web.timetravel import PastResource, IPastDate, PastConnectionPool
 
 class MainPage(rend.Page):
 
@@ -16,7 +17,7 @@ class MainPage(rend.Page):
 
     def __init__(self, config, dbpool, collector):
         self.config = config['web']
-        self.dbpool = dbpool
+        self.dbpool = PastConnectionPool(dbpool)
         self.collector = collector
         rend.Page.__init__(self)
 
@@ -42,3 +43,11 @@ class MainPage(rend.Page):
 
     def child_complete(self, ctx):
         return CompleteResource(self.dbpool)
+
+    def child_past(self, ctx):
+        try:
+            # Check if we already got a date
+            ctx.locate(IPastDate)
+        except KeyError:
+            return PastResource(self)
+        return None

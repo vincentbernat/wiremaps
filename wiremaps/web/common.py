@@ -9,7 +9,8 @@ class RenderMixIn:
     """Helper class that provide some builtin fragments"""
 
     def render_ip(self, ctx, ip):
-        d = self.dbpool.runQuery("SELECT ip FROM equipment WHERE ip=%(ip)s "
+        d = self.dbpool.runQuery(ctx,
+                                 "SELECT ip FROM equipment WHERE ip=%(ip)s "
                                  "AND deleted='infinity'",
                                  {'ip': ip})
         d.addCallback(lambda x: T.invisible[
@@ -46,7 +47,8 @@ class RenderMixIn:
         return T.a(href="search/%s/" % mac) [ mac ]
 
     def render_hostname(self, ctx, name):
-        d = self.dbpool.runQuery("SELECT name FROM equipment "
+        d = self.dbpool.runQuery(ctx,
+                                 "SELECT name FROM equipment "
                                  "WHERE lower(name)=lower(%(name)s) "
                                  "AND deleted='infinity'",
                                  {'name': name})

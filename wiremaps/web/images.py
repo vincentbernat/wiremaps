@@ -29,14 +29,16 @@ class ImageResource(rend.Page):
         # Is it really an OID?
         try:
             ip = IP(oid)
-            d = self.dbpool.runQuery("SELECT oid FROM equipment "
+            d = self.dbpool.runQuery(ctx,
+                                     "SELECT oid FROM equipment "
                                      "WHERE ip=%(ip)s AND deleted='infinity'",
                                      {'ip': str(ip)})
         except ValueError:
             # Well, this is not an IP
             if not re.match(r"[0-9\.]+", oid):
                 # This should be an hostname
-                d = self.dbpool.runQuery("SELECT oid FROM equipment "
+                d = self.dbpool.runQuery(ctx,
+                                         "SELECT oid FROM equipment "
                                          "WHERE deleted='infinity' "
                                          "AND (name=%(name)s "
                                          "OR name ILIKE %(name)s||'.%%')",

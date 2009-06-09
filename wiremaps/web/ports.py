@@ -55,7 +55,7 @@ class PortDetailsResource(JsonPage):
                    PortDetailsFdb,
                    PortDetailsCdp,
                    ]:
-            detail = c(self.ip, self.index, self.dbpool)
+            detail = c(ctx, self.ip, self.index, self.dbpool)
             l.append(detail.collectDetails())
         d = defer.DeferredList(l, consumeErrors=True)
         d.addCallback(self.flattenList)
@@ -70,7 +70,8 @@ class PortRelatedDetails:
     C{rend.Fragment}.
     """
 
-    def __init__(self, ip, index, dbpool):
+    def __init__(self, ctx, ip, index, dbpool):
+        self.ctx = ctx
         self.dbpool = dbpool
         self.ip = ip
         self.index = index
@@ -90,7 +91,8 @@ class PortRelatedDetails:
         return result
 
     def collectDetails(self):
-        d = self.dbpool.runQuery(self.query,
+        d = self.dbpool.runQuery(self.ctx,
+                                 self.query,
                                  { 'ip': str(self.ip),
                                    'port': self.index })
         d.addCallback(lambda x: x and self.render(x) or None)
