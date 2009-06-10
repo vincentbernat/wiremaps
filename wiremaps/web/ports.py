@@ -91,7 +91,7 @@ class PortRelatedDetails:
         return result
 
     def collectDetails(self):
-        d = self.dbpool.runQuery(self.ctx,
+        d = self.dbpool.runQueryInPast(self.ctx,
                                  self.query,
                                  { 'ip': str(self.ip),
                                    'port': self.index })

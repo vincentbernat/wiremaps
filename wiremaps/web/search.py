@@ -67,7 +67,7 @@ class SearchVlanName(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_nvlan(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT count(vid) AS c, name "
                                     "FROM vlan WHERE vid=%(vid)s "
                                     "AND deleted='infinity' "
@@ -93,7 +93,7 @@ class SearchVlan(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_nvlan(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT e.name, p.name "
                                     "FROM vlan v, port p, equipment e "
                                     "WHERE v.equipment=e.ip "
@@ -145,7 +145,7 @@ class SearchMacResource(JsonPage, RenderMixIn):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  "SELECT DISTINCT ip FROM arp "
                                  "WHERE mac=%(mac)s AND deleted='infinity'",
                                  {'mac': self.mac})
@@ -184,7 +184,7 @@ class SearchIPResource(JsonPage, RenderMixIn):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  "SELECT DISTINCT mac FROM arp "
                                  "WHERE ip=%(ip)s AND deleted='infinity'",
                                  {'ip': self.ip})
@@ -221,7 +221,7 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  "SELECT DISTINCT name, ip FROM equipment "
                                  "WHERE deleted='infinity' "
                                  "AND (name=%(name)s "
@@ -272,7 +272,7 @@ class SearchInDescription(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_description(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT DISTINCT name, description "
                                     "FROM equipment "
                                     "WHERE deleted='infinity' "
@@ -326,7 +326,7 @@ class SearchHostnameWithDiscovery(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_discovery(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT e.name, p.name "
                                     "FROM equipment e, port p, " + self.table + " l "
                                     "WHERE (l.sysname=%(name)s OR l.sysname ILIKE %(name)s || '%%') "
@@ -369,7 +369,7 @@ class SearchMacInFdb(rend.Fragment, RenderMixIn):
 
     def data_macfdb(self, ctx, data):
         # We filter out port with too many MAC
-        return self.dbpool.runQuery(ctx, """
+        return self.dbpool.runQueryInPast(ctx, """
 SELECT DISTINCT e.name, e.ip, p.name, p.index, COUNT(f2.mac) as c
 FROM fdb f, equipment e, port p, fdb f2
 WHERE f.mac=%(mac)s
@@ -409,7 +409,7 @@ class SearchMacInInterfaces(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_macif(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT DISTINCT e.name, e.ip, p.name, p.index "
                                     "FROM equipment e, port p "
                                     "WHERE p.mac=%(mac)s "
@@ -442,7 +442,7 @@ class SearchIPInEquipment(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_ipeqt(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT e.name FROM equipment e "
                                     "WHERE e.ip=%(ip)s AND e.deleted='infinity'",
                                     {'ip': self.ip})
@@ -472,7 +472,7 @@ class SearchIPInSonmp(rend.Fragment, RenderMixIn):
         rend.Fragment.__init__(self)
 
     def data_sonmp(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT e.name, p.name, s.remoteport "
                                     "FROM equipment e, port p, sonmp s "
                                     "WHERE s.remoteip=%(ip)s "
@@ -528,7 +528,7 @@ class SearchIPInLldp(SearchIPInDiscovery):
     discovery_name = "LLDP"
 
     def data_discovery(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT e.name, p.name, l.portdesc, l.sysname "
                                     "FROM equipment e, port p, lldp l "
                                     "WHERE l.mgmtip=%(ip)s "
@@ -544,7 +544,7 @@ class SearchIPInCdp(SearchIPInDiscovery):
     discovery_name = "CDP"
 
     def data_discovery(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT e.name, p.name, c.portname, c.sysname "
                                     "FROM equipment e, port p, cdp c "
                                     "WHERE c.mgmtip=%(ip)s "

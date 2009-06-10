@@ -12,7 +12,7 @@ class EquipmentResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT name,ip FROM equipment "
                                     "WHERE deleted='infinity' "
                                     "ORDER BY name")
@@ -35,7 +35,7 @@ class EquipmentDescriptionResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT description FROM equipment "
                                     "WHERE ip=%(ip)s AND deleted='infinity'",
                                     {'ip': str(self.ip)})
@@ -75,7 +75,7 @@ class EquipmentVlansResource(rend.Page, RenderMixIn):
             T.thead[T.td["VID"], T.td["Name"], T.td["Ports"]], r]
 
     def data_vlans(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
+        return self.dbpool.runQueryInPast(ctx,
                                     "SELECT v.vid, v.name, p.name "
                                     "FROM vlan v, port p "
                                     "WHERE v.equipment=%(ip)s AND v.type='local' "
@@ -95,7 +95,7 @@ class EquipmentDetailResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return self.dbpool.runQuery(ctx, """
+        return self.dbpool.runQueryInPast(ctx, """
 SELECT p.index, p.name, p.alias, p.cstate,
 CASE WHEN ep.speed IS NOT NULL THEN ep.speed ELSE p.speed END,
 ep.duplex, ep.autoneg 
@@ -135,7 +135,7 @@ class RefreshEquipmentResource(JsonPage):
         return d
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  "SELECT ip FROM equipment "
                                  "WHERE ip=%(ip)s AND deleted='infinity'",
                                  {'ip': str(self.ip)})

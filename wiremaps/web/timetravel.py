@@ -10,11 +10,10 @@ class IPastDate(Interface):
 class PastConnectionPool:
     """Proxy for an existing connection pool to run queries in the past.
 
-    This proxy intercepts runQuery and modifies the request to make it
-    happen in the past. It only accepts simple queries (query + dict).
-
-    The interface of runQuery is modified! It needs the context to get
-    the date.
+    This proxy intercepts runQueryInPast and modifies the request to
+    make it happen in the past (if necessary). It only accepts simple
+    queries (query + dict) and needs a web context (to extract the
+    date).
     """
 
     _regexp = re.compile(r"(?:(\w+)\.|)deleted='infinity'")
@@ -25,7 +24,7 @@ class PastConnectionPool:
     def __getattr__(self, attribute):
         return getattr(self._orig, attribute)
 
-    def runQuery(self, ctx, query, dic=None):
+    def runQueryInPast(self, ctx, query, dic=None):
         """Run the specified query in the past.
 
         Occurences of C{deleted='infinity'} are replaced by C{(created

@@ -61,7 +61,7 @@ class CompleteMacResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  """SELECT t.mac, COUNT(t.mac) as c FROM
 ((SELECT mac FROM port WHERE deleted='infinity') UNION ALL
 (SELECT mac FROM fdb WHERE deleted='infinity') UNION ALL
@@ -91,7 +91,7 @@ class CompleteIpResource(JsonPage):
 
     def data_json(self, ctx, data):
         # We favour equipment.ip, then sonmp/cdp/lldp then arp
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  """SELECT ip FROM
 ((SELECT DISTINCT ip FROM equipment WHERE deleted='infinity'
   AND CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
@@ -125,7 +125,7 @@ class CompleteEquipmentResource(JsonPage):
 
     def data_json(self, ctx, data):
         # We favour equipment.name
-        d = self.dbpool.runQuery(ctx,
+        d = self.dbpool.runQueryInPast(ctx,
                                  """SELECT name FROM
 ((SELECT DISTINCT name FROM equipment WHERE deleted='infinity' AND name ILIKE %(name)s||'%%'
 ORDER BY name LIMIT %(l)s) UNION
