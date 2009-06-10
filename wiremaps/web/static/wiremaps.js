@@ -181,6 +181,8 @@ function loadEquipment(ip)
 		$("table#ports").show();
 		$("div#actions #details").show();
 		$("div#actions #vlans").show();
+		if (!timemachine)
+		  $("div#actions #refresh").show();
 		hideMessage();
 	        $(document).scrollTop($("div#application").offset().top);
 	    }});
@@ -491,6 +493,7 @@ function travelTime() {
   $("div#description").hide();
   $("div#infovlans").hide();
   $("#colswitch1").hide();
+  $("div#equipments #refresh").hide();
   $("div#equipments div#actions").css("visibility", "hidden");
   $("div#equipments select")
     .children().remove().end()
