@@ -218,35 +218,36 @@ LIMIT 20
 class PortDetailsSpeed(PortRelatedDetails):
 
     query = """
-SELECT speed, duplex, autoneg
-FROM port
-WHERE equipment=%(ip)s AND index=%(port)s
-AND deleted='infinity'
+SELECT p.speed, ep.speed, ep.duplex, ep.autoneg
+FROM port p
+LEFT JOIN extendedport ep
+ON p.equipment=ep.equipment AND p.index=ep.index
+WHERE p.equipment=%(ip)s AND p.index=%(port)s
+AND p.deleted='infinity' AND ep.deleted='infinity'
 """
 
     def render(self, data):
         result = []
-        data = data[0]
-        if data[0] is None and data[1] is None and data[2] is None:
+        speed, espeed, duplex, autoneg = data[0]
+        if speed is None and espeed is None and duplex is None and autoneg is None:
             return None
-        speed = ""
-        if data[0]:
-            speed = data[0]
+        if espeed is not None:
+            speed = espeed
+        if speed:
             if speed >= 1000:
-                speed = "%s Gbit/s" % (str(speed/1000.))
+                sspeed = "%s Gbit/s" % (str(speed/1000.))
             else:
-                speed = "%d Mbit/s" % speed
-            if speed:
-                result.append(("Speed / Speed",
-                               speed,
-                               data[0]))
-        if data[1]:
+                sspeed = "%d Mbit/s" % speed
+            result.append(("Speed / Speed",
+                           sspeed,
+                           speed))
+        if duplex:
             result.append(("Speed / Duplex",
-                           data[1], None))
-        if data[2] is not None:
+                           duplex, None))
+        if autoneg is not None:
             result.append(("Speed / Autoneg",
-                            data[2] and "enabled" or "disabled",
-                            data[2]))
+                            autoneg and "enabled" or "disabled",
+                            autoneg))
         return result
 
 class PortDetailsMac(PortRelatedDetails):

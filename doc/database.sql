@@ -51,6 +51,7 @@
 
 DROP RULE IF EXISTS update_equipment ON equipment;
 DROP RULE IF EXISTS update_port ON port;
+DROP RULE IF EXISTS insert_extendedport ON extendedport;
 DROP RULE IF EXISTS insert_fdb ON fdb;
 DROP RULE IF EXISTS insert_arp ON arp;
 DROP RULE IF EXISTS insert_sonmp ON sonmp;
@@ -62,6 +63,7 @@ DROP RULE IF EXISTS insert_vlan_duplicate ON vlan;
 DROP RULE IF EXISTS insert_trunk ON trunk;
 DROP TABLE IF EXISTS equipment CASCADE;
 DROP TABLE IF EXISTS port CASCADE;
+DROP TABLE IF EXISTS extendedport CASCADE;
 DROP TABLE IF EXISTS fdb CASCADE;
 DROP TABLE IF EXISTS arp CASCADE;
 DROP TABLE IF EXISTS sonmp CASCADE;
@@ -94,17 +96,36 @@ CREATE TABLE port (
   alias	    text	      NULL,
   cstate    text              NOT NULL,
   mac	    macaddr	      NULL,
-  duplex    text	      NULL,
   speed	    int		      NULL,
+  created   abstime	      DEFAULT CURRENT_TIMESTAMP,
+  deleted   abstime	      DEFAULT 'infinity',
+  PRIMARY KEY (equipment, index, deleted),
+  CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down')
+);
+-- No INSERT rule for this table. created and deleted fields should be
+-- handled by the application.
+
+-- More optional info about a port
+CREATE TABLE extendedport (
+  equipment inet	      NOT NULL,
+  index     int		      NOT NULL,
+  duplex    text	      NULL,
+  speed	    int		      NULL, -- if not NULL, this is better than port.speed
   autoneg   boolean	      NULL,
   created   abstime	      DEFAULT CURRENT_TIMESTAMP,
   deleted   abstime	      DEFAULT 'infinity',
   PRIMARY KEY (equipment, index, deleted),
-  CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down'),
   CONSTRAINT duplex_check CHECK (duplex = 'full' OR duplex = 'half')
 );
--- No INSERT rule for this table. created and deleted fields should be
--- handled by the application.
+CREATE RULE insert_extendedport AS ON INSERT TO extendedport
+WHERE EXISTS (SELECT 1 FROM extendedport
+      	      WHERE equipment=new.equipment AND index=new.index
+	      AND duplex=new.duplex AND speed=new.speed AND autoneg=new.autoneg
+	      AND deleted=CURRENT_TIMESTAMP::abstime)
+DO INSTEAD UPDATE extendedport SET deleted='infinity'
+WHERE equipment=new.equipment AND index=new.index
+AND duplex=new.duplex AND speed=new.speed AND autoneg=new.autoneg
+AND deleted=CURRENT_TIMESTAMP::abstime;
 
 -- Just a dump of FDB for a given port
 CREATE TABLE fdb (
@@ -293,7 +314,9 @@ DO ALSO
 CREATE RULE update_port AS ON UPDATE TO port
 WHERE old.deleted='infinity' AND new.deleted=CURRENT_TIMESTAMP::abstime
 DO ALSO
-(UPDATE fdb SET deleted=CURRENT_TIMESTAMP::abstime
+(UPDATE extendedport SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND index=new.index AND deleted='infinity' ;
+ UPDATE fdb SET deleted=CURRENT_TIMESTAMP::abstime
  WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
  UPDATE sonmp SET deleted=CURRENT_TIMESTAMP::abstime
  WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;

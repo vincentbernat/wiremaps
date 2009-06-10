@@ -180,23 +180,32 @@ class CollectorService(service.Service):
         """
 
         def fileIntoDb(txn, result, ip):
-            txn.execute("SELECT ip FROM equipment WHERE ip = %(ip)s AND deleted='infinity'",
+            txn.execute("SELECT ip, name, oid, description "
+                        "FROM equipment WHERE ip = %(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             id = txn.fetchall()
+            target = {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
+                      'oid': result['.1.3.6.1.2.1.1.2.0'],
+                      'description': result['.1.3.6.1.2.1.1.1.0'],
+                      'ip': str(ip)}
             if not id:
                 txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
                             "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
-                            {'ip': str(ip), 'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
-                             'oid': result['.1.3.6.1.2.1.1.2.0'],
-                             'description': result['.1.3.6.1.2.1.1.1.0']})
+                            target)
             else:
-                txn.execute("UPDATE equipment SET name=%(name)s, oid=%(oid)s, "
-                            "description=%(description)s, updated=CURRENT_TIMESTAMP "
-                            "WHERE ip=%(ip)s AND deleted='infinity'",
-                            {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
-                             'oid': result['.1.3.6.1.2.1.1.2.0'],
-                             'description': result['.1.3.6.1.2.1.1.1.0'],
-                             'ip': str(ip)})
+                # Maybe something changed
+                if id[0][1] != target["name"] or id[0][2] != target["oid"] or \
+                        id[0][3] != target["description"]:
+                    txn.execute("UPDATE equipment SET deleted=CURRENT_TIMESTAMP "
+                                "WHERE ip=%(ip)s AND deleted='infinity'",
+                                target)
+                    txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
+                                "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
+                                target)
+                else:
+                    # Nothing changed, update `updated' column
+                    txn.execute("UPDATE equipment SET updated=CURRENT_TIMESTAMP "
+                                "WHERE ip=%(ip)s AND deleted='infinity'", target)
             return result['.1.3.6.1.2.1.1.2.0']
 
         d = proxy.get(['.1.3.6.1.2.1.1.1.0', # description

@@ -21,34 +21,17 @@ class SpeedCollector:
     def collectData(self):
 
         def filePortIntoDb(txn, duplex, speed, autoneg, ip):
-            if not speed:
-                # We did not collect any speed data, we prefer to keep
-                # the default results from ifSpeed
-                return
-            txn.execute("SELECT index FROM port WHERE equipment=%(ip)s AND deleted='infinity'",
+            txn.execute("UPDATE extendedport SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
-            for (port,) in txn.fetchall():
-                if self.normport:
-                    oport = self.normport(port)
-                else:
-                    oport = port
-                if oport and speed.get(oport, None):
-                    txn.execute("UPDATE port "
-                                "SET duplex=%(duplex)s, autoneg=%(autoneg)s, speed=%(speed)s "
-                                "WHERE equipment=%(ip)s AND index=%(port)s AND deleted='infinity'",
-                                {'ip': str(ip),
-                                 'port': port,
-                                 'duplex': duplex.get(oport, None),
-                                 'speed': speed.get(oport, None),
-                                 'autoneg': autoneg.get(oport, None)})
-                else:
-                    # When we don't get speed, we prefer to keep the original information
-                    txn.execute("UPDATE port SET duplex=NULL, autoneg=NULL "
-                                "WHERE equipment=%(ip)s AND index=%(port)s "
-                                "AND deleted='infinity'",
-                                {'ip': str(ip),
-                                 'port': port})
-
+            for port in speed:
+                txn.execute("INSERT INTO extendedport "
+                            "VALUES (%(ip)s, %(index)s, %(duplex)s, %(speed)s, %(autoneg)s)",
+                            {'ip': str(ip),
+                             'index': port,
+                             'duplex': duplex.get(port, None),
+                             'speed': speed[port],
+                             'autoneg': autoneg.get(port, None)})
 
         print "Collecting port speed/duplex for %s" % self.proxy.ip
         self.speed = {}

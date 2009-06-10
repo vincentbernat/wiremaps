@@ -99,29 +99,39 @@ class F5PortCollector:
 
         def fileIntoDb(txn, data, association, ip):
             # Interfaces
+            from port import PortCollector
+            names = {}
+            status = {}
+            mac = {}
+            speed = {}
+            duplex = {}
             interfaces = []
             for p in data["status"]:
                 interfaces.append([x.isdigit() and int(x) or x for x in p.split(".")])
             interfaces.sort()
             interfaces = [".".join([str(y) for y in x]) for x in interfaces]
-            txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
             for p in data["status"]:
-                txn.execute("""
-INSERT INTO port
-(equipment, index, name, cstate, mac, duplex, speed)
-VALUES(%(ip)s, %(index)s, %(name)s, %(state)s, %(mac)s, %(duplex)s, %(speed)s)
-""",
+                index = interfaces.index(p) + 1
+                names[index] = p
+                status[index] = data["status"][p] == 0 and 'up' or 'down'
+                mac[index] = data["mac"].get(p, None) and \
+                    ":".join([("%02x" % ord(m)) for m in data["mac"][p]])
+                speed[index] = data["speed"].get(p, None)
+                duplex[index] = {0: None,
+                                 1: 'half',
+                                 2: 'full'}[data["duplex"].get(p, 0)]
+            PortCollector.filePortsIntoDb(txn,
+                                          names, {}, status, mac, speed, ip)
+            txn.execute("UPDATE extendedport SET deleted=CURRENT_TIMESTAMP "
+                        "WHERE equipment=%(ip)s AND deleted='infinity'",
+                        {'ip': str(ip)})
+            for p in speed:
+                txn.execute("INSERT INTO extendedport (equipment, index, duplex, speed) "
+                            "VALUES (%(ip)s, %(index)s, %(duplex)s, %(speed)s)",
                             {'ip': str(ip),
-                             'index': interfaces.index(p) + 1,
-                             'name': p,
-                             'state': data["status"][p] == 0 and 'up' or 'down',
-                             'mac': data["mac"].get(p, None) and \
-                                 ":".join([("%02x" % ord(m)) for m in data["mac"][p]]),
-                             'duplex': {0: None,
-                                        1: 'half',
-                                        2: 'full'}[data["duplex"].get(p, 0)],
-                             'speed': data["speed"].get(p, None)})
+                             'index': p,
+                             'duplex': duplex.get(p, None),
+                             'speed': speed[p]})
             # Trunk
             txn.execute("UPDATE trunk SET deleted=CURRENT_TIMESTAMP "
                         "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})

@@ -95,11 +95,15 @@ class EquipmentDetailResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
-        return self.dbpool.runQuery(ctx,
-                                    "SELECT index, name, alias, cstate, speed, duplex, autoneg "
-                                    "FROM port WHERE equipment=%(ip)s "
-                                    "AND deleted='infinity' "
-                                    "ORDER BY index",
+        return self.dbpool.runQuery(ctx, """
+SELECT p.index, p.name, p.alias, p.cstate,
+CASE WHEN ep.speed IS NOT NULL THEN ep.speed ELSE p.speed END,
+ep.duplex, ep.autoneg 
+FROM port p LEFT JOIN extendedport ep 
+ON ep.equipment=p.equipment AND ep.index = p.index 
+WHERE p.equipment=%(ip)s AND p.deleted='infinity' AND ep.deleted='infinity' 
+ORDER BY index
+""",
                                     {'ip': str(self.ip)})
 
     def child_refresh(self, ctx):
