@@ -223,7 +223,8 @@ FROM port p
 LEFT JOIN extendedport ep
 ON p.equipment=ep.equipment AND p.index=ep.index
 WHERE p.equipment=%(ip)s AND p.index=%(port)s
-AND p.deleted='infinity' AND ep.deleted='infinity'
+AND p.deleted='infinity'
+AND (ep.deleted='infinity' or ep.deleted IS NULL)
 """
 
     def render(self, data):

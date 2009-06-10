@@ -101,7 +101,8 @@ CASE WHEN ep.speed IS NOT NULL THEN ep.speed ELSE p.speed END,
 ep.duplex, ep.autoneg 
 FROM port p LEFT JOIN extendedport ep 
 ON ep.equipment=p.equipment AND ep.index = p.index 
-WHERE p.equipment=%(ip)s AND p.deleted='infinity' AND ep.deleted='infinity' 
+WHERE p.equipment=%(ip)s AND p.deleted='infinity'
+AND (ep.deleted='infinity' or ep.deleted IS NULL)
 ORDER BY index
 """,
                                     {'ip': str(self.ip)})
