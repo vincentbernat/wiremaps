@@ -1,0 +1,13 @@
+Important changes in Wiremaps
+=============================
+
+ - Wiremaps features a time travel function which needs a new database
+   schema. Since upgrading existing schema was considered too
+   difficult, you need to reinstall the database from scratch. On
+   startup, Wiremaps will tell you how to do that.
+
+ - It is now possible to go back in time. A clock icon has appeared at
+   the top of the interface and allows to input a date in the
+   past. Validation is done with `Enter' key. The background will
+   change to indicate that now every request is done in the past. To
+   go back in the present, just click the clock again.
