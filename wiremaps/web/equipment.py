@@ -81,7 +81,7 @@ class EquipmentVlansResource(rend.Page, RenderMixIn):
                                     "WHERE v.equipment=%(ip)s AND v.type='local' "
                                     "AND v.port = p.index "
                                     "AND p.equipment = v.equipment "
-                                    "AND deleted='infinity' "
+                                    "AND p.deleted='infinity' AND v.deleted='infinity' "
                                     "ORDER BY v.vid, p.index",
                                     {'ip': str(self.ip)})
 
