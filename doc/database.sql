@@ -278,7 +278,7 @@ AND deleted=CURRENT_TIMESTAMP::abstime;
 CREATE RULE insert_vlan_duplicate AS ON INSERT TO vlan
 WHERE EXISTS (SELECT 1 FROM vlan
       	      WHERE equipment=new.equipment AND port=new.port
-	      AND vid=new.vid AND name=new.name AND type=new.type
+	      AND vid=new.vid AND type=new.type
 	      AND deleted='infinity')
 DO INSTEAD NOTHING;
 
