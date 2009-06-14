@@ -3,12 +3,12 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.sonmp import SonmpCollector
-from wiremaps.collector.vlan import VlanCollector
-from wiremaps.collector.speed import SpeedCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import FdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.sonmp import SonmpCollector
+from wiremaps.collector.helpers.vlan import VlanCollector
+from wiremaps.collector.helpers.speed import SpeedCollector
 
 class Alteon2208:
     """Collector for Nortel Alteon 2208 and related"""
@@ -37,15 +37,15 @@ class Alteon2208:
             return port + 256
         return None
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool, self.normPortName)
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy, self.normPortName)
         ports.ifName = ports.ifDescr
         ports.ifDescr = '.1.3.6.1.2.1.2.2.1.1' # ifIndex
-        speed = AlteonSpeedCollector(proxy, dbpool, lambda x: x+256)
-        fdb = FdbCollector(proxy, dbpool, self.config)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        vlan = AlteonVlanCollector(proxy, dbpool, lambda x: self.normPortIndex(x-1))
-        sonmp = SonmpCollector(proxy, dbpool, self.normPortIndex)
+        speed = AlteonSpeedCollector(equipment, proxy, lambda x: x+256)
+        fdb = FdbCollector(equipment, proxy, self.config)
+        arp = ArpCollector(equipment, proxy, self.config)
+        vlan = AlteonVlanCollector(equipment, proxy, lambda x: self.normPortIndex(x-1))
+        sonmp = SonmpCollector(equipment, proxy, self.normPortIndex)
         d = ports.collectData()
         d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: fdb.collectData())

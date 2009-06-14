@@ -2,8 +2,8 @@ from zope.interface import implements
 from twisted.plugin import IPlugin
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.arp import ArpCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.arp import ArpCollector
 
 class NetscreenISG:
     """Collector for Netscreen ISG"""
@@ -16,9 +16,9 @@ class NetscreenISG:
                         '.1.3.6.1.4.1.3224.1.10', # Netscreen 208
                         ])
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool, self.config)
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy)
+        arp = ArpCollector(equipment, proxy, self.config)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())
         return d

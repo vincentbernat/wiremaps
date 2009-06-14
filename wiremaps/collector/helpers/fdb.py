@@ -6,19 +6,18 @@ class FdbCollector:
     dot1dTpFdbPort = '.1.3.6.1.2.1.17.4.3.1.2'
     dot1dBasePortIfIndex = '.1.3.6.1.2.1.17.1.4.1.2'
 
-    def __init__(self, proxy, dbpool, config, normport=None):
+    def __init__(self, equipment, proxy, config, normport=None):
         """Create a collector using FDB entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
-        @param dbpool: pool of database connections
+        @param equipment: equipment to complete with FDB data
         @param config: configuration
         @param nomport: function to use to normalize port index
         """
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normport = normport
         self.config = config
-        self.fdb = {}
         self.portif = {}
 
     def gotFdb(self, results):
@@ -36,7 +35,7 @@ class FdbCollector:
             if self.normport is not None:
                 port = self.normport(port)
             if port is not None:
-                self.fdb[(port, mac)] = 1
+                self.equipment.ports[port].fdb.append(mac)
 
     def gotPortIf(self, results):
         """Callback handling reception of port<->ifIndex translation from FDB
@@ -53,37 +52,11 @@ class FdbCollector:
         d.addCallback(self.gotFdb)
         return d
 
-    def collectData(self, write=True):
+    def collectData(self):
         """Collect data from SNMP using dot1dTpFdbPort.
-
-        @param write: when C{False}, do not write the result to
-           database. It is intended to be called later with C{True} to
-           accumulate results of successive runs.
         """
-    
-        def fileIntoDb(txn, fdb, ip):
-            for port, mac in fdb.keys():
-                # Some magic here: PostgreSQL will take care of
-                # updating the record if it already exists.
-                txn.execute("INSERT INTO fdb (equipment, port, mac) "
-                            "VALUES (%(ip)s, %(port)s, %(mac)s)",
-                            {'ip': str(ip),
-                             'port': port,
-                             'mac': mac})
-            # Expire oldest entries
-            txn.execute("UPDATE fdb SET deleted=CURRENT_TIMESTAMP WHERE "
-                       "CURRENT_TIMESTAMP - interval '%(expire)s hours' > updated "
-                       "AND equipment=%(ip)s AND deleted='infinity'",
-                       {'ip': str(ip),
-                        'expire': self.config.get('fdbexpire', 24)})
-
-
         print "Collecting FDB for %s" % self.proxy.ip
         d = self.collectFdbData()
-        if write:
-            d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
-                                                               self.fdb,
-                                                               self.proxy.ip))
         return d
 
 class CommunityFdbCollector(FdbCollector):
@@ -161,4 +134,4 @@ class ExtremeFdbCollector(FdbCollector):
                 if self.normport is not None:
                     port = self.normport(port)
                 if port is not None:
-                    self.fdb[(port, mac)] = 1
+                    self.equipment.ports[port].fdb.append(mac)

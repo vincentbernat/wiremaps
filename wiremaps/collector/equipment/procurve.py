@@ -3,11 +3,11 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.lldp import LldpCollector, LldpSpeedCollector
-from wiremaps.collector.vlan import Rfc2674VlanCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import FdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.lldp import LldpCollector, LldpSpeedCollector
+from wiremaps.collector.helpers.vlan import Rfc2674VlanCollector
 
 class Procurve:
     """Collector for HP Procurve switches"""
@@ -24,19 +24,18 @@ class Procurve:
             return None
         return port
 
-    def collectData(self, ip, proxy, dbpool):
+    def collectData(self, equipment, proxy):
         t = {}
-        trunk = ProcurveTrunkCollector(proxy, dbpool, t)
-        ports = PortCollector(proxy, dbpool, trunk=t)
+        trunk = ProcurveTrunkCollector(equipment, proxy, t)
+        ports = PortCollector(equipment, proxy, trunk=t)
         ports.ifName = ports.ifAlias
-        fdb = FdbCollector(proxy, dbpool, self.config,
+        fdb = FdbCollector(equipment, proxy, self.config,
                            lambda x: self.normport(x, ports))
-        arp = ArpCollector(proxy, dbpool, self.config)
-        lldp = LldpCollector(proxy, dbpool)
-        speed = LldpSpeedCollector(proxy, dbpool)
-        vlan = Rfc2674VlanCollector(proxy, dbpool,
-                                    normPort=lambda x: self.normport(x, ports),
-                                    clean=False)
+        arp = ArpCollector(equipment, proxy, self.config)
+        lldp = LldpCollector(equipment, proxy)
+        speed = LldpSpeedCollector(equipment, proxy)
+        vlan = Rfc2674VlanCollector(equipment, proxy,
+                                    normPort=lambda x: self.normport(x, ports))
         d = trunk.collectData()
         d.addCallback(lambda x: ports.collectData())
         d.addCallback(lambda x: fdb.collectData())
@@ -58,9 +57,9 @@ class ProcurveTrunkCollector:
     ifType = '.1.3.6.1.2.1.2.2.1.3'
     ifStackStatus = '.1.3.6.1.2.1.31.1.2.1.3'
 
-    def __init__(self, proxy, dbpool, trunk):
+    def __init__(self, equipment, proxy, trunk):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.trunk = trunk
 
     def gotType(self, results):

@@ -1,3 +1,5 @@
+from wiremaps.collector.datastore import LocalVlan
+
 class VlanCollector:
     """Collect VLAN information.
 
@@ -9,11 +11,10 @@ class VlanCollector:
     C{oidVlanNames} and C{oidVlanPorts} should be defined.
     """
 
-    def __init__(self, proxy, dbpool, normPort=None, clean=True):
+    def __init__(self, equipment, proxy, normPort=None):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normPort = normPort
-        self.clean = clean
 
     def gotVlan(self, results, dic):
         """Callback handling reception of VLAN
@@ -25,35 +26,24 @@ class VlanCollector:
             vid = int(oid.split(".")[-1])
             dic[vid] = results[oid]
 
+    def completeEquipment(self):
+        """Complete C{self.equipment} with collected data"""
+        for vid in self.vlanNames:
+            if vid in self.vlanPorts:
+                for i in range(0, len(self.vlanPorts[vid])):
+                    if ord(self.vlanPorts[vid][i]) == 0:
+                        continue
+                    for j in range(0, 8):
+                        if ord(self.vlanPorts[vid][i]) & (1 << j):
+                            port = 8-j + 8*i
+                            if self.normPort is not None:
+                                port = self.normPort(port)
+                            if port is not None:
+                                self.equipment.ports[port].vlan.append(
+                                    LocalVlan(vid, self.vlanNames[vid]))
+
     def collectData(self):
         """Collect VLAN data from SNMP"""
-    
-        def fileVlanIntoDb(txn, names, ports, ip):
-            if self.clean:
-                txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                            "WHERE equipment=%(ip)s AND type='local' "
-                            "AND deleted='infinity'",
-                            {'ip': str(ip)})
-            for vid in names:
-                if vid in ports:
-                    for i in range(0, len(ports[vid])):
-                        if ord(ports[vid][i]) == 0:
-                            continue
-                        for j in range(0, 8):
-                            if ord(ports[vid][i]) & (1 << j):
-                                port = 8-j + 8*i
-                                if self.normPort is not None:
-                                    port = self.normPort(port)
-                                if port is not None:
-                                    txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
-                                                "%(port)s, %(vid)s, %(name)s, "
-                                                "%(type)s)",
-                                                {'ip': str(ip),
-                                                 'port': port,
-                                                 'vid': vid,
-                                                 'name': names[vid],
-                                                 'type': 'local'})
-
         print "Collecting VLAN information for %s" % self.proxy.ip
         self.vlanNames = {}
         self.vlanPorts = {}
@@ -61,10 +51,7 @@ class VlanCollector:
         d.addCallback(self.gotVlan, self.vlanNames)
         d.addCallback(lambda x: self.proxy.walk(self.oidVlanPorts))
         d.addCallback(self.gotVlan, self.vlanPorts)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
-                                                           self.vlanNames,
-                                                           self.vlanPorts,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d
 
 class Rfc2674VlanCollector(VlanCollector):
@@ -92,11 +79,10 @@ class IfMibVlanCollector:
     ifType = '.1.3.6.1.2.1.2.2.1.3'
     ifDescr = '.1.3.6.1.2.1.2.2.1.2'
 
-    def __init__(self, proxy, dbpool, normPort=None, clean=True):
+    def __init__(self, equipment, proxy, normPort=None):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normPort = normPort
-        self.clean = clean
 
     def gotIfType(self, results):
         """Callback handling reception of interface types
@@ -134,30 +120,20 @@ class IfMibVlanCollector:
             if vlanport in self.vlans:
                 self.vlans[vlanport].append(physport)
 
+    def completeEquipment(self):
+        """Complete C{self.equipment} with collected data."""
+        for id in self.vids:
+            if id not in self.vlans:
+                continue
+            for port in self.vlans[id]:
+                if self.normPort is not None:
+                    port = self.normPort(port)
+                if port is not None:
+                    self.equipment.ports[port].vlan.append(
+                        LocalVlan(id, "VLAN %d" % id))
+
     def collectData(self):
         """Collect VLAN data from SNMP"""
-    
-        def fileVlanIntoDb(txn, vids, vlans, ip):
-            if self.clean:
-                txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                            "WHERE equipment=%(ip)s AND type='local' AND deleted='infinity'",
-                            {'ip': str(ip)})
-            for id in vids:
-                if id not in vlans:
-                    continue
-                for port in vlans[id]:
-                    if self.normPort is not None:
-                        port = self.normPort(port)
-                    if port is not None:
-                        txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
-                                    "%(port)s, %(vid)s, %(name)s, "
-                                    "%(type)s)",
-                                    {'ip': str(ip),
-                                     'port': port,
-                                     'vid': vids[id],
-                                     'name': "VLAN %d" % vids[id],
-                                     'type': 'local'})
-
         print "Collecting VLAN information for %s" % self.proxy.ip
         self.vids = {}
         self.vlans = {}
@@ -167,8 +143,5 @@ class IfMibVlanCollector:
         d.addCallback(self.gotIfDescr)
         d.addCallback(lambda x: self.proxy.walk(self.ifStackStatus))
         d.addCallback(self.gotIfStackStatus)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
-                                                           self.vids,
-                                                           self.vlans,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d

@@ -3,11 +3,11 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.alteon import AlteonVlanCollector, AlteonSpeedCollector
-from wiremaps.collector.vlan import VlanCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import FdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.equipment.alteon import AlteonVlanCollector, AlteonSpeedCollector
+from wiremaps.collector.helpers.vlan import VlanCollector
 
 class BladeEthernetSwitch:
     """Collector for various Blade Ethernet Switch based on AlteonOS"""
@@ -19,21 +19,21 @@ class BladeEthernetSwitch:
     def handleEquipment(self, oid):
         raise NotImplementedError
 
-    def collectData(self, ip, proxy, dbpool):
+    def collectData(self, equipment, proxy):
         proxy.use_getbulk = False # Some Blade have bogus GETBULK
-        ports = PortCollector(proxy, dbpool, normPort=lambda x: x%128)
+        ports = PortCollector(equipment, proxy, normPort=lambda x: x%128)
         if self.ifDescr is not None:
             ports.ifDescr = self.ifDescr
 
-        speed = AlteonSpeedCollector(proxy, dbpool, lambda x: x%128)
+        speed = AlteonSpeedCollector(equipment, proxy, lambda x: x%128)
         speed.oidDuplex = '%s.1.3.2.1.1.3' % self.baseoid
         speed.oidSpeed = '%s.1.3.2.1.1.2' % self.baseoid
         speed.oidAutoneg = '%s.1.1.2.2.1.11'% self.baseoid
 
-        fdb = FdbCollector(proxy, dbpool, self.config, normport=lambda x: x%128)
-        arp = ArpCollector(proxy, dbpool, self.config)
+        fdb = FdbCollector(equipment, proxy, self.config, normport=lambda x: x%128)
+        arp = ArpCollector(equipment, proxy, self.config)
 
-        vlan = AlteonVlanCollector(proxy, dbpool, lambda x: x%128 - 1)
+        vlan = AlteonVlanCollector(equipment, proxy, lambda x: x%128 - 1)
         vlan.oidVlanNames = '%s.2.1.1.3.1.2' % self.baseoid
         vlan.oidVlanPorts = '%s.2.1.1.3.1.3' % self.baseoid
 

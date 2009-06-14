@@ -13,30 +13,23 @@ class SpeedCollector:
     def gotDuplex(self, results):
         raise NotImplementedError
 
-    def __init__(self, proxy, dbpool, normPort=None):
+    def __init__(self, equipment, proxy, normPort=None):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normport = normPort
 
+    def completeEquipment(self):
+        """Complete the equipment with data collected"""
+        for port in self.speed:
+            if self.normport and self.normport(port) is not None:
+                nport = self.equipment.ports[self.normport(port)]
+            else:
+                nport = self.equipment.ports[port]
+            nport.speed = self.speed[port]
+            nport.autoneg = self.autoneg.get(port, None)
+            nport.duplex = self.duplex.get(port, None)
+
     def collectData(self):
-
-        def filePortIntoDb(txn, duplex, speed, autoneg, ip):
-            txn.execute("UPDATE extendedport SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for port in speed:
-                if self.normport and self.normport(port) is not None:
-                    index = self.normport(port)
-                else:
-                    index = port
-                txn.execute("INSERT INTO extendedport "
-                            "VALUES (%(ip)s, %(index)s, %(duplex)s, %(speed)s, %(autoneg)s)",
-                            {'ip': str(ip),
-                             'index': index,
-                             'duplex': duplex.get(port, None),
-                             'speed': speed[port],
-                             'autoneg': autoneg.get(port, None)})
-
         print "Collecting port speed/duplex for %s" % self.proxy.ip
         self.speed = {}
         self.duplex = {}
@@ -49,10 +42,6 @@ class SpeedCollector:
             d.addCallback(self.gotSpeed)
         d.addCallback(lambda x: self.proxy.walk(self.oidAutoneg))
         d.addCallback(self.gotAutoneg)
-        d.addCallback(lambda x: self.dbpool.runInteraction(filePortIntoDb,
-                                                           self.duplex,
-                                                           self.speed,
-                                                           self.autoneg,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d
         

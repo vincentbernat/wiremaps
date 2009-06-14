@@ -3,10 +3,11 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.fdb import CommunityFdbCollector
-from wiremaps.collector.cdp import CdpCollector
+from wiremaps.collector.datastore import LocalVlan
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.fdb import CommunityFdbCollector
+from wiremaps.collector.helpers.cdp import CdpCollector
 
 class Cisco:
     """Collector for Cisco"""
@@ -16,17 +17,17 @@ class Cisco:
     def handleEquipment(self, oid):
         return oid.startswith('.1.3.6.1.4.1.9.')
 
-    def collectData(self, ip, proxy, dbpool):
+    def collectData(self, equipment, proxy):
         # On Cisco, ifName is more revelant than ifDescr, especially
         # on Catalyst switches
         t = {}
-        trunk = CiscoTrunkCollector(proxy, dbpool, t)
-        ports = PortCollector(proxy, dbpool, invert=True, trunk=t)
+        trunk = CiscoTrunkCollector(equipment, proxy, t)
+        ports = PortCollector(equipment, proxy, invert=True, trunk=t)
         ports.ifDescr = ports.ifAlias
-        fdb = CiscoFdbCollector(proxy, dbpool, self.config)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        cdp = CdpCollector(proxy, dbpool)
-        vlan = CiscoVlanCollector(proxy, dbpool, ports)
+        fdb = CiscoFdbCollector(equipment, proxy, self.config)
+        arp = ArpCollector(equipment, proxy, self.config)
+        cdp = CdpCollector(equipment, proxy)
+        vlan = CiscoVlanCollector(equipment, proxy, ports)
         d = trunk.collectData()
         d.addCallback(lambda x: ports.collectData())
         d.addCallback(lambda x: arp.collectData())
@@ -53,9 +54,9 @@ class CiscoTrunkCollector:
     pagpEthcOperationMode = '.1.3.6.1.4.1.9.9.98.1.1.1.1.1'
     pagpGroupIfIndex = '.1.3.6.1.4.1.9.9.98.1.1.1.1.8'
 
-    def __init__(self, proxy, dbpool, trunk):
+    def __init__(self, equipment, proxy, trunk):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.trunk = trunk
 
     def gotOperationMode(self, results):
@@ -114,9 +115,9 @@ class CiscoVlanCollector:
     # Vlan names
     vtpVlanName = '.1.3.6.1.4.1.9.9.46.1.3.1.1.4'
 
-    def __init__(self, proxy, dbpool, ports):
+    def __init__(self, equipment, proxy, ports):
         self.ports = ports
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.proxy = proxy
 
     def gotVlanNames(self, results):
@@ -171,28 +172,19 @@ class CiscoVlanCollector:
             if port not in self.vlans:
                 self.vlans[port] = [results[oid]]
 
+    def completeEquipment(self):
+        """Use collected data to populate C{self.equipments}"""
+        for port in self.vlans:
+            if port not in self.ports.portNames:
+                continue
+            for vid in self.vlans[port]:
+                if vid not in self.names:
+                    continue
+                self.equipment.ports[port].vlan.append(
+                    LocalVlan(vid, self.names[vid]))
+
     def collectData(self):
         """Collect VLAN data from SNMP"""
-    
-        def fileVlanIntoDb(txn, names, vlans, ip):
-            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND type='local' AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for port in vlans:
-                if port not in self.ports.portNames:
-                    continue
-                for vid in vlans[port]:
-                    if vid not in names:
-                        continue
-                    txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
-                                "%(port)s, %(vid)s, %(name)s, "
-                                "%(type)s)",
-                                {'ip': str(ip),
-                                 'port': port,
-                                 'vid': vid,
-                                 'name': names[vid],
-                                 'type': 'local'})
-
         print "Collecting VLAN information for %s" % self.proxy.ip
         self.trunked = []
         self.vlans = {}
@@ -208,8 +200,5 @@ class CiscoVlanCollector:
         d.addCallback(self.gotNativeVlan)
         d.addCallback(lambda x: self.proxy.walk(self.vlanTrunkPortNativeVlan))
         d.addCallback(self.gotNativeVlan)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
-                                                           self.names,
-                                                           self.vlans,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d

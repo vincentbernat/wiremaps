@@ -5,9 +5,10 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import CommunityFdbCollector
-from wiremaps.collector.arp import ArpCollector
+from wiremaps.collector.datastore import LocalVlan
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import CommunityFdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
 
 class SuperStack:
     """Collector for 3Com SuperStack switches"""
@@ -31,12 +32,12 @@ class SuperStack:
                                         mo.group(1))
         return descr
 
-    def collectData(self, ip, proxy, dbpool):
+    def collectData(self, equipment, proxy):
         proxy.version = 1       # Use SNMPv1
-        ports = PortCollector(proxy, dbpool, self.normPortName)
-        fdb = SuperStackFdbCollector(proxy, dbpool, self.config)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        vlan = SuperStackVlanCollector(proxy, dbpool)
+        ports = PortCollector(equipment, proxy, self.normPortName)
+        fdb = SuperStackFdbCollector(equipment, proxy, self.config)
+        arp = ArpCollector(equipment, proxy, self.config)
+        vlan = SuperStackVlanCollector(equipment, proxy)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
@@ -77,9 +78,9 @@ class SuperStackVlanCollector:
     encapsIfType = '.1.3.6.1.4.1.43.10.1.14.4.1.1.2'
     ifStackStatus = '.1.3.6.1.2.1.31.1.2.1.3'
 
-    def __init__(self, proxy, dbpool):
+    def __init__(self, equipment, proxy):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
 
     def gotVlan(self, results, dic):
         """Callback handling reception of VLAN
@@ -94,9 +95,9 @@ class SuperStackVlanCollector:
     def gotStackStatus(self, results):
         """Handle reception of C{IF-MIB::ifStackStatus}.
 
-        We'll build C{vlanPorts}
+        We also complete C{self.equipment}
         """
-        self.vlanPorts = {}
+        vlanPorts = {}
         for oid in results:
             if results[oid] == 1: # active
                 port = int(oid.split(".")[-1])
@@ -111,30 +112,20 @@ class SuperStackVlanCollector:
                     vid = self.vlanVid[y]
                 elif self.vlanEncapsType[y] == 2: # vlanEncaps8021q
                     vid = self.vlanEncapsTag[y]
-                if vid not in self.vlanPorts:
-                    self.vlanPorts[vid] = []
-                self.vlanPorts[vid].append(port)
+                if vid not in vlanPorts:
+                    vlanPorts[vid] = []
+                vlanPorts[vid].append(port)
+
+        # Add all those information in C{self.equipment}
+        for x in self.vlanVid:
+            if self.vlanVid[x] in vlanPorts:
+                for port in vlanPorts[self.vlanVid[x]]:
+                    self.equipment.ports[port].vlan.append(
+                        LocalVlan(self.vlanVid[x],
+                                  self.vlanNames[x]))
 
     def collectData(self):
         """Collect VLAN data from SNMP"""
-
-        def fileVlanIntoDb(txn, vid, names, ports, ip):
-            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND type='local' "
-                        "AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for x in vid:
-                if vid[x] in ports:
-                    for port in ports[vid[x]]:
-                        txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
-                                    "%(port)s, %(vid)s, %(name)s, "
-                                    "%(type)s)",
-                                    {'ip': str(ip),
-                                     'port': port,
-                                     'vid': vid[x],
-                                     'name': names[x],
-                                     'type': 'local'})
-
         print "Collecting VLAN information for %s" % self.proxy.ip
         self.vlanVid = {}
         self.vlanNames = {}
@@ -150,9 +141,4 @@ class SuperStackVlanCollector:
         d.addCallback(self.gotVlan, self.vlanEncapsType)
         d.addCallback(lambda x: self.proxy.walk(self.ifStackStatus))
         d.addCallback(self.gotStackStatus)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
-                                                           self.vlanVid,
-                                                           self.vlanNames,
-                                                           self.vlanPorts,
-                                                           self.proxy.ip))
         return d

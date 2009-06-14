@@ -3,9 +3,9 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.lldp import LldpCollector, LldpSpeedCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.lldp import LldpCollector, LldpSpeedCollector
 
 class Linux:
     """Collector for Linux.
@@ -20,11 +20,11 @@ class Linux:
         return (oid in ['.1.3.6.1.4.1.8072.3.2.10', # Net-SNMP Linux
                         ])
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        lldp = LldpCollector(proxy, dbpool)
-        speed = LldpSpeedCollector(proxy, dbpool)
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy)
+        arp = ArpCollector(equipment, proxy, self.config)
+        lldp = LldpCollector(equipment, proxy)
+        speed = LldpSpeedCollector(equipment, proxy)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())

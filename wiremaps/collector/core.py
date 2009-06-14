@@ -10,11 +10,13 @@ from twisted.application import internet, service
 from twisted.plugin import getPlugins
 from twisted.python.failure import Failure
 
-import wiremaps.collector
+import wiremaps.collector.equipment
+from wiremaps.collector.datastore import Equipment
+from wiremaps.collector.database import DatabaseWriter
 from wiremaps.collector import exception
 from wiremaps.collector.proxy import AgentProxy
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.generic import generic
+from wiremaps.collector.equipment.generic import generic
 
 class CollectorService(service.Service):
     """Service to collect data from SNMP"""
@@ -130,13 +132,16 @@ class CollectorService(service.Service):
     def handlePlugins(self, info):
         """Give control to plugins.
 
-        @param info: C{(proxy, oid)} tuple
+        @param info: C{(proxy, equipment)} tuple
         """
-        proxy, oid = info
+        proxy, equipment = info
         proxy.version = 2       # Switch to version 2. Plugins should
                                 # switch back to version 1 if needed.
-        plugins = [ plugin for plugin in getPlugins(ICollector, wiremaps.collector)
-                    if plugin.handleEquipment(str(oid)) ]
+        # Filter out plugins that do not handle our equipment
+        plugins = [ plugin for plugin
+                    in getPlugins(ICollector,
+                                  wiremaps.collector.equipment)
+                    if plugin.handleEquipment(str(equipment.oid)) ]
         if not plugins:
             print "No plugin found for OID %s, using generic one" % oid
             plugins = [generic]
@@ -144,9 +149,12 @@ class CollectorService(service.Service):
                                                      for plugin in plugins],
                                                     proxy.ip)
         d = defer.succeed(None)
+        # Run each plugin to complete C{equipment}
         for plugin in plugins:
             plugin.config = self.config
-            d.addCallback(lambda x: plugin.collectData(proxy.ip, proxy, self.dbpool))
+            d.addCallback(lambda x: plugin.collectData(equipment, proxy))
+        # At the end, write C{equipment} to the database
+        d.addCallback(lambda _: DatabaseWriter(equipment, self.config).write(self.dbpool))
         return d
 
     def guessCommunity(self, ignored, proxy, ip, communities):
@@ -175,43 +183,16 @@ class CollectorService(service.Service):
         """Get some basic information to file C{equipment} table.
 
         @param proxy: proxy to use to get our information
-        @return: deferred tuple C{(proxy, oid)} where C{oid} is the OID
-            of the equipment.
+        @return: deferred tuple C{(proxy, equipment)} where C{equipment} should
+            be completed with additional information
         """
-
-        def fileIntoDb(txn, result, ip):
-            txn.execute("SELECT ip, name, oid, description "
-                        "FROM equipment WHERE ip = %(ip)s AND deleted='infinity'",
-                        {'ip': str(ip)})
-            id = txn.fetchall()
-            target = {'name': result['.1.3.6.1.2.1.1.5.0'].lower(),
-                      'oid': result['.1.3.6.1.2.1.1.2.0'],
-                      'description': result['.1.3.6.1.2.1.1.1.0'],
-                      'ip': str(ip)}
-            if not id:
-                txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
-                            "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
-                            target)
-            else:
-                # Maybe something changed
-                if id[0][1] != target["name"] or id[0][2] != target["oid"] or \
-                        id[0][3] != target["description"]:
-                    txn.execute("UPDATE equipment SET deleted=CURRENT_TIMESTAMP "
-                                "WHERE ip=%(ip)s AND deleted='infinity'",
-                                target)
-                    txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
-                                "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
-                                target)
-                else:
-                    # Nothing changed, update `updated' column
-                    txn.execute("UPDATE equipment SET updated=CURRENT_TIMESTAMP "
-                                "WHERE ip=%(ip)s AND deleted='infinity'", target)
-            return result['.1.3.6.1.2.1.1.2.0']
-
         d = proxy.get(['.1.3.6.1.2.1.1.1.0', # description
                        '.1.3.6.1.2.1.1.2.0', # OID
                        '.1.3.6.1.2.1.1.5.0', # name
                        ])
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb, x, proxy.ip))
-        d.addCallback(lambda x: (proxy,x))
+        d.addCallback(lambda result: (proxy,
+                                      Equipment(proxy.ip,
+                                                result['.1.3.6.1.2.1.1.5.0'].lower(),
+                                                result['.1.3.6.1.2.1.1.2.0'],
+                                                result['.1.3.6.1.2.1.1.1.0'])))
         return d

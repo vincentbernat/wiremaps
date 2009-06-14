@@ -1,4 +1,5 @@
 from wiremaps.collector import exception
+from wiremaps.collector.datastore import Cdp
 
 class CdpCollector:
     """Collect data using CDP"""
@@ -9,14 +10,14 @@ class CdpCollector:
     cdpCacheAddress = '.1.3.6.1.4.1.9.9.23.1.2.1.1.4'
     cdpCacheAddressType = '.1.3.6.1.4.1.9.9.23.1.2.1.1.3'
 
-    def __init__(self, proxy, dbpool):
+    def __init__(self, equipment, proxy):
         """Create a collector using CDP entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
-        @param dbpool: pool of database connections
+        @param equipment: equipment to complete with data from CDP
         """
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
 
     def gotCdp(self, results, dic):
         """Callback handling reception of CDP
@@ -30,28 +31,21 @@ class CdpCollector:
             if desc and port is not None:
                 dic[port] = desc
 
+    def completeEquipment(self):
+        """Add collected data to equipment."""
+        for port in self.cdpDeviceId:
+            if self.cdpAddressType[port] != 1:
+                ip = "0.0.0.0"
+            else:
+                ip = ".".join(str(ord(i)) for i in self.cdpAddress[port])
+            self.equipment.ports[port].cdp = \
+                Cdp(self.cdpDeviceId[port],
+                    self.cdpDevicePort[port],
+                    ip,
+                    self.cdpPlatform[port])
+
     def collectData(self):
         """Collect CDP data from SNMP"""
-    
-        def fileIntoDb(txn, sysname, portname, platform, mgmtiptype, mgmtip, ip):
-            txn.execute("UPDATE cdp SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for port in sysname.keys():
-                if mgmtiptype[port] != 1:
-                    mgmtip[port] = "0.0.0.0"
-                else:
-                    mgmtip[port] = ".".join(str(ord(i)) for i in mgmtip[port])
-                txn.execute("INSERT INTO cdp VALUES (%(ip)s, "
-                            "%(port)s, %(sysname)s, %(portname)s, "
-                            "%(mgmtip)s, %(platform)s)",
-                            {'ip': str(ip),
-                             'port': port,
-                             'sysname': sysname[port],
-                             'portname': portname[port],
-                             'platform': platform[port],
-                             'mgmtip': mgmtip[port]})
-
         print "Collecting CDP for %s" % self.proxy.ip
         self.cdpDeviceId = {}
         self.cdpDevicePort = {}
@@ -63,11 +57,5 @@ class CdpCollector:
         for y in ["DevicePort", "Platform", "AddressType", "Address"]:
             d.addCallback(lambda x,z: self.proxy.walk(getattr(self, "cdpCache%s" % z)), y)
             d.addCallback(self.gotCdp, getattr(self, "cdp%s" % y))
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
-                                                           self.cdpDeviceId,
-                                                           self.cdpDevicePort,
-                                                           self.cdpPlatform,
-                                                           self.cdpAddressType,
-                                                           self.cdpAddress,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d

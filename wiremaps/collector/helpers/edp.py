@@ -1,4 +1,5 @@
 from wiremaps.collector import exception
+from wiremaps.collector.datastore import Edp, RemoteVlan
 
 class EdpCollector:
     """Collect data using EDP"""
@@ -8,15 +9,15 @@ class EdpCollector:
     edpNeighborPort = '.1.3.6.1.4.1.1916.1.13.2.1.6'
     edpNeighborVlanId = '.1.3.6.1.4.1.1916.1.13.3.1.2'
 
-    def __init__(self, proxy, dbpool, normport=None):
+    def __init__(self, equipment, proxy, normport=None):
         """Create a collector using EDP entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
-        @param dbpool: pool of database connections
+        @param equipment: equipment to complete with data from EDP
         @param nomport: function to use to normalize port index
         """
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normport = normport
 
     def gotEdp(self, results, dic):
@@ -46,37 +47,21 @@ class EdpCollector:
                     for x in oid[len(self.edpNeighborVlanId):].split(".")[11:]]
             self.vlan[results[oid], port] = "".join(vlan)
 
+    def completeEquipment(self):
+        """Complete C{self.equipment} with data from EDP."""
+        # Core EDP
+        for port in self.edpSysName:
+            self.equipment.ports[port].edp = \
+                Edp(self.edpSysName[port],
+                    int(self.edpRemoteSlot[port]),
+                    int(self.edpRemotePort[port]))
+        # Vlans
+        for vid, port in self.vlan:
+            self.equipment.ports[port].vlan.append(
+                RemoteVlan(vid, self.vlan[vid, port]))
+
     def collectData(self):
         """Collect EDP data from SNMP"""
-    
-        def fileIntoDb(txn, sysname, remoteslot, remoteport, ip):
-            txn.execute("UPDATE edp SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for port in sysname.keys():
-                txn.execute("INSERT INTO edp VALUES (%(ip)s, "
-                            "%(port)s, %(sysname)s, %(remoteslot)s, "
-                            "%(remoteport)s)",
-                            {'ip': str(ip),
-                             'port': port,
-                             'sysname': sysname[port],
-                             'remoteslot': int(remoteslot[port]),
-                             'remoteport': int(remoteport[port])})
-
-        def fileVlanIntoDb(txn, vlan, ip):
-            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND type='remote' AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for vid,port in vlan.keys():
-                txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
-                            "%(port)s, %(vid)s, %(name)s, "
-                            "%(type)s)",
-                            {'ip': str(ip),
-                             'port': port,
-                             'vid': vid,
-                             'name': vlan[vid,port],
-                             'type': 'remote'})
-
         print "Collecting EDP for %s" % self.proxy.ip
         self.edpSysName = {}
         self.edpRemoteSlot = {}
@@ -90,12 +75,5 @@ class EdpCollector:
         d.addCallback(self.gotEdp, self.edpRemotePort)
         d.addCallback(lambda x: self.proxy.walk(self.edpNeighborVlanId))
         d.addCallback(self.gotEdpVlan)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
-                                                           self.edpSysName,
-                                                           self.edpRemoteSlot,
-                                                           self.edpRemotePort,
-                                                           self.proxy.ip))
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
-                                                           self.vlan,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d

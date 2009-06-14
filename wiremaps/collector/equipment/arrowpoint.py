@@ -2,8 +2,8 @@ from zope.interface import implements
 from twisted.plugin import IPlugin
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.arp import ArpCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.arp import ArpCollector
 
 class ArrowPoint:
     """Collector for Arrowpoint Content Switch (no FDB)"""
@@ -18,9 +18,9 @@ class ArrowPoint:
     def normPortName(self, port):
         return "Port %s" % port
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool, self.normPortName)
-        arp = ArpCollector(proxy, dbpool, self.config)
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy, self.normPortName)
+        arp = ArpCollector(equipment, proxy, self.config)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())
         return d

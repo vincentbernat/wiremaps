@@ -3,13 +3,13 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.sonmp import SonmpCollector
-from wiremaps.collector.lldp import LldpCollector
-from wiremaps.collector.vlan import VlanCollector
-from wiremaps.collector.nortel import NortelSpeedCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import FdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.sonmp import SonmpCollector
+from wiremaps.collector.helpers.lldp import LldpCollector
+from wiremaps.collector.helpers.vlan import VlanCollector
+from wiremaps.collector.helpers.nortel import NortelSpeedCollector
 
 class Nortel5510:
     """Collector for Nortel 55x0 and Nortel 425"""
@@ -32,16 +32,15 @@ class Nortel5510:
         except:
             return port
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool, self.normPortName)
-        speed = NortelSpeedCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool, self.config)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        lldp = LldpCollector(proxy, dbpool)
-        sonmp = SonmpCollector(proxy, dbpool)
-        vlan = NortelVlanCollector(proxy, dbpool,
-                                   normPort=lambda x: x-1,
-                                   clean=False) # cleaning is done by LLDP
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy, self.normPortName)
+        speed = NortelSpeedCollector(equipment, proxy)
+        fdb = FdbCollector(equipment, proxy, self.config)
+        arp = ArpCollector(equipment, proxy, self.config)
+        lldp = LldpCollector(equipment, proxy)
+        sonmp = SonmpCollector(equipment, proxy)
+        vlan = NortelVlanCollector(equipment, proxy,
+                                   normPort=lambda x: x-1)
         d = ports.collectData()
         d.addCallback(lambda x: speed.collectData())
         d.addCallback(lambda x: fdb.collectData())

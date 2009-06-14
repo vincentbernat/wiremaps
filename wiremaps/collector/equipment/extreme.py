@@ -3,12 +3,13 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector, ExtremeFdbCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.lldp import LldpCollector
-from wiremaps.collector.edp import EdpCollector
-from wiremaps.collector.vlan import IfMibVlanCollector
+from wiremaps.collector.datastore import LocalVlan
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import FdbCollector, ExtremeFdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.lldp import LldpCollector
+from wiremaps.collector.helpers.edp import EdpCollector
+from wiremaps.collector.helpers.vlan import IfMibVlanCollector
 
 class ExtremeSummit:
     """Collector for Extreme switches and routers"""
@@ -25,14 +26,14 @@ class ExtremeSummit:
     def vlanFactory(self):
         return ExtremeVlanCollector
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool, invert=True)
-        fdb = FdbCollector(proxy, dbpool, self.config)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        edp = EdpCollector(proxy, dbpool)
-        vlan = self.vlanFactory()(proxy, dbpool)
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy, invert=True)
+        fdb = FdbCollector(equipment, proxy, self.config)
+        arp = ArpCollector(equipment, proxy, self.config)
+        edp = EdpCollector(equipment, proxy)
+        vlan = self.vlanFactory()(equipment, proxy)
         # LLDP disabled due to unstability
-        # lldp = LldpCollector(proxy, dbpool)
+        # lldp = LldpCollector(equipment, proxy)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
@@ -62,14 +63,14 @@ class ExtremeWare:
         return (oid in ['.1.3.6.1.4.1.1916.2.11', # Black Diamond 6808 (ExtremeWare)
                         ])
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = PortCollector(proxy, dbpool, invert=True)
-        vlan = ExtremeVlanCollector(proxy, dbpool)
-        fdb = ExtremeFdbCollector(vlan, proxy, dbpool, self.config)
-        arp = ArpCollector(proxy, dbpool, self.config)
-        edp = EdpCollector(proxy, dbpool)
+    def collectData(self, equipment, proxy):
+        ports = PortCollector(equipment, proxy, invert=True)
+        vlan = ExtremeVlanCollector(equipment, proxy)
+        fdb = ExtremeFdbCollector(vlan, equipment, proxy, self.config)
+        arp = ArpCollector(equipment, proxy, self.config)
+        edp = EdpCollector(equipment, proxy)
         # LLDP disabled due to unstability
-        # lldp = LldpCollector(proxy, dbpool)
+        # lldp = LldpCollector(equipment, proxy)
         d = ports.collectData()
         d.addCallback(lambda x: vlan.collectData())
         d.addCallback(lambda x: fdb.collectData())
@@ -86,9 +87,9 @@ class ExtremeVlanCollector:
     vlanOpaque = '.1.3.6.1.4.1.1916.1.2.6.1.1'
     extremeSlotNumber = '.1.3.6.1.4.1.1916.1.1.2.2.1.1'
 
-    def __init__(self, proxy, dbpool):
+    def __init__(self, equipment, proxy):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
 
     def gotVlan(self, results, dic):
         """Callback handling reception of VLAN
@@ -121,6 +122,14 @@ class ExtremeVlanCollector:
                             l.append(8-j + 8*i)
             self.vlanPorts[vlan] = l
 
+        # Add all this to C{self.equipment}
+        for vid in self.vlanDescr:
+            if vid in self.vlanId and vid in self.vlanPorts:
+                for port in self.vlanPorts[vid]:
+                    self.equipment.ports[port].vlan.append(
+                        LocalVlan(self.vlanId[vid],
+                                  self.vlanDescr[vid]))
+
     def gotSlots(self, results):
         """Callback handling reception of slots
 
@@ -130,23 +139,6 @@ class ExtremeVlanCollector:
 
     def collectData(self):
         """Collect VLAN data from SNMP"""
-    
-        def fileVlanIntoDb(txn, descr, id, ports, ip):
-            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND type='local' AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for vid in descr:
-                if vid in id and vid in ports:
-                    for port in ports[vid]:
-                        txn.execute("INSERT INTO vlan VALUES (%(ip)s, "
-                                    "%(port)s, %(vid)s, %(name)s, "
-                                    "%(type)s)",
-                                    {'ip': str(ip),
-                                     'port': port,
-                                     'vid': id[vid],
-                                     'name': descr[vid],
-                                     'type': 'local'})
-
         print "Collecting VLAN information for %s" % self.proxy.ip
         self.vlanDescr = {}
         self.vlanId = {}
@@ -160,14 +152,7 @@ class ExtremeVlanCollector:
         d.addCallback(self.gotSlots)
         d.addCallback(lambda x: self.proxy.walk(self.vlanOpaque))
         d.addCallback(self.gotVlanMembers)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileVlanIntoDb,
-                                                           self.vlanDescr,
-                                                           self.vlanId,
-                                                           self.vlanPorts,
-                                                           self.proxy.ip))
         return d
-
-
 
 osummit = OldExtremeSummit()
 summit = ExtremeSummit()

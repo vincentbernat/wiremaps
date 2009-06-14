@@ -1,4 +1,5 @@
 from twisted.internet import defer
+from wiremaps.collector.datastore import Port, Trunk
 
 class PortCollector:
     """Collect data about ports"""
@@ -12,79 +13,21 @@ class PortCollector:
     ifSpeed = '.1.3.6.1.2.1.2.2.1.5'
     ifHighSpeed = '.1.3.6.1.2.1.31.1.1.1.15'
 
-    @classmethod
-    def filePortsIntoDb(cls, txn, names, aliases, status, address, speed, ip):
-        # This table is a bit complicated to use because we need
-        # to update or insert depending on the fact that the
-        # information has changed or not.
-        tmp = aliases.copy()
-        tmp.update(names)
-        names = tmp
-        newports = names.keys()
-        txn.execute("SELECT index, name, alias, cstate, mac, speed "
-                    "FROM port WHERE equipment = %(ip)s "
-                    "AND deleted='infinity'",
-                    {'ip': str(ip)})
-        ports = txn.fetchall()
-        for port in ports:
-            port, oname, oalias, ocstate, omac, ospeed = port
-            port = int(port)
-            if port not in newports:
-                # Delete port
-                txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
-                            "WHERE equipment = %(ip)s "
-                            "AND index = %(index)s AND deleted='infinity'",
-                            {'ip': str(ip),
-                             'index': port})
-            else:
-                # Refresh port
-                txn.execute("SELECT 1 WHERE %(mac1)s::macaddr = %(mac2)s::macaddr",
-                            {'mac1': omac,
-                             'mac2': address.get(port, None)})
-                if not(txn.fetchall()) or \
-                        oname != names[port] or oalias != aliases.get(port, None) or \
-                        ocstate != status[port] or \
-                        ospeed != speed.get(port, None):
-                    # Delete the old one
-                    txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
-                                "WHERE equipment = %(ip)s "
-                                "AND index = %(index)s AND deleted='infinity'",
-                                {'ip': str(ip),
-                                 'index': port})
-                else:
-                    newports.remove(port)
-                    # We don't need to update it, it is up-to-date
-        for port in newports:
-            # Add port
-            txn.execute("INSERT INTO port "
-                        "(equipment, index, name, alias, cstate, mac, speed) "
-                        "VALUES (%(ip)s, %(port)s, "
-                        "%(name)s, %(alias)s, %(state)s, %(address)s, %(speed)s)",
-                        {'ip': str(ip),
-                         'port': port,
-                         'name': names[port],
-                         'alias': aliases.get(port, None),
-                         'state': status[port],
-                         'address': address.get(port, None),
-                         'speed': speed.get(port, None),
-                         })
-
-
-    def __init__(self, proxy, dbpool,
+    def __init__(self, equipment, proxy,
                  normName=None, normPort=None, filter=None, invert=False,
                  trunk=None):
         """Create a collector for port information
 
         @param proxy: proxy to use to query SNMP
-        @param dbpool: pool of database connections
+        @param equipment: equipment to complete
         @param normName: function to normalize port name
         @param normPort: function to normalize port index
         @param filter: filter out those ports
         @param invert: invert ifName and ifDescr
-        @param trunk: collected trunk information
+        @param trunk: collected trunk information (mapping trunk index -> list of members)
         """
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normName = normName
         self.normPort = normPort
         self.filter = filter
@@ -215,6 +158,22 @@ class PortCollector:
             if s:
                 self.speed[port] = s
 
+    def completeEquipment(self):
+        """Complete C{self.equipment} with data collected"""
+        tmp = self.portAliases.copy()
+        tmp.update(self.portNames)
+        self.portNames = tmp
+        for port in self.portNames:
+            self.equipment.ports[port] = Port(self.portNames[port],
+                                              self.portStatus[port],
+                                              self.portAliases.get(port, None),
+                                              self.portAddress.get(port, None),
+                                              self.speed.get(port, None))
+        if self.trunk:
+            for t in self.trunk:
+                for port in self.trunk[t]:
+                    self.equipment.ports[port].trunk = Trunk(t)
+
     def collectData(self):
         """Collect data.
 
@@ -222,18 +181,6 @@ class PortCollector:
           and index
         - Using IF-MIB::ifOperStatus for port status
         """
-
-        def fileTrunkIntoDb(txn, trunk, ip):
-            txn.execute("UPDATE trunk SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
-            for t in trunk:
-                for port in trunk[t]:
-                    txn.execute("INSERT INTO trunk VALUES (%(ip)s, %(trunk)s, %(port)s)",
-                                {'ip': str(ip),
-                                 'trunk': t,
-                                 'port': port
-                                 })
-
         print "Collecting port information for %s" % self.proxy.ip
         d = self.proxy.walk(self.ifType)
         d.addCallback(self.gotIfTypes)
@@ -249,15 +196,5 @@ class PortCollector:
         d.addCallback(self.gotSpeed)
         d.addCallback(lambda x: self.proxy.walk(self.ifHighSpeed))
         d.addCallback(self.gotHighSpeed)
-        d.addCallback(lambda x: self.dbpool.runInteraction(self.filePortsIntoDb,
-                                                           self.portNames,
-                                                           self.portAliases,
-                                                           self.portStatus,
-                                                           self.portAddress,
-                                                           self.speed,
-                                                           self.proxy.ip))
-        if self.trunk is not None:
-            d.addCallback(lambda x: self.dbpool.runInteraction(fileTrunkIntoDb,
-                                                               self.trunk,
-                                                               self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d

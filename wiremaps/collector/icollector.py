@@ -1,7 +1,7 @@
 from zope.interface import Interface
 
 class ICollector(Interface):
-    """Interface for a collector"""
+    """Interface for a collector for a given equipment"""
 
     def handleEquipment(oid):
         """Does this instance handle the given equipment
@@ -10,11 +10,12 @@ class ICollector(Interface):
         @return: C{True} if the equipment is handled
         """
 
-    def collectData(ip, proxy, dbpool):
+    def collectData(equipment, proxy):
         """Collect data from the equipment
 
-        @param ip: IP of the equipment
+        @param equipment: equipment to complete with data
         @param proxy: proxy to query the equipment with SNMP
-        @param dbpool: pool of database connections to use to query
-            database
+
+        @return: an object implementing IEquipment interface and
+            containing all information for the given equipment.
         """

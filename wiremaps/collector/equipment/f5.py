@@ -3,7 +3,8 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.arp import ArpCollector
+from wiremaps.collector.datastore import Port, Trunk, LocalVlan
+from wiremaps.collector.helpers.arp import ArpCollector
 
 class F5:
     """Collector for F5.
@@ -43,9 +44,9 @@ class F5:
     def handleEquipment(self, oid):
         return oid.startswith('.1.3.6.1.4.1.3375.2.1.3.4.') # F5 BigIP
 
-    def collectData(self, ip, proxy, dbpool):
-        ports = F5PortCollector(proxy, dbpool)
-        arp = ArpCollector(proxy, dbpool, self.config)
+    def collectData(self, equipment, proxy):
+        ports = F5PortCollector(equipment, proxy)
+        arp = ArpCollector(equipment, proxy, self.config)
         d = ports.collectData()
         d.addCallback(lambda x: arp.collectData())
         return d
@@ -57,9 +58,9 @@ class F5PortCollector:
     collector because the way data are indexed.
     """
 
-    def __init__(self, proxy, dbpool):
+    def __init__(self, equipment, proxy):
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.data = {}
         self.association = {}
 
@@ -95,64 +96,41 @@ class F5PortCollector:
             string2 = "".join([chr(int(c)) for c in strings[(len(string1)+2):]])
             self.association[kind].append((string1, string2))
 
+
+    def completeEquipment(self):
+        # Interfaces
+        names = {}
+        status = {}
+        mac = {}
+        speed = {}
+        duplex = {}
+        interfaces = []
+        for p in self.data["status"]:
+            interfaces.append([x.isdigit() and int(x) or x for x in p.split(".")])
+        interfaces.sort()
+        interfaces = [".".join([str(y) for y in x]) for x in interfaces]
+        for p in self.data["status"]:
+            index = interfaces.index(p) + 1
+            self.equipment.ports[index] = \
+                Port(p,
+                     self.data["status"][p] == 0 and 'up' or 'down',
+                     mac=(self.data["mac"].get(p, None) and \
+                              ":".join([("%02x" % ord(m))
+                                        for m in self.data["mac"][p]])),
+                     speed=self.data["speed"].get(p, None),
+                     duplex={0: None,
+                             1: 'half',
+                             2: 'full'}[self.data["duplex"].get(p, 0)])
+        for trunk, port in self.association["trunk"]:
+            self.equipment.ports[interfaces.index(port) + 1].trunk = \
+                Trunk(interfaces.index(trunk) + 1)
+        for vlan, port in self.association["vlan"]:
+            if vlan not in self.data["vid"]: continue
+            self.equipment.ports[interfaces.index(port) + 1].vlan.append(
+                LocalVlan(self.data["vid"][vlan],
+                          vlan))
+
     def collectData(self):
-
-        def fileIntoDb(txn, data, association, ip):
-            # Interfaces
-            from port import PortCollector
-            names = {}
-            status = {}
-            mac = {}
-            speed = {}
-            duplex = {}
-            interfaces = []
-            for p in data["status"]:
-                interfaces.append([x.isdigit() and int(x) or x for x in p.split(".")])
-            interfaces.sort()
-            interfaces = [".".join([str(y) for y in x]) for x in interfaces]
-            for p in data["status"]:
-                index = interfaces.index(p) + 1
-                names[index] = p
-                status[index] = data["status"][p] == 0 and 'up' or 'down'
-                mac[index] = data["mac"].get(p, None) and \
-                    ":".join([("%02x" % ord(m)) for m in data["mac"][p]])
-                speed[index] = data["speed"].get(p, None)
-                duplex[index] = {0: None,
-                                 1: 'half',
-                                 2: 'full'}[data["duplex"].get(p, 0)]
-            PortCollector.filePortsIntoDb(txn,
-                                          names, {}, status, mac, speed, ip)
-            txn.execute("UPDATE extendedport SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for p in speed:
-                txn.execute("INSERT INTO extendedport (equipment, index, duplex, speed) "
-                            "VALUES (%(ip)s, %(index)s, %(duplex)s, %(speed)s)",
-                            {'ip': str(ip),
-                             'index': p,
-                             'duplex': duplex.get(p, None),
-                             'speed': speed[p]})
-            # Trunk
-            txn.execute("UPDATE trunk SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
-            for trunk, port in association["trunk"]:
-                txn.execute("INSERT INTO trunk VALUES (%(ip)s, %(trunk)s, %(port)s)",
-                            {'ip': str(ip),
-                             'trunk': interfaces.index(trunk) + 1,
-                             'port': interfaces.index(port) + 1})
-            # VLAN
-            txn.execute("UPDATE vlan SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'", {'ip': str(ip)})
-            for vlan, port in association["vlan"]:
-                if vlan not in data["vid"]: continue
-                txn.execute(
-                    "INSERT INTO vlan VALUES (%(ip)s, %(port)s, %(vid)s, %(name)s, %(type)s)",
-                    {'ip': str(ip),
-                     'port': interfaces.index(port) + 1,
-                     'vid': data["vid"][vlan],
-                     'name': vlan,
-                     'type': 'local'})
-
         print "Collecting port, trunk and vlan information for %s" % self.proxy.ip
         d = defer.succeed(None)
         for oid, what in [
@@ -173,12 +151,7 @@ class F5PortCollector:
             (".1.3.6.1.4.1.3375.2.1.2.13.2.2.1.1", "vlan")]:
             d.addCallback(lambda x,y: self.proxy.walk(y), oid)
             d.addCallback(self.gotAssociation, what, oid)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
-                                                           self.data,
-                                                           self.association,
-                                                           self.proxy.ip))
+        d.addCallback(lambda _: self.completeEquipment())
         return d
-
-
 
 f5 = F5()

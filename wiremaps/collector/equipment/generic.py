@@ -3,11 +3,11 @@ from twisted.plugin import IPlugin
 from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
-from wiremaps.collector.port import PortCollector
-from wiremaps.collector.fdb import FdbCollector
-from wiremaps.collector.arp import ArpCollector
-from wiremaps.collector.lldp import LldpCollector, LldpSpeedCollector
-from wiremaps.collector.vlan import Rfc2674VlanCollector, IfMibVlanCollector
+from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.fdb import FdbCollector
+from wiremaps.collector.helpers.arp import ArpCollector
+from wiremaps.collector.helpers.lldp import LldpCollector, LldpSpeedCollector
+from wiremaps.collector.helpers.vlan import Rfc2674VlanCollector, IfMibVlanCollector
 
 class Generic:
     """Generic class for equipments not handled by another class.
@@ -24,22 +24,20 @@ class Generic:
             return None
         return port
 
-    def collectData(self, ip, proxy, dbpool):
+    def collectData(self, equipment, proxy):
         proxy.version = 1       # Use SNMPv1
-        ports = PortCollector(proxy, dbpool)
-        fdb = FdbCollector(proxy, dbpool, self.config,
+        ports = PortCollector(equipment, proxy)
+        fdb = FdbCollector(equipment, proxy, self.config,
                            lambda x: self.normport(x, ports))
-        arp = ArpCollector(proxy, dbpool, self.config)
-        lldp = LldpCollector(proxy, dbpool,
+        arp = ArpCollector(equipment, proxy, self.config)
+        lldp = LldpCollector(equipment, proxy,
                              lambda x: self.normport(x, ports))
-        speed = LldpSpeedCollector(proxy, dbpool,
+        speed = LldpSpeedCollector(equipment, proxy,
                                    lambda x: self.normport(x, ports))
-        vlan1 = Rfc2674VlanCollector(proxy, dbpool,
-                                     normPort=lambda x: self.normport(x, ports),
-                                     clean=False)
-        vlan2 = IfMibVlanCollector(proxy, dbpool,
-                                   normPort=lambda x: self.normport(x, ports),
-                                   clean=False)
+        vlan1 = Rfc2674VlanCollector(equipment, proxy,
+                                     normPort=lambda x: self.normport(x, ports))
+        vlan2 = IfMibVlanCollector(equipment, proxy,
+                                   normPort=lambda x: self.normport(x, ports))
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())

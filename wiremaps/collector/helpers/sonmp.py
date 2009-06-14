@@ -1,16 +1,18 @@
+from wiremaps.collector.datastore import Sonmp
+
 class SonmpCollector:
     """Collect data using SONMP"""
 
     s5EnMsTopNmmSegId = '.1.3.6.1.4.1.45.1.6.13.2.1.1.4'
 
-    def __init__(self, proxy, dbpool, normport=None):
+    def __init__(self, equipment, proxy, normport=None):
         """Create a collector using SONMP entries in SNMP.
 
         @param proxy: proxy to use to query SNMP
-        @param dbpool: pool of database connections
+        @param equipment: equipment to complete
         """
         self.proxy = proxy
-        self.dbpool = dbpool
+        self.equipment = equipment
         self.normport = normport
 
     def gotSonmp(self, results):
@@ -18,7 +20,6 @@ class SonmpCollector:
 
         @param results: result of walking C{S5-ETH-MULTISEG-TOPOLOGY-MIB::s5EnMsTopNmmSegId}
         """
-        self.sonmp = {}
         for oid in results:
             ip = ".".join([m for m in oid.split(".")[-5:-1]])
             segid = int(oid.split(".")[-1])
@@ -31,28 +32,11 @@ class SonmpCollector:
             if self.normport:
                 port = self.normport(port)
             if port is not None and port > 0:
-                self.sonmp[port] = (ip, segid)
+                self.equipment.ports[port].sonmp = Sonmp(ip, segid)
 
     def collectData(self):
         """Collect data from SNMP using s5EnMsTopNmmSegId"""
-    
-        def fileIntoDb(txn, sonmp, ip):
-            txn.execute("UPDATE sonmp SET deleted=CURRENT_TIMESTAMP "
-                        "WHERE equipment=%(ip)s AND deleted='infinity'",
-                        {'ip': str(ip)})
-            for port in sonmp.keys():
-                rip, rport = self.sonmp[port]
-                txn.execute("INSERT INTO sonmp VALUES (%(ip)s, "
-                            "%(port)s, %(rip)s, %(rport)s)",
-                            {'ip': str(ip),
-                             'port': port,
-                             'rip': rip,
-                             'rport': rport})
-
         print "Collecting SONMP for %s" % self.proxy.ip
         d = self.proxy.walk(self.s5EnMsTopNmmSegId)
         d.addCallback(self.gotSonmp)
-        d.addCallback(lambda x: self.dbpool.runInteraction(fileIntoDb,
-                                                           self.sonmp,
-                                                           self.proxy.ip))
         return d

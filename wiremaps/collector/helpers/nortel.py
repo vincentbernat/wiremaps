@@ -1,11 +1,9 @@
 from twisted.internet import defer
 
-from speed import SpeedCollector
+from wiremaps.collector.helpers.speed import SpeedCollector
 
 class MltCollector:
     """Collect data using MLT.
-
-    No data is written to database.
     """
 
     rcMltPortMembers = '.1.3.6.1.4.1.2272.1.17.10.1.3'
