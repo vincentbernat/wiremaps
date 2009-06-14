@@ -15,7 +15,17 @@ class Database:
                 config['database']['username'],
                 config['database']['password']))
         self.pool = p
-        reactor.callLater(0, self.upgradeDatabase)
+        reactor.callLater(0, self.checkDatabase)
+
+    def checkDatabase(self):
+        """Check if the database is running. Otherwise, stop the reactor.
+
+        If the database is running, launch upgrade process.
+        """
+        d = self.pool.runOperation("SELECT 1")
+        d.addCallbacks(lambda _: self.upgradeDatabase(),
+                       self.databaseFailure)
+        return d
 
     def upgradeDatabase(self):
         """Try to upgrade database by running various upgrade_* functions.
@@ -36,9 +46,14 @@ class Database:
             self.upgradeFailure)
         return d
 
+    def databaseFailure(self, fail):
+        """Unable to connect to the database"""
+        log.msg("unable to connect to database:\n%s" % str(fail))
+        reactor.stop()
+
     def upgradeFailure(self, fail):
         """When upgrade fails, just stop the reactor..."""
-        log.msg("unable to update database: %s" % str(fail))
+        log.msg("unable to update database:\n%s" % str(fail))
         reactor.stop()
 
     def upgradeDatabase_01(self):
