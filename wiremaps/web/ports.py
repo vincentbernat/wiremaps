@@ -218,22 +218,17 @@ LIMIT 20
 class PortDetailsSpeed(PortRelatedDetails):
 
     query = """
-SELECT p.speed, ep.speed, ep.duplex, ep.autoneg
+SELECT p.speed, p.duplex, p.autoneg
 FROM port p
-LEFT JOIN extendedport ep
-ON p.equipment=ep.equipment AND p.index=ep.index
-AND ep.deleted='infinity'
 WHERE p.equipment=%(ip)s AND p.index=%(port)s
 AND p.deleted='infinity'
 """
 
     def render(self, data):
         result = []
-        speed, espeed, duplex, autoneg = data[0]
-        if speed is None and espeed is None and duplex is None and autoneg is None:
+        speed, duplex, autoneg = data[0]
+        if speed is None and duplex is None and autoneg is None:
             return None
-        if espeed is not None:
-            speed = espeed
         if speed:
             if speed >= 1000:
                 sspeed = "%s Gbit/s" % (str(speed/1000.))

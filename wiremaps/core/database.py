@@ -84,3 +84,72 @@ rebrowse all hosts.
         d = self.pool.runOperation("SELECT created FROM equipment LIMIT 1")
         d.addErrback(lambda x: upgrade())
         return d
+
+    def upgradeDatabase_02(self):
+        """merge port and extendedport tables"""
+
+        def merge(txn):
+            """Merge extendedport into port.
+
+            A whole new table is created and renamed. Dropping the old
+            table drop the update rule as well. We recreate it.
+            """
+            txn.execute("""
+CREATE TABLE newport (
+  equipment inet	      NOT NULL,
+  index     int		      NOT NULL,
+  name	    text	      NOT NULL,
+  alias	    text	      NULL,
+  cstate    text		  NOT NULL,
+  mac	    macaddr	      NULL,
+  speed	    int		      NULL,
+  duplex    text	      NULL,
+  autoneg   boolean	      NULL,
+  created   abstime	      DEFAULT CURRENT_TIMESTAMP,
+  deleted   abstime	      DEFAULT 'infinity',
+  CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down'),
+  CONSTRAINT duplex_check CHECK (duplex = 'full' OR duplex = 'half')
+)""")
+            txn.execute("""
+INSERT INTO newport
+SELECT DISTINCT ON (p.equipment, p.index, p.deleted)
+p.equipment, p.index, p.name, p.alias, p.cstate, p.mac,
+CASE WHEN ep.speed IS NOT NULL THEN ep.speed ELSE p.speed END,
+ep.duplex, ep.autoneg, p.created, p.deleted
+FROM port p
+LEFT JOIN extendedport ep
+ON ep.equipment=p.equipment AND ep.index = p.index
+AND ep.created >= p.created AND ep.deleted <= p.deleted
+""")
+            txn.execute("DROP TABLE port CASCADE")
+            txn.execute("ALTER TABLE newport RENAME TO port")
+            txn.execute("""
+ALTER TABLE port
+ADD PRIMARY KEY (equipment, index, deleted)
+""")
+            txn.execute("""
+CREATE RULE update_port AS ON UPDATE TO port
+WHERE old.deleted='infinity' AND new.deleted=CURRENT_TIMESTAMP::abstime
+DO ALSO
+(UPDATE fdb SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE sonmp SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE edp SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE cdp SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE lldp SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE vlan SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE trunk SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND port=new.index AND deleted='infinity' ;
+ UPDATE trunk SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.equipment AND member=new.index AND deleted='infinity')
+""")
+
+        d = self.pool.runOperation("SELECT 1 FROM extendedport LIMIT 1")
+        d.addCallbacks(lambda _: self.pool.runInteraction(merge),
+                       lambda _: None)
+        return d

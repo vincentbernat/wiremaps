@@ -65,11 +65,11 @@ class DatabaseWriter:
         """Write port related information to the database."""
         uptodate = []      # List of ports that are already up-to-date
         # Try to get existing ports
-        txn.execute("SELECT index, name, alias, cstate, mac, speed "
+        txn.execute("SELECT index, name, alias, cstate, mac, speed, duplex, autoneg "
                     "FROM port WHERE equipment = %(ip)s "
                     "AND deleted='infinity'",
                     {'ip': self.equipment.ip})
-        for port, name, alias, cstate, mac, speed in txn.fetchall():
+        for port, name, alias, cstate, mac, speed, duplex, autoneg in txn.fetchall():
             if port not in self.equipment.ports:
                 # Delete port
                 txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
@@ -88,7 +88,9 @@ class DatabaseWriter:
                         name != nport.name or \
                         alias != nport.alias or \
                         cstate != nport.state or \
-                        speed != nport.speed:
+                        speed != nport.speed or \
+                        duplex != nport.duplex or \
+                        autoneg != nport.autoneg:
                     # Delete the old one
                     txn.execute("UPDATE port SET deleted=CURRENT_TIMESTAMP "
                                 "WHERE equipment = %(ip)s "
@@ -102,10 +104,12 @@ class DatabaseWriter:
             if port in uptodate: continue
             # Add port
             nport = self.equipment.ports[port]
-            txn.execute("INSERT INTO port "
-                        "(equipment, index, name, alias, cstate, mac, speed) "
-                        "VALUES (%(ip)s, %(port)s, "
-                        "%(name)s, %(alias)s, %(state)s, %(address)s, %(speed)s)",
+            txn.execute("""
+INSERT INTO port
+(equipment, index, name, alias, cstate, mac, speed, duplex, autoneg)
+VALUES (%(ip)s, %(port)s, %(name)s, %(alias)s, %(state)s, %(address)s,
+        %(speed)s, %(duplex)s, %(autoneg)s)
+""",
                         {'ip': self.equipment.ip,
                          'port': port,
                          'name': nport.name,
@@ -113,21 +117,9 @@ class DatabaseWriter:
                          'state': nport.state,
                          'address': nport.mac,
                          'speed': nport.speed,
+                         'duplex': nport.duplex,
+                         'autoneg': nport.autoneg,
                          })
-        # We also need to update extendedport table. This table should be removed later.
-        txn.execute("UPDATE extendedport SET deleted=CURRENT_TIMESTAMP "
-                    "WHERE equipment=%(ip)s AND deleted='infinity'",
-                    {'ip': self.equipment.ip})
-        for port in self.equipment.ports:
-            nport = self.equipment.ports[port]
-            if nport.duplex is not None or nport.autoneg is not None:
-                txn.execute("INSERT INTO extendedport "
-                            "VALUES (%(ip)s, %(index)s, %(duplex)s, %(speed)s, %(autoneg)s)",
-                            {'ip': self.equipment.ip,
-                             'index': port,
-                             'duplex': nport.duplex,
-                             'speed': nport.speed,
-                             'autoneg': nport.autoneg})
 
     def _fdb(self, txn):
         """Write FDB to database"""

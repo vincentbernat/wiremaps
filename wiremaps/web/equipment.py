@@ -96,12 +96,8 @@ class EquipmentDetailResource(JsonPage):
 
     def data_json(self, ctx, data):
         return self.dbpool.runQueryInPast(ctx, """
-SELECT p.index, p.name, p.alias, p.cstate,
-CASE WHEN ep.speed IS NOT NULL THEN ep.speed ELSE p.speed END,
-ep.duplex, ep.autoneg 
-FROM port p LEFT JOIN extendedport ep 
-ON ep.equipment=p.equipment AND ep.index = p.index 
-AND ep.deleted='infinity'
+SELECT p.index, p.name, p.alias, p.cstate, p.speed, p.duplex, p.autoneg
+FROM port p
 WHERE p.equipment=%(ip)s AND p.deleted='infinity'
 ORDER BY index
 """,
