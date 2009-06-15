@@ -192,7 +192,7 @@ class CollectorService(service.Service):
                        ])
         d.addCallback(lambda result: (proxy,
                                       Equipment(proxy.ip,
-                                                result['.1.3.6.1.2.1.1.5.0'].lower(),
+                                                result['.1.3.6.1.2.1.1.5.0'].lower() or "unknown",
                                                 result['.1.3.6.1.2.1.1.2.0'],
                                                 result['.1.3.6.1.2.1.1.1.0'])))
         return d
