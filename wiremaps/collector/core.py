@@ -143,7 +143,7 @@ class CollectorService(service.Service):
                                   wiremaps.collector.equipment)
                     if plugin.handleEquipment(str(equipment.oid)) ]
         if not plugins:
-            print "No plugin found for OID %s, using generic one" % oid
+            print "No plugin found for OID %s, using generic one" % str(equipment.oid)
             plugins = [generic]
         print "Using %s to collect data from %s" % ([str(plugin.__class__)
                                                      for plugin in plugins],
