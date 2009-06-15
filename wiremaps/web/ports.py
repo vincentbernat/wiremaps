@@ -178,10 +178,10 @@ class PortDetailsFdb(PortRelatedDetails):
     query = """
 SELECT DISTINCT f.mac, MIN(a.ip::text)::inet AS minip
 FROM fdb f LEFT OUTER JOIN arp a
-ON a.mac = f.mac
+ON a.mac = f.mac AND a.deleted='infinity'
 WHERE f.equipment=%(ip)s
 AND f.port=%(port)s
-AND f.deleted='infinity' AND a.deleted='infinity'
+AND f.deleted='infinity'
 GROUP BY f.mac
 ORDER BY minip ASC, f.mac
 LIMIT 20
