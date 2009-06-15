@@ -21,7 +21,7 @@ chown $user.$group /var/log/wiremaps
 case "$1" in
     configure)
         for p in $(pyversions -i); do
-            $p -c 'import wiremaps.collector ; from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin)) ; list(getPlugins(IPlugin, wiremaps.collector))' >/dev/null 2>&1 || true
+            $p -c 'import wiremaps.collector.equipment ; from twisted.plugin import IPlugin, getPlugins; list(getPlugins(IPlugin)) ; list(getPlugins(IPlugin, wiremaps.collector.equipment))' >/dev/null 2>&1 || true
         done
         ;;
 esac
