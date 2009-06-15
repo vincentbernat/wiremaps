@@ -25,12 +25,14 @@ class SpeedCollector:
                         "WHERE equipment=%(ip)s AND deleted='infinity'",
                         {'ip': str(ip)})
             for port in speed:
-                if self.normPort:
-                    port = self.normPort(port)
+                if self.normport and self.normport(port) is not None:
+                    index = self.normport(port)
+                else:
+                    index = port
                 txn.execute("INSERT INTO extendedport "
                             "VALUES (%(ip)s, %(index)s, %(duplex)s, %(speed)s, %(autoneg)s)",
                             {'ip': str(ip),
-                             'index': port,
+                             'index': index,
                              'duplex': duplex.get(port, None),
                              'speed': speed[port],
                              'autoneg': autoneg.get(port, None)})
