@@ -14,7 +14,8 @@ class AgentProxy(original_AgentProxy):
         if self.use_getbulk and self.version == 2:
             return original_AgentProxy.getbulk(self, oid, *args)
         d = self.getnext(oid)
-        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
+        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView,
+                                      snmp.SNMPNoSuchName) and {})
         return d
 
     def walk(self, oid):
@@ -36,7 +37,8 @@ class Walker(object):
 
     def __call__(self):
         d = self.proxy.getbulk(self.baseoid)
-        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
+        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView,
+                                      snmp.SNMPNoSuchName) and {})
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return self.defer
@@ -59,7 +61,8 @@ class Walker(object):
             self.defer = None
             return
         d = self.proxy.getbulk(self.lastoid)
-        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView) and {})
+        d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView,
+                                      snmp.SNMPNoSuchName) and {})
         d.addCallback(self.getMore)
         d.addErrback(self.fireError)
         return None
