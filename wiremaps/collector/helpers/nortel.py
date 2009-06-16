@@ -4,9 +4,14 @@ from wiremaps.collector.helpers.speed import SpeedCollector
 
 class MltCollector:
     """Collect data using MLT.
+
+    There are two attributes available after collection:
+     - C{mlt} which is a mapping from MLT ID to list of ports
+     - C{mltindex} which is a mapping from IF index to MLT ID
     """
 
     rcMltPortMembers = '.1.3.6.1.4.1.2272.1.17.10.1.3'
+    rcMltIfIndex = '.1.3.6.1.4.1.2272.1.17.10.1.11'
 
     def __init__(self, proxy):
         """Create a collector using MLT entries in SNMP.
@@ -15,6 +20,7 @@ class MltCollector:
         """
         self.proxy = proxy
         self.mlt = {}
+        self.mltindex = {}
 
     def gotMlt(self, results):
         """Callback handling reception of MLT
@@ -47,6 +53,12 @@ class MltCollector:
                         l.append(7-j + 8*i)
             self.mlt[mlt] = l
 
+    def gotIfIndex(self, results):
+        for oid in results:
+            mlt = int(oid.split(".")[-1])
+            index = results[oid]
+            self.mltindex[index] = mlt
+
     def collectData(self, write=True):
         """Collect data from SNMP using rcMltPortMembers
         """
@@ -54,6 +66,8 @@ class MltCollector:
         print "Collecting MLT for %s" % self.proxy.ip
         d = self.proxy.walk(self.rcMltPortMembers)
         d.addCallback(self.gotMlt)
+        d.addCallback(lambda _: self.proxy.walk(self.rcMltIfIndex))
+        d.addCallback(self.gotIfIndex)
         return d
 
 class NortelSpeedCollector(SpeedCollector):
