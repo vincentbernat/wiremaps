@@ -96,7 +96,8 @@ class LldpCollector:
         """
         lldpValidPorts = []
         if not results:
-            raise exception.NoLLDP("LLDP does not seem to be running")
+            print "LLDP does not seem to be running on %s" % self.equipment.ip
+            return
         for oid in results:
             port = int(oid.split(".")[-1])
             if self.normport is not None:
