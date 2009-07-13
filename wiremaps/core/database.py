@@ -22,7 +22,7 @@ class Database:
 
         If the database is running, launch upgrade process.
         """
-        d = self.pool.runOperation("SELECT 1")
+        d = self.pool.runOperation("SELECT 1 FROM equipment LIMIT 1")
         d.addCallbacks(lambda _: self.upgradeDatabase(),
                        self.databaseFailure)
         return d
