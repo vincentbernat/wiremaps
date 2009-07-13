@@ -32,13 +32,14 @@ class ExtremeSummit:
         arp = ArpCollector(equipment, proxy, self.config)
         edp = EdpCollector(equipment, proxy)
         vlan = self.vlanFactory()(equipment, proxy)
-        lldp = LldpCollector(equipment, proxy)
+        # LLDP disabled due to unstability
+        # lldp = LldpCollector(equipment, proxy)
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: edp.collectData())
         d.addCallback(lambda x: vlan.collectData())
-        d.addCallback(lambda x: lldp.collectData())
+        # d.addCallback(lambda x: lldp.collectData())
         return d
 
 class OldExtremeSummit(ExtremeSummit):
@@ -68,13 +69,14 @@ class ExtremeWare:
         fdb = ExtremeFdbCollector(vlan, equipment, proxy, self.config)
         arp = ArpCollector(equipment, proxy, self.config)
         edp = EdpCollector(equipment, proxy)
-        lldp = LldpCollector(equipment, proxy)
+        # LLDP disabled due to unstability
+        # lldp = LldpCollector(equipment, proxy)
         d = ports.collectData()
         d.addCallback(lambda x: vlan.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: edp.collectData())
-        d.addCallback(lambda x: lldp.collectData())
+        # d.addCallback(lambda x: lldp.collectData())
         return d
 
 class ExtremeVlanCollector:
