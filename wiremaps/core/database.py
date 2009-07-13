@@ -62,7 +62,7 @@ class Database:
         # different to have a clean upgrade. This is better to start
         # from scratch and ask the user to repopulate the database.
 
-        def upgrade():
+        def upgrade(err):
             print("""!!! Incompatible database schema.
 
 The  current   schema  is  incompatible  with  the   new  time  travel
@@ -79,10 +79,10 @@ used by another instance of Wiremaps or as a rollback.
 After  this step,  you should  repopulate data  by asking  Wiremaps to
 rebrowse all hosts.
 """)
-            raise NotImplementedError("Incompatible database schema.")
+            raise NotImplementedError("Incompatible database schema:\n %s" % str(err))
 
         d = self.pool.runOperation("SELECT created FROM equipment LIMIT 1")
-        d.addErrback(lambda x: upgrade())
+        d.addErrback(upgrade)
         return d
 
     def upgradeDatabase_02(self):
