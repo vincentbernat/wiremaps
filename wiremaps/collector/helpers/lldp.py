@@ -5,6 +5,8 @@ from wiremaps.collector.helpers.speed import SpeedCollector
 class LldpCollector:
     """Collect data using LLDP"""
 
+    lldpRemPortIdSubtype = '.1.0.8802.1.1.2.1.4.1.1.6'
+    lldpRemPortId = '.1.0.8802.1.1.2.1.4.1.1.7'
     lldpRemPortDesc = '.1.0.8802.1.1.2.1.4.1.1.8'
     lldpRemSysName = '.1.0.8802.1.1.2.1.4.1.1.9'
     lldpRemSysDesc = '.1.0.8802.1.1.2.1.4.1.1.10'
@@ -34,7 +36,9 @@ class LldpCollector:
             port = int(oid.split(".")[-2])
             if self.normport is not None:
                 port = self.normport(port)
-            desc = results[oid].strip()
+            desc = results[oid]
+            if type(desc) is str:
+                desc = desc.strip()
             if desc and port is not None:
                 dic[port] = desc
 
@@ -120,7 +124,9 @@ class LldpCollector:
             self.equipment.ports[port].lldp = Lldp(
                 self.lldpSysName[port],
                 self.lldpSysDesc[port],
-                self.lldpPortDesc[port],
+                # When port ID subtype is ifName, use it instead of description
+                self.lldpPortIdSubtype[port] == 5 and self.lldpPortId[port] or \
+                    self.lldpPortDesc[port],
                 self.lldpMgmtIp.get(port, "0.0.0.0"))
 
     def collectData(self):
@@ -131,10 +137,16 @@ class LldpCollector:
         self.lldpSysName = {}
         self.lldpSysDesc = {}
         self.lldpPortDesc = {}
+        self.lldpPortIdSubtype = {}
+        self.lldpPortId = {}
         d.addCallback(lambda x: self.proxy.walk(self.lldpRemSysName))
         d.addCallback(self.gotLldp, self.lldpSysName)
         d.addCallback(lambda x: self.proxy.walk(self.lldpRemSysDesc))
         d.addCallback(self.gotLldp, self.lldpSysDesc)
+        d.addCallback(lambda x: self.proxy.walk(self.lldpRemPortIdSubtype))
+        d.addCallback(self.gotLldp, self.lldpPortIdSubtype)
+        d.addCallback(lambda x: self.proxy.walk(self.lldpRemPortId))
+        d.addCallback(self.gotLldp, self.lldpPortId)
         d.addCallback(lambda x: self.proxy.walk(self.lldpRemPortDesc))
         d.addCallback(self.gotLldp, self.lldpPortDesc)
         d.addCallback(lambda _: self.completeEquipment())
