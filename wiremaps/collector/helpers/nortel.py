@@ -74,7 +74,7 @@ class NortelSpeedCollector(SpeedCollector):
 
     oidDuplex = '.1.3.6.1.4.1.2272.1.4.10.1.1.13'
     oidSpeed = '.1.3.6.1.4.1.2272.1.4.10.1.1.15'
-    oidAutoneg = '.1.3.6.1.4.1.2272.1.4.10.1.1.18'
+    oidAutoneg = '.1.3.6.1.4.1.2272.1.4.10.1.1.11'
 
     def gotDuplex(self, results):
         """Callback handling duplex"""
