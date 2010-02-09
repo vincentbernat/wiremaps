@@ -1,4 +1,3 @@
-from pyPgSQL import PgSQL
 from twisted.python import log
 from twisted.internet import defer, reactor
 
