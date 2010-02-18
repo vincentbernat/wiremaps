@@ -149,6 +149,8 @@ DO ALSO
  WHERE equipment=new.equipment AND member=new.index AND deleted='infinity')
 """)
 
+            txn.execute("DROP TABLE extendedport CASCADE")
+
         d = self.pool.runOperation("SELECT 1 FROM extendedport LIMIT 1")
         d.addCallbacks(lambda _: self.pool.runInteraction(merge),
                        lambda _: None)
