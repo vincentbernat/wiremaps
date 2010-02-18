@@ -84,6 +84,7 @@ CREATE TABLE equipment (
   deleted abstime	   DEFAULT 'infinity',
   PRIMARY KEY (ip, deleted)
 );
+CREATE INDEX equipment_deleted ON equipment (deleted);
 -- No INSERT rule for this table. created, updated and deleted fields
 -- should be handled by the application.
 
@@ -103,6 +104,7 @@ CREATE TABLE port (
   CONSTRAINT cstate_check CHECK (cstate = 'up' OR cstate = 'down'),
   CONSTRAINT duplex_check CHECK (duplex = 'full' OR duplex = 'half')
 );
+CREATE INDEX port_deleted ON port (deleted);
 -- No INSERT rule for this table. created and deleted fields should be
 -- handled by the application.
 
@@ -116,6 +118,7 @@ CREATE TABLE fdb (
   deleted abstime	      DEFAULT 'infinity',
   UNIQUE (equipment, port, mac, deleted)
 );
+CREATE INDEX fdb_deleted ON fdb (deleted);
 CREATE RULE insert_fdb AS ON INSERT TO fdb
 WHERE EXISTS (SELECT 1 FROM fdb
       	      WHERE equipment=new.equipment AND mac=new.mac AND port=new.port
@@ -134,6 +137,7 @@ CREATE TABLE arp (
   deleted abstime	      DEFAULT 'infinity',
   UNIQUE (equipment, mac, ip, deleted)
 );
+CREATE INDEX arp_deleted ON arp (deleted);
 CREATE RULE insert_arp AS ON INSERT TO arp
 WHERE EXISTS (SELECT 1 FROM arp
       	      WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip
@@ -152,6 +156,7 @@ CREATE TABLE sonmp (
   deleted abstime	       DEFAULT 'infinity',
   PRIMARY KEY (equipment, port, deleted)
 );
+CREATE INDEX sonmp_deleted ON sonmp (deleted);
 CREATE RULE insert_sonmp AS ON INSERT TO sonmp
 WHERE EXISTS (SELECT 1 FROM sonmp
       	      WHERE equipment=new.equipment AND port=new.port
@@ -173,6 +178,7 @@ CREATE TABLE edp (
   deleted abstime	       DEFAULT 'infinity',
   PRIMARY KEY (equipment, port, deleted)
 );
+CREATE INDEX edp_deleted ON edp (deleted);
 CREATE RULE insert_edp AS ON INSERT TO edp
 WHERE EXISTS (SELECT 1 FROM edp
       	      WHERE equipment=new.equipment AND port=new.port
@@ -197,6 +203,7 @@ CREATE TABLE cdp (
   deleted abstime	       DEFAULT 'infinity',
   PRIMARY KEY (equipment, port, deleted)
 );
+CREATE INDEX cdp_deleted ON cdp (deleted);
 CREATE RULE insert_cdp AS ON INSERT TO cdp
 WHERE EXISTS (SELECT 1 FROM cdp
       	      WHERE equipment=new.equipment AND port=new.port
@@ -221,6 +228,7 @@ CREATE TABLE lldp (
   deleted abstime	       DEFAULT 'infinity',
   PRIMARY KEY (equipment, port, deleted)
 );
+CREATE INDEX lldp_deleted ON lldp (deleted);
 CREATE RULE insert_lldp AS ON INSERT TO lldp
 WHERE EXISTS (SELECT 1 FROM lldp
       	      WHERE equipment=new.equipment AND port=new.port

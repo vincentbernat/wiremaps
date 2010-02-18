@@ -155,3 +155,20 @@ DO ALSO
         d.addCallbacks(lambda _: self.pool.runInteraction(merge),
                        lambda _: None)
         return d
+
+    def upgradeDatabase_03(self):
+        """add indexes to enhance completion speed"""
+
+        def addindex(txn):
+            txn.execute("CREATE INDEX port_deleted ON port (deleted)")
+            txn.execute("CREATE INDEX fdb_deleted ON fdb (deleted)")
+            txn.execute("CREATE INDEX arp_deleted ON arp (deleted)")
+            txn.execute("CREATE INDEX sonmp_deleted ON sonmp (deleted)")
+            txn.execute("CREATE INDEX edp_deleted ON edp (deleted)")
+            txn.execute("CREATE INDEX cdp_deleted ON cdp (deleted)")
+            txn.execute("CREATE INDEX lldp_deleted ON lldp (deleted)")
+
+        d = self.pool.runOperation("CREATE INDEX equipment_deleted ON equipment (deleted)")
+        d.addCallbacks(lambda _: self.pool.runInteraction(addindex),
+                       lambda _: None)
+        return d
