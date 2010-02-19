@@ -8,7 +8,7 @@ stamp-ports: port.svg
 	touch stamp-ports
 png: $(IMAGES)
 %.png: %.svg
-	inkscape --file=$< --export-png=$@ --export-area-canvas \
+	inkscape --file=$< --export-png=$@ -C \
 		 --export-width=$(WIDTH)
 
 clean:
