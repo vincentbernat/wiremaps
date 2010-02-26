@@ -7,7 +7,10 @@ from nevow import rend, flat
 from nevow import json, inevow, context
 from nevow import tags as T
 
-from pyPgSQL import PgSQL
+try:
+    from pyPgSQL import PgSQL
+except ImportError:
+    PgSQL = None
 
 class JsonPage(rend.Page):
 
@@ -36,9 +39,10 @@ class JsonPage(rend.Page):
              - PgSQL result set into list
              - handling of deferreds
             """
-            if type(data) in [list, tuple] or isinstance(data, PgSQL.PgResultSet):
+            if type(data) in [list, tuple] or \
+                    (PgSQL and isinstance(data, PgSQL.PgResultSet)):
                 return [sanitize(x, d) for x in data]
-            if isinstance(data, PgSQL.PgBooleanType):
+            if PgSQL and isinstance(data, PgSQL.PgBooleanType):
                 if data:
                     return u"true"
                 return u"false"

@@ -7,13 +7,25 @@ from twisted.enterprise import adbapi
 class Database:
     
     def __init__(self, config):
-        p = adbapi.ConnectionPool("pyPgSQL.PgSQL",
-                                  "%s:%d:%s:%s:%s" % (
-                config['database'].get('host', 'localhost'),
-                config['database'].get('port', 5432),
-                config['database']['database'],
-                config['database']['username'],
-                config['database']['password']))
+        try:
+            import psycopg2
+        except ImportError:
+            p = adbapi.ConnectionPool("pyPgSQL.PgSQL",
+                                      "%s:%d:%s:%s:%s" % (
+                    config['database'].get('host', 'localhost'),
+                    config['database'].get('port', 5432),
+                    config['database']['database'],
+                    config['database']['username'],
+                    config['database']['password']))
+        else:
+            p = adbapi.ConnectionPool("psycopg2",
+                                      "host=%s port=%d dbname=%s "
+                                      "user=%s password=%s" % (
+                    config['database'].get('host', 'localhost'),
+                    config['database'].get('port', 5432),
+                    config['database']['database'],
+                    config['database']['username'],
+                    config['database']['password']))
         self.pool = p
         reactor.callLater(0, self.checkDatabase)
 

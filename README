@@ -25,7 +25,9 @@ Installation
 
 To use this application, you need the following Debian packages:
  - postgresql-8.2 (PostgreSQL 8.2 - http://www.postgresql.org)
- - python-pgsql (PyPgSQL Python bindings - http://pypgsql.sourceforge.net/)
+ - python-psycopg2 (Psycopg - http://initd.org/psycopg/)
+   (or alternatively, python-pgsql (PyPgSQL Python bindings -
+                                    http://pypgsql.sourceforge.net/))
  - python-twisted-core (Twisted - http://twistedmatrix.com)
  - python-twisted-names (Twisted Names - http://twistedmatrix.com)
  - python-nevow (Nevow - http://divmod.org/trac/wiki/DivmodNevow)
