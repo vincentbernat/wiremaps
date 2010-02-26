@@ -1,5 +1,7 @@
 # When modifying this class, also update doc/database.sql
 
+import warnings
+
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
@@ -10,6 +12,12 @@ class Database:
         try:
             import psycopg2
         except ImportError:
+            warnings.warn("psycopg2 was not found, try pyPgSQL instead",
+                          DeprecationWarning)
+            try:
+                import pyPgSQL
+            except ImportError:
+                raise ImportError("Neither psycopg2 or pyPgSQL is present on your system")
             p = adbapi.ConnectionPool("pyPgSQL.PgSQL",
                                       "%s:%d:%s:%s:%s" % (
                     config['database'].get('host', 'localhost'),
