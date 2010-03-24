@@ -46,6 +46,7 @@ $(document).ready(function() {
     /* Unhide application on load */
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
+    /* TODO: make autocomplete work in the past */
     $("div#search input#search").autocomplete("complete",
 					      {minChars: 3,
 					       onItemSelect: function(li) {
