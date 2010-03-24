@@ -152,7 +152,7 @@ function loadEquipment(ip)
     $("div#photo img")
 	.attr("src", timeMachineUrl("images/" + ip))
 	.parent().show();
-    $("div#actions a").attr("href", "search/" + ip + "/");
+    $("div#actions a").attr("href", timeMachineUrl("search/" + ip + "/"));
     $("table#ports").hide();
     $("#colswitch1").hide();
     $("div#infovlans").hide();
