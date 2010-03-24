@@ -46,8 +46,8 @@ $(document).ready(function() {
     /* Unhide application on load */
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
-    /* TODO: make autocomplete work in the past */
-    $("div#search input#search").autocomplete("complete",
+    /* TODO: use buildApiUrl */
+    $("div#search input#search").autocomplete("api/1.0/complete",
 					      {minChars: 3,
 					       onItemSelect: function(li) {
 						 $("div#search form").submit();
@@ -99,7 +99,7 @@ function loadEquipments(load)
     sendMessage("info", "Loading list of equipments...");
     $.ajax({type: "GET",
 	    cache: false,
-	    url: timeMachineUrl("equipment/"),
+	    url: buildApiUrl("equipment/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert", "Unable to get the list of equipments");
@@ -151,15 +151,15 @@ function loadEquipment(ip)
 	.children(".first:first").remove();
     $("div#equipments div#actions").css("visibility", "visible");
     $("div#photo img")
-	.attr("src", timeMachineUrl("images/" + ip))
+	.attr("src", buildApiUrl("images/" + ip))
 	.parent().show();
-    $("div#actions a").attr("href", timeMachineUrl("search/" + ip + "/"));
+    $("div#actions a").attr("href", buildApiUrl("search/" + ip + "/"));
     $("table#ports").hide();
     $("#colswitch1").hide();
     $("div#infovlans").hide();
     $.ajax({type: "GET",
 	    cache: false,
-	    url: timeMachineUrl("equipment/"+ip+"/descr/"),
+	    url: buildApiUrl("equipment/"+ip+"/descr/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		$("div#description").hide();
@@ -172,7 +172,7 @@ function loadEquipment(ip)
     sendMessage("info", "Loading list of ports for "+ip);
     $.ajax({type: "GET",
 	    cache: false,
-	    url: timeMachineUrl("equipment/"+ip+"/"),
+	    url: buildApiUrl("equipment/"+ip+"/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert", "Unable to get the list of ports for "+ip);
@@ -197,7 +197,7 @@ function showVlans(event)
   sendMessage("info", "Loading vlan information for "+ip);
   $.ajax({type: "GET",
 	  cache: false,
-	  url: timeMachineUrl("equipment/"+ip+"/vlans/"),
+	  url: buildApiUrl("equipment/"+ip+"/vlans/"),
 	  dataType: "html",
 	  error: function(xmlh, textstatus, error) {
 		$("div#infovlans").hide();
@@ -222,7 +222,7 @@ function displayPortDetails(event)
   port.find("td.state").addClass("loading");
   $.ajax({type: "GET",
 	  cache: false,
-	  url: timeMachineUrl("equipment/"+ip+"/"+port.attr("_index")+"/"),
+	  url: buildApiUrl("equipment/"+ip+"/"+port.attr("_index")+"/"),
 	  dataType: "json",
 	  error: function(xmlh, textstatus, error) {
 	    sendMessage("alert",
@@ -400,7 +400,7 @@ function refresh(event) {
     sendMessage("info", "Refreshing "+target[1]+"...");
     $.ajax({type: "GET",
 	    cache: false,
-	    url: timeMachineUrl("equipment/"+target[1]+"/refresh/"),
+	    url: buildApiUrl("equipment/"+target[1]+"/refresh/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert",
@@ -420,7 +420,7 @@ function search(elt) {
     sendMessage("info", "Search for "+elt+"...");
     $.ajax({type: "GET",
 	    cache: false,
-	    url: timeMachineUrl("search/"+elt+"/"),
+	    url: buildApiUrl("search/"+elt+"/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
 		sendMessage("alert",
@@ -434,12 +434,12 @@ function search(elt) {
 /* Time machine stuff */
 var timemachine = "";
 
-function timeMachineUrl(url) {
+function buildApiUrl(url) {
   /* Adapt the given URL to a time machine compatible one */
   if (timemachine) {
-    return "past/" + timemachine + "/" + url;
+    return "api/1.0/past/" + timemachine + "/" + url;
   }
-  return url;
+  return "api/1.0/" + url;
 }
 
 function getNow() {
