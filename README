@@ -69,7 +69,7 @@ if the application is installed). The init.d script also allows to use
 older version of Twisted (2.4).
 
 Indexation is not done automatically. You must browse
-http://localhost:8087/equipment/refresh to initiate a whole
+http://localhost:8087/api/1.0/equipment/refresh to initiate a whole
 refresh. Put this command in a crontab.
 
 In the git repository (git clone git://trac.luffy.cx/wiremaps.git),
