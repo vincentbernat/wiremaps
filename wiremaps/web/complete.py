@@ -1,7 +1,6 @@
 import re
 
-from nevow import rend
-from nevow import tags as T
+from nevow import rend, tags as T, loaders
 
 from wiremaps.web.json import JsonPage
 
@@ -10,7 +9,7 @@ COMPLETE_LIMIT = 10
 class CompleteResource(rend.Page):
 
     addSlash = True
-    docFactory = T.html [ T.body [ T.p [ "Nothing here" ] ] ]
+    docFactory = loaders.stan(T.html [ T.body [ T.p [ "Nothing here" ] ] ])
 
     def __init__(self, dbpool):
         self.dbpool = dbpool

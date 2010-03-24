@@ -1,7 +1,7 @@
 import re
 from zope.interface import Interface
 from twisted.python import log
-from nevow import rend, tags as T
+from nevow import rend, tags as T, loaders
 
 class IPastDate(Interface):
     """Remember a past date for time travel"""
@@ -63,7 +63,7 @@ class PastResource(rend.Page):
     """
 
     addSlash = True
-    docFactory = T.html [ T.body [ T.p [ "Nothing here" ] ] ]
+    docFactory = loaders.stan(T.html [ T.body [ T.p [ "Nothing here" ] ] ])
 
     def __init__(self, main):
         self.main = main

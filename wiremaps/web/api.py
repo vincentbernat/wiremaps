@@ -1,4 +1,4 @@
-from nevow import rend, tags as T
+from nevow import rend, tags as T, loaders
 from zope.interface import Interface
 
 from wiremaps.web.images import ImageResource
@@ -17,8 +17,8 @@ class ApiResource(rend.Page):
 
     addSlash = True
     versions = [ "1.0" ]        # Valid versions
-    docFactory = T.html [ T.body [ T.p [ "Valid versions are:" ],
-                                   T.ul [ [ T.li[v] for v in versions ] ] ] ]
+    docFactory = loaders.stan(T.html [ T.body [ T.p [ "Valid versions are:" ],
+                                   T.ul [ [ T.li[v] for v in versions ] ] ] ])
 
     def __init__(self, config, dbpool, collector):
         self.config = config
@@ -34,6 +34,9 @@ class ApiResource(rend.Page):
 
 class ApiVersionedResource(rend.Page):
     """Versioned web service for Wiremaps."""
+
+    addSlash = True
+    docFactory = loaders.stan(T.html [ T.body [ T.p [ "Nothing here" ] ] ])
 
     def __init__(self, config, dbpool, collector):
         self.config = config

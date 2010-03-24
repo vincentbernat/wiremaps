@@ -12,7 +12,7 @@ from wiremaps.web.json import JsonPage
 class SearchResource(rend.Page):
 
     addSlash = True
-    docFactory = T.html [ T.body [ T.p [ "Nothing here" ] ] ]
+    docFactory = loaders.stan(T.html [ T.body [ T.p [ "Nothing here" ] ] ])
 
     def __init__(self, dbpool):
         self.dbpool = dbpool
