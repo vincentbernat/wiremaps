@@ -1,12 +1,22 @@
 import re
 
 from twisted.names import client
+from zope.interface import Interface
+
 from nevow import rend
 from nevow import tags as T, entities as E
 from nevow.stan import Entity
 
+class IApiVersion(Interface):
+    """Remember the version used for API"""
+    pass
+
 class RenderMixIn:
     """Helper class that provide some builtin fragments"""
+
+    def render_apiurl(self, ctx, data):
+        return ctx.tag(href= "api/%s/%s" % (IApiVersion(ctx),
+                                            ctx.tag.attributes["href"]))
 
     def render_ip(self, ctx, ip):
         d = self.dbpool.runQueryInPast(ctx,
@@ -15,8 +25,8 @@ class RenderMixIn:
                                  {'ip': ip})
         d.addCallback(lambda x: T.invisible[
                 x and
-                T.a(href="equipment/%s/" % ip) [ ip ] or
-                T.a(href="search/%s/" % ip) [ ip ],
+                T.a(href="equipment/%s/" % ip, render=self.render_apiurl) [ ip ] or
+                T.a(href="search/%s/" % ip, render=self.render_apiurl) [ ip ],
                 T.invisible(data=self.data_solvedip, # Dunno why we can't use T.directive here
                             render=T.directive("solvedip"))])
         return d
@@ -44,7 +54,7 @@ class RenderMixIn:
                        self.render_zwsp(name)]
 
     def render_mac(self, ctx, mac):
-        return T.a(href="search/%s/" % mac) [ mac ]
+        return T.a(href="search/%s/" % mac, render=self.render_apiurl) [ mac ]
 
     def render_hostname(self, ctx, name):
         d = self.dbpool.runQueryInPast(ctx,
@@ -53,12 +63,15 @@ class RenderMixIn:
                                  "AND deleted='infinity'",
                                  {'name': name})
         d.addCallback(lambda x: x and
-                      T.a(href="equipment/%s/" % name) [ self.render_zwsp(name) ] or
-                      T.a(href="search/%s/" % name) [ self.render_zwsp(name) ])
+                      T.a(href="equipment/%s/" % name,
+                          render=self.render_apiurl) [ self.render_zwsp(name) ] or
+                      T.a(href="search/%s/" % name,
+                          render=self.render_apiurl) [ self.render_zwsp(name) ])
         return d    
 
     def render_vlan(self, ctx, vlan):
-        return T.a(href="search/%s/" % vlan) [ vlan ]
+        return T.a(href="search/%s/" % vlan,
+                   render=self.render_apiurl) [ vlan ]
 
     def render_sonmpport(self, ctx, port):
         if port < 64:

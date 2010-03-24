@@ -377,9 +377,9 @@ function displaySearchResults(data, elt) {
 function searchOrShow(event) {
     event.preventDefault();
     var target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
-    if (target[0].match(/^search/))
+    if (target[0].match(/api\/1\.0\/search\//))
 	search(target[1]);
-    else if (target[0].match(/equipment/)) {
+    else if (target[0].match(/api\/1.0\/equipment\//)) {
 	var a = $("div#equipments select option").filter(function() {
 		    return (($(this).attr("_ip") == target[1]) ||
 			    (($(this).attr("_hostname") != null) &&

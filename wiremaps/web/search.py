@@ -250,7 +250,8 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
                                     T.invisible(data=ip[1],
                                                 render=T.directive("ip")),
                                     ". You can ",
-                                    T.a(href="search/%s/" % ip[1])["search on it"],
+                                    T.a(href="search/%s/" % ip[1],
+                                        render=self.render_apiurl)["search on it"],
                                     " to find more results." ]
                 fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
                 fragments.append(fragment)

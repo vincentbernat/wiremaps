@@ -1,15 +1,11 @@
 from nevow import rend, tags as T, loaders
-from zope.interface import Interface
 
 from wiremaps.web.images import ImageResource
 from wiremaps.web.equipment import EquipmentResource
 from wiremaps.web.search import SearchResource
 from wiremaps.web.complete import CompleteResource
 from wiremaps.web.timetravel import PastResource, IPastDate, PastConnectionPool
-
-class IApiVersion(Interface):
-    """Remember the version used for API"""
-    pass
+from wiremaps.web.common import IApiVersion
 
 class ApiResource(rend.Page):
     """Web service for Wiremaps.
