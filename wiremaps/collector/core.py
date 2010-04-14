@@ -5,7 +5,7 @@ Handle collection of data in database with the help of SNMP
 import sys
 
 from IPy import IP
-from twisted.internet import defer
+from twisted.internet import defer, task
 from twisted.application import internet, service
 from twisted.plugin import getPlugins
 from twisted.python.failure import Failure
@@ -35,40 +35,34 @@ class CollectorService(service.Service):
         defined in the configuration file.
         """
 
-        class Explorer(object):
+        def doWork(remaining):
+            for ip in remaining:
+                d = self.startExploreIP(ip)
+                d.addErrback(self.reportError, ip)
+                yield d
 
-            def __init__(self, collector, remaining):
-                self.defer = defer.Deferred()
-                self.collector = collector
-                self.remaining = remaining
-
-            def __call__(self):
-                self.exploreNext()
-                return self.defer
-
-            def exploreNext(self):
-                if self.remaining:
-                    ip = self.remaining.pop()
-                    d = self.collector.startExploreIP(ip)
-                    d.addErrback(self.collector.reportError, ip)
-                    d.addCallback(lambda x: self.exploreNext())
-                else:
-                    self.defer.callback(None)
-
+        # Don't explore if already exploring
         if self.exploring:
             raise exception.CollectorAlreadyRunning(
                 "Exploration still running")
         self.exploring = True
         print "Start exploring %s..." % self.config['ips']
+
+        # Expand list of IP to explore
         if type(self.config['ips']) in [list, tuple]:
             remaining = []
             for ip in self.config['ips']:
                 remaining += [x for x in IP(ip)]
         else:
             remaining = [x for x in IP(self.config['ips'])]
+
+        # Start exploring
         dl = []
-        for i in range(0, self.config['parallel']):
-            dl.append(Explorer(self, remaining)())
+        coop = task.Cooperator()
+        work = doWork(remaining)
+        for i in xrange(self.config['parallel']):
+            d = coop.coiterate(work)
+            dl.append(d)
         defer.DeferredList(dl).addCallback(self.stopExploration)
 
     def startExploreIP(self, ip):
