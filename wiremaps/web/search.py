@@ -235,7 +235,8 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
         if not ips:
             if resolve:
                 d = client.getHostByName(self.name)
-                d.addCallbacks(lambda x: self.gotIP([[self.name,x]]),
+                d.addCallbacks(lambda x: self.gotIP([[self.name,x]],
+                                                    resolve=False),
                                lambda x: self.gotIP(None, resolve=False))
                 return d
             fragment = T.span [ "I cannot find any IP for this host" ]
@@ -245,14 +246,19 @@ class SearchHostnameResource(JsonPage, RenderMixIn):
             fragments = []
             for ip in ips:
                 fragment = T.span [ "The hostname ",
-                                    T.span(_class="data")[ip[0]],
+                                    resolve and T.a(href="equipment/%s/" % ip[1],
+                                        render=self.render_apiurl)[ip[0]] or \
+                                        T.span(_class="data")[ip[0]],
                                     " is associated with IP ",
                                     T.invisible(data=ip[1],
                                                 render=T.directive("ip")),
-                                    ". You can ",
-                                    T.a(href="search/%s/" % ip[1],
-                                        render=self.render_apiurl)["search on it"],
-                                    " to find more results." ]
+                                    resolve and \
+                                        T.invisible[
+                                            ". You can ",
+                                            T.a(href="search/%s/" % ip[1],
+                                                render=self.render_apiurl)
+                                            ["search on it"],
+                                            " to find more results." ] or "."]
                 fragment = FragmentMixIn(self.dbpool, docFactory=loaders.stan(fragment))
                 fragments.append(fragment)
 
