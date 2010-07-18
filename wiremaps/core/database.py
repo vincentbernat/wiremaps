@@ -221,3 +221,34 @@ DO ALSO
         d.addCallbacks(lambda _: None,
                        lambda _: self.pool.runInteraction(addpast))
         return d
+
+    def upgradeDatabase_05(self):
+        """add update_equipment rule"""
+        # This rule may have been dropped when we dropped old port table
+
+        def cleanup(txn):
+            # Since we succesfully added the rule, this may mean we
+            # need to delete some orphaned ports/arp entries
+            txn.execute("""
+UPDATE port SET deleted=CURRENT_TIMESTAMP::abstime
+WHERE deleted = 'infinity'
+AND equipment NOT IN (SELECT ip FROM equipment WHERE deleted='infinity')
+""")
+            txn.execute("""
+UPDATE arp SET deleted=CURRENT_TIMESTAMP::abstime
+WHERE deleted = 'infinity'
+AND equipment NOT IN (SELECT ip FROM equipment WHERE deleted='infinity')
+""")
+
+        d = self.pool.runOperation("""
+CREATE RULE update_equipment AS ON UPDATE TO equipment
+WHERE old.deleted='infinity' AND new.deleted=CURRENT_TIMESTAMP::abstime
+DO ALSO
+(UPDATE port SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.ip AND deleted='infinity' ;
+ UPDATE arp SET deleted=CURRENT_TIMESTAMP::abstime
+ WHERE equipment=new.ip AND deleted='infinity')
+""")
+        d.addCallbacks(lambda _: self.pool.runInteraction(cleanup),
+                       lambda _: None)
+        return d
