@@ -254,7 +254,7 @@ function replacePorts(ports)
     for (var i = 0; i < ports.length; i++) {
 	var port = portReference.clone().appendTo("table#ports > tbody");
 	var speed = ports[i][4];
-	if ([10, 100, 1000, 10000].indexOf(speed) == -1)
+	if ($.inArray(speed, [10, 100, 1000, 10000]) == -1)
 	  speed = null;
 	port
 	  .children("td.name").toggle(displayPortDetails, hidePortDetails).end()
