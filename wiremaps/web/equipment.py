@@ -13,7 +13,7 @@ class EquipmentResource(JsonPage):
 
     def data_json(self, ctx, data):
         return self.dbpool.runQueryInPast(ctx,
-                                    "SELECT name,ip FROM equipment "
+                                    "SELECT name,ip FROM equipment_full "
                                     "WHERE deleted='infinity' "
                                     "ORDER BY name")
 
@@ -36,7 +36,7 @@ class EquipmentDescriptionResource(JsonPage):
 
     def data_json(self, ctx, data):
         return self.dbpool.runQueryInPast(ctx,
-                                    "SELECT description FROM equipment "
+                                    "SELECT description FROM equipment_full "
                                     "WHERE ip=%(ip)s AND deleted='infinity'",
                                     {'ip': str(self.ip)})
 
@@ -77,7 +77,7 @@ class EquipmentVlansResource(rend.Page, RenderMixIn):
     def data_vlans(self, ctx, data):
         return self.dbpool.runQueryInPast(ctx,
                                     "SELECT v.vid, v.name, p.name "
-                                    "FROM vlan v, port p "
+                                    "FROM vlan_full v, port_full p "
                                     "WHERE v.equipment=%(ip)s AND v.type='local' "
                                     "AND v.port = p.index "
                                     "AND p.equipment = v.equipment "
@@ -97,7 +97,7 @@ class EquipmentDetailResource(JsonPage):
     def data_json(self, ctx, data):
         return self.dbpool.runQueryInPast(ctx, """
 SELECT p.index, p.name, p.alias, p.cstate, p.speed, p.duplex, p.autoneg
-FROM port p
+FROM port_full p
 WHERE p.equipment=%(ip)s AND p.deleted='infinity'
 ORDER BY index
 """,
@@ -133,7 +133,7 @@ class RefreshEquipmentResource(JsonPage):
 
     def data_json(self, ctx, data):
         d = self.dbpool.runQueryInPast(ctx,
-                                 "SELECT ip FROM equipment "
+                                 "SELECT ip FROM equipment_full "
                                  "WHERE ip=%(ip)s AND deleted='infinity'",
                                  {'ip': str(self.ip)})
         d.addCallback(self.gotEquipment)

@@ -62,9 +62,9 @@ class CompleteMacResource(JsonPage):
     def data_json(self, ctx, data):
         d = self.dbpool.runQueryInPast(ctx,
                                  """SELECT t.mac, COUNT(t.mac) as c FROM
-((SELECT mac FROM port WHERE deleted='infinity') UNION ALL
-(SELECT mac FROM fdb WHERE deleted='infinity') UNION ALL
-(SELECT mac FROM arp WHERE deleted='infinity')) AS t
+((SELECT mac FROM port_full WHERE deleted='infinity') UNION ALL
+(SELECT mac FROM fdb_full WHERE deleted='infinity') UNION ALL
+(SELECT mac FROM arp_full WHERE deleted='infinity')) AS t
 WHERE CAST(t.mac AS text) ILIKE %(name)s||'%%'
 GROUP BY t.mac ORDER BY c DESC LIMIT %(limit)s""",
                                  {'name': self.mac,
@@ -92,15 +92,15 @@ class CompleteIpResource(JsonPage):
         # We favour equipment.ip, then sonmp/cdp/lldp then arp
         d = self.dbpool.runQueryInPast(ctx,
                                  """SELECT ip FROM
-((SELECT DISTINCT ip FROM equipment WHERE deleted='infinity'
+((SELECT DISTINCT ip FROM equipment_full WHERE deleted='infinity'
   AND CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT mgmtip FROM lldp WHERE deleted='infinity'
+(SELECT DISTINCT mgmtip FROM lldp_full WHERE deleted='infinity'
  AND CAST(mgmtip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT mgmtip FROM cdp WHERE deleted='infinity'
+(SELECT DISTINCT mgmtip FROM cdp_full WHERE deleted='infinity'
  AND CAST(mgmtip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT remoteip FROM sonmp WHERE deleted='infinity'
+(SELECT DISTINCT remoteip FROM sonmp_full WHERE deleted='infinity'
  AND CAST(remoteip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s) UNION
-(SELECT DISTINCT ip FROM arp WHERE deleted='infinity'
+(SELECT DISTINCT ip FROM arp_full WHERE deleted='infinity'
  AND CAST(ip AS text) LIKE %(ip)s||'%%' LIMIT %(l)s)) AS foo
 ORDER BY ip LIMIT %(l)s""", {'ip': self.ip,
                              'l': COMPLETE_LIMIT})
@@ -126,12 +126,12 @@ class CompleteEquipmentResource(JsonPage):
         # We favour equipment.name
         d = self.dbpool.runQueryInPast(ctx,
                                  """SELECT name FROM
-((SELECT DISTINCT name FROM equipment WHERE deleted='infinity' AND name ILIKE %(name)s||'%%'
+((SELECT DISTINCT name FROM equipment_full WHERE deleted='infinity' AND name ILIKE %(name)s||'%%'
 ORDER BY name LIMIT %(l)s) UNION
 (SELECT DISTINCT sysname FROM
- ((SELECT sysname FROM lldp WHERE deleted='infinity') UNION
-  (SELECT sysname FROM edp WHERE deleted='infinity') UNION
-  (SELECT sysname FROM cdp WHERE deleted='infinity')) AS foo WHERE sysname ILIKE %(name)s||'%%' ORDER BY sysname LIMIT %(l)s))
+ ((SELECT sysname FROM lldp_full WHERE deleted='infinity') UNION
+  (SELECT sysname FROM edp_full WHERE deleted='infinity') UNION
+  (SELECT sysname FROM cdp_full WHERE deleted='infinity')) AS foo WHERE sysname ILIKE %(name)s||'%%' ORDER BY sysname LIMIT %(l)s))
 AS bar ORDER BY name""", {'name': self.name,
                    'l': COMPLETE_LIMIT})
         d.addCallback(lambda x: [y[0] for y in x])

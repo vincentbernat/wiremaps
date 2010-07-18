@@ -39,6 +39,13 @@
 -- column is set to CURRENT_TIMESTAMP and the trigger will update all
 -- `deleted' column accordingly.
 
+-- Each table have a _past counterpart that has the same schema but
+-- where deleted != 'infinity'. Each table has also a view _full which
+-- is the join of the table and the past table. To maintain PostgreSQL
+-- 8.1 compatibility, we need to copy indexes by hand (instead of
+-- using INCLUDING INDEXES). We don't include DEFAULTS because there
+-- is not direct insertion into past tables.
+
 -- The configuration of PostgreSQL should use UTF-8 messages. For example:
 -- lc_messages = 'en_US.UTF-8'
 -- lc_monetary = 'en_US.UTF-8'
@@ -61,15 +68,35 @@ DROP RULE IF EXISTS insert_vlan ON vlan;
 DROP RULE IF EXISTS insert_vlan_duplicate ON vlan;
 DROP RULE IF EXISTS insert_trunk ON trunk;
 DROP TABLE IF EXISTS equipment CASCADE;
+DROP TABLE IF EXISTS equipment_past CASCADE;
+DROP VIEW IF EXISTS equipment_full CASCADE;
 DROP TABLE IF EXISTS port CASCADE;
+DROP TABLE IF EXISTS port_past CASCADE;
+DROP VIEW IF EXISTS port_full CASCADE;
 DROP TABLE IF EXISTS fdb CASCADE;
+DROP TABLE IF EXISTS fdb_past CASCADE;
+DROP VIEW IF EXISTS fdb_full CASCADE;
 DROP TABLE IF EXISTS arp CASCADE;
+DROP TABLE IF EXISTS arp_past CASCADE;
+DROP VIEW IF EXISTS arp_full CASCADE;
 DROP TABLE IF EXISTS sonmp CASCADE;
+DROP TABLE IF EXISTS sonmp_past CASCADE;
+DROP VIEW IF EXISTS sonmp_full CASCADE;
 DROP TABLE IF EXISTS edp CASCADE;
+DROP TABLE IF EXISTS edp_past CASCADE;
+DROP VIEW IF EXISTS edp_full CASCADE;
 DROP TABLE IF EXISTS cdp CASCADE;
+DROP TABLE IF EXISTS cdp_past CASCADE;
+DROP VIEW IF EXISTS cdp_full CASCADE;
 DROP TABLE IF EXISTS lldp CASCADE;
+DROP TABLE IF EXISTS lldp_past CASCADE;
+DROP VIEW IF EXISTS lldp_full CASCADE;
 DROP TABLE IF EXISTS vlan CASCADE;
+DROP TABLE IF EXISTS vlan_past CASCADE;
+DROP VIEW IF EXISTS vlan_full CASCADE;
 DROP TABLE IF EXISTS trunk CASCADE;
+DROP TABLE IF EXISTS trunk_past CASCADE;
+DROP VIEW IF EXISTS trunk_full CASCADE;
 
 -- DROP TYPE IF EXISTS state CASCADE;
 -- CREATE TYPE state AS ENUM ('up', 'down');
@@ -87,6 +114,10 @@ CREATE TABLE equipment (
 CREATE INDEX equipment_deleted ON equipment (deleted);
 -- No INSERT rule for this table. created, updated and deleted fields
 -- should be handled by the application.
+CREATE TABLE equipment_past (LIKE equipment);
+ALTER TABLE equipment_past ADD PRIMARY KEY (ip, deleted);
+CREATE INDEX equipment_past_deleted ON equipment_past (deleted);
+CREATE VIEW equipment_full AS (SELECT * FROM equipment UNION SELECT * FROM equipment_past);
 
 CREATE TABLE port (
   equipment inet	      NOT NULL,
@@ -107,6 +138,10 @@ CREATE TABLE port (
 CREATE INDEX port_deleted ON port (deleted);
 -- No INSERT rule for this table. created and deleted fields should be
 -- handled by the application.
+CREATE TABLE port_past (LIKE port);
+ALTER TABLE port_past ADD PRIMARY KEY (equipment, index, deleted);
+CREATE INDEX port_past_deleted ON port_past (deleted);
+CREATE VIEW port_full AS (SELECT * FROM port UNION SELECT * FROM port_past);
 
 -- Just a dump of FDB for a given port
 CREATE TABLE fdb (
@@ -126,6 +161,10 @@ WHERE EXISTS (SELECT 1 FROM fdb
 DO INSTEAD UPDATE fdb SET updated=CURRENT_TIMESTAMP
 WHERE equipment=new.equipment AND mac=new.mac AND port=new.port
 AND deleted='infinity';
+CREATE TABLE fdb_past (LIKE fdb);
+ALTER TABLE fdb_past ADD PRIMARY KEY (equipment, port, mac, deleted);
+CREATE INDEX fdb_past_deleted ON fdb_past (deleted);
+CREATE VIEW fdb_full AS (SELECT * FROM fdb UNION SELECT * FROM fdb_past);
 
 -- Just a dump of ARP for a given port
 CREATE TABLE arp (
@@ -145,6 +184,10 @@ WHERE EXISTS (SELECT 1 FROM arp
 DO INSTEAD UPDATE arp SET updated=CURRENT_TIMESTAMP
 WHERE equipment=new.equipment AND mac=new.mac AND ip=new.ip
 AND deleted='infinity';
+CREATE TABLE arp_past (LIKE arp);
+ALTER TABLE arp_past ADD PRIMARY KEY (equipment, mac, ip, deleted);
+CREATE INDEX arp_past_deleted ON arp_past (deleted);
+CREATE VIEW arp_full AS (SELECT * FROM arp UNION SELECT * FROM arp_past);
 
 -- Just a dump of SONMP for a given port
 CREATE TABLE sonmp (
@@ -166,6 +209,10 @@ DO INSTEAD UPDATE sonmp SET deleted='infinity'
 WHERE equipment=new.equipment AND port=new.port
 AND remoteip=new.remoteip AND remoteport=new.remoteport
 AND deleted=CURRENT_TIMESTAMP::abstime;
+CREATE TABLE sonmp_past (LIKE sonmp);
+ALTER TABLE sonmp_past ADD PRIMARY KEY (equipment, port, deleted);
+CREATE INDEX sonmp_past_deleted ON sonmp_past (deleted);
+CREATE VIEW sonmp_full AS (SELECT * FROM sonmp UNION SELECT * FROM sonmp_past);
 
 -- Just a dump of EDP for a given port
 CREATE TABLE edp (
@@ -190,6 +237,10 @@ WHERE equipment=new.equipment AND port=new.port
 AND sysname=new.sysname
 AND remoteslot=new.remoteslot AND remoteport=new.remoteport
 AND deleted=CURRENT_TIMESTAMP::abstime;
+CREATE TABLE edp_past (LIKE edp);
+ALTER TABLE edp_past ADD PRIMARY KEY (equipment, port, deleted);
+CREATE INDEX edp_past_deleted ON edp_past (deleted);
+CREATE VIEW edp_full AS (SELECT * FROM edp UNION SELECT * FROM edp_past);
 
 -- Just a dump of CDP for a given port
 CREATE TABLE cdp (
@@ -215,6 +266,10 @@ WHERE equipment=new.equipment AND port=new.port
 AND sysname=new.sysname AND portname=new.portname
 AND mgmtip=new.mgmtip AND platform=new.platform
 AND deleted=CURRENT_TIMESTAMP::abstime;
+CREATE TABLE cdp_past (LIKE cdp);
+ALTER TABLE cdp_past ADD PRIMARY KEY (equipment, port, deleted);
+CREATE INDEX cdp_past_deleted ON cdp_past (deleted);
+CREATE VIEW cdp_full AS (SELECT * FROM cdp UNION SELECT * FROM cdp_past);
 
 -- Synthesis of info from LLDP for a given port. Not very detailed.
 CREATE TABLE lldp (
@@ -240,6 +295,10 @@ WHERE equipment=new.equipment AND port=new.port
 AND sysname=new.sysname AND portdesc=new.portdesc
 AND mgmtip=new.mgmtip AND sysdesc=new.sysdesc
 AND deleted=CURRENT_TIMESTAMP::abstime;
+CREATE TABLE lldp_past (LIKE lldp);
+ALTER TABLE lldp_past ADD PRIMARY KEY (equipment, port, deleted);
+CREATE INDEX lldp_past_deleted ON lldp_past (deleted);
+CREATE VIEW lldp_full AS (SELECT * FROM lldp UNION SELECT * FROM lldp_past);
 
 -- Info about vlan
 CREATE TABLE vlan (
@@ -268,6 +327,9 @@ WHERE EXISTS (SELECT 1 FROM vlan
 	      AND vid=new.vid AND type=new.type
 	      AND deleted='infinity')
 DO INSTEAD NOTHING;
+CREATE TABLE vlan_past (LIKE vlan);
+ALTER TABLE vlan_past ADD PRIMARY KEY (equipment, port, vid, type, deleted);
+CREATE VIEW vlan_full AS (SELECT * FROM vlan UNION SELECT * FROM vlan_past);
 
 -- Info about trunk
 CREATE TABLE trunk (
@@ -287,6 +349,9 @@ DO INSTEAD UPDATE trunk SET deleted='infinity'
 WHERE equipment=new.equipment AND port=new.port
 AND member=new.member
 AND deleted=CURRENT_TIMESTAMP::abstime;
+CREATE TABLE trunk_past (LIKE trunk);
+ALTER TABLE trunk_past ADD PRIMARY KEY (equipment, port, member, deleted);
+CREATE VIEW trunk_full AS (SELECT * FROM trunk UNION SELECT * FROM trunk_past);
 
 -- Special rule to propagate updates. These rules should work when
 -- port or equipment `deleted' column is set from infinity to

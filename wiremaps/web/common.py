@@ -20,7 +20,7 @@ class RenderMixIn:
 
     def render_ip(self, ctx, ip):
         d = self.dbpool.runQueryInPast(ctx,
-                                 "SELECT ip FROM equipment WHERE ip=%(ip)s "
+                                 "SELECT ip FROM equipment_full WHERE ip=%(ip)s "
                                  "AND deleted='infinity'",
                                  {'ip': ip})
         d.addCallback(lambda x: T.invisible[
@@ -58,7 +58,7 @@ class RenderMixIn:
 
     def render_hostname(self, ctx, name):
         d = self.dbpool.runQueryInPast(ctx,
-                                 "SELECT name FROM equipment "
+                                 "SELECT name FROM equipment_full "
                                  "WHERE lower(name)=lower(%(name)s) "
                                  "AND deleted='infinity'",
                                  {'name': name})

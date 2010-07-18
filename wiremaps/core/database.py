@@ -192,3 +192,32 @@ DO ALSO
         d.addCallbacks(lambda _: self.pool.runInteraction(addindex),
                        lambda _: None)
         return d
+
+    def upgradeDatabase_04(self):
+        """add past tables"""
+
+        def addpast(txn):
+            for table in ["equipment", "port", "fdb", "arp", "sonmp", "edp", "cdp", "lldp",
+                          "vlan", "trunk"]:
+                # Copy table schema
+                txn.execute("CREATE TABLE %s_past (LIKE %s)" % ((table,)*2))
+                # Create view
+                txn.execute("CREATE VIEW %s_full AS "
+                            "(SELECT * FROM %s UNION SELECT * FROM %s_past)" % ((table,)*3))
+                # Add index on `deleted'
+                if table not in ["vlan", "trunk"]:
+                    txn.execute("CREATE INDEX %s_past_deleted ON %s_past (deleted)" % ((table,)*2))
+            # Primary keys
+            for table in ["sonmp", "edp", "cdp", "lldp"]:
+                txn.execute("ALTER TABLE %s_past ADD PRIMARY KEY (equipment, port, deleted)" % table)
+            txn.execute("ALTER TABLE equipment_past ADD PRIMARY KEY (ip, deleted)")
+            txn.execute("ALTER TABLE port_past ADD PRIMARY KEY (equipment, index, deleted)")
+            txn.execute("ALTER TABLE fdb_past ADD PRIMARY KEY (equipment, port, mac, deleted)")
+            txn.execute("ALTER TABLE arp_past ADD PRIMARY KEY (equipment, mac, ip, deleted)")
+            txn.execute("ALTER TABLE vlan_past ADD PRIMARY KEY (equipment, port, vid, type, deleted)")
+            txn.execute("ALTER TABLE trunk_past ADD PRIMARY KEY (equipment, port, member, deleted)")
+
+        d = self.pool.runOperation("SELECT 1 FROM equipment_past LIMIT 1")
+        d.addCallbacks(lambda _: None,
+                       lambda _: self.pool.runInteraction(addpast))
+        return d

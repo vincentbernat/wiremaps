@@ -103,7 +103,7 @@ class PortDetailsRemoteLldp(PortRelatedDetails):
 
     query = """
 SELECT DISTINCT re.name, rp.name
-FROM lldp l, equipment re, equipment le, port lp, port rp
+FROM lldp_full l, equipment_full re, equipment_full le, port_full lp, port_full rp
 WHERE (l.mgmtip=le.ip OR l.sysname=le.name)
 AND le.ip=%(ip)s AND lp.equipment=le.ip
 AND l.portdesc=lp.name
@@ -131,10 +131,10 @@ class PortDetailsVlan(PortRelatedDetails):
     query = """
 SELECT COALESCE(l.vid, r.vid) as vvid, l.name, r.name
 FROM
-(SELECT * FROM vlan
+(SELECT * FROM vlan_full
  WHERE deleted='infinity' AND equipment=%(ip)s AND port=%(port)s AND type='local') l
 FULL OUTER JOIN
-(SELECT * FROM vlan
+(SELECT * FROM vlan_full
  WHERE deleted='infinity' AND equipment=%(ip)s AND port=%(port)s AND type='remote') r
 ON l.vid = r.vid
 ORDER BY vvid
@@ -177,7 +177,7 @@ class PortDetailsFdb(PortRelatedDetails):
 
     query = """
 SELECT DISTINCT f.mac, MIN(a.ip::text)::inet AS minip
-FROM fdb f LEFT OUTER JOIN arp a
+FROM fdb_full f LEFT OUTER JOIN arp_full a
 ON a.mac = f.mac AND a.deleted='infinity'
 WHERE f.equipment=%(ip)s
 AND f.port=%(port)s
@@ -219,7 +219,7 @@ class PortDetailsSpeed(PortRelatedDetails):
 
     query = """
 SELECT p.speed, p.duplex, p.autoneg
-FROM port p
+FROM port_full p
 WHERE p.equipment=%(ip)s AND p.index=%(port)s
 AND p.deleted='infinity'
 """
@@ -250,7 +250,7 @@ class PortDetailsMac(PortRelatedDetails):
 
     query = """
 SELECT mac
-FROM port
+FROM port_full
 WHERE equipment=%(ip)s AND index=%(port)s
 AND mac IS NOT NULL
 AND deleted='infinity'
@@ -265,7 +265,7 @@ class PortDetailsTrunkComponents(PortRelatedDetails):
 
     query = """
 SELECT p.name
-FROM trunk t, port p
+FROM trunk_full t, port_full p
 WHERE t.equipment=%(ip)s AND t.port=%(port)s
 AND p.equipment=t.equipment
 AND p.index=t.member
@@ -283,7 +283,7 @@ class PortDetailsTrunkMember(PortRelatedDetails):
 
     query = """
 SELECT p.name
-FROM trunk t, port p
+FROM trunk_full t, port_full p
 WHERE t.equipment=%(ip)s AND t.member=%(port)s
 AND p.equipment=t.equipment
 AND p.index=t.port
@@ -300,7 +300,7 @@ class PortDetailsSonmp(PortRelatedDetails):
 
     query = """
 SELECT DISTINCT remoteip, remoteport
-FROM sonmp WHERE equipment=%(ip)s
+FROM sonmp_full WHERE equipment=%(ip)s
 AND port=%(port)s
 AND deleted='infinity'
 """
@@ -317,7 +317,7 @@ class PortDetailsEdp(PortRelatedDetails):
 
     query = """
 SELECT DISTINCT sysname, remoteslot, remoteport
-FROM edp WHERE equipment=%(ip)s
+FROM edp_full WHERE equipment=%(ip)s
 AND port=%(port)s
 And deleted='infinity'
 """
@@ -352,7 +352,7 @@ class PortDetailsLldp(PortDetailsDiscovery):
     discovery_name = "LLDP"
     query = """
 SELECT DISTINCT mgmtip, sysdesc, sysname, portdesc
-FROM lldp WHERE equipment=%(ip)s
+FROM lldp_full WHERE equipment=%(ip)s
 AND port=%(port)s
 AND deleted='infinity'
 """
@@ -362,7 +362,7 @@ class PortDetailsCdp(PortDetailsDiscovery):
     discovery_name = "CDP"
     query = """
 SELECT DISTINCT mgmtip, platform, sysname, portname
-FROM cdp WHERE equipment=%(ip)s
+FROM cdp_full WHERE equipment=%(ip)s
 AND port=%(port)s
 AND deleted='infinity'
 """

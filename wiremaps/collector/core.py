@@ -102,14 +102,23 @@ class CollectorService(service.Service):
         """Stop exploration process."""
         print "Exploration of %s finished!" % self.config['ips']
         self.exploring = False
-        self.cleanUp()
-        self.dbpool.runOperation("UPDATE equipment SET deleted=CURRENT_TIMESTAMP "
-                                 "WHERE CURRENT_TIMESTAMP - interval '%(expire)s days' "
-                                 "> updated AND deleted='infinity'",
-                                 {'expire': self.config.get('expire', 1)})
+        self.dbpool.runInteraction(self.cleanup)
 
-    def cleanUp(self):
-        """Clean older entries"""
+    def cleanup(self, txn):
+        """Clean older entries and move them in _past tables"""
+        # Expire old entries
+        txn.execute("""
+UPDATE equipment SET deleted=CURRENT_TIMESTAMP
+WHERE CURRENT_TIMESTAMP - interval '%(expire)s days' > updated
+AND deleted='infinity'
+""",
+                    {'expire': self.config.get('expire', 1)})
+        # Move old entries to _past tables
+        for table in ["equipment", "port", "fdb", "arp", "sonmp", "edp", "cdp", "lldp",
+                      "vlan", "trunk"]:
+            txn.execute("INSERT INTO %s_past "
+                        "SELECT * FROM %s WHERE deleted != 'infinity'" % ((table,)*2))
+            txn.execute("DELETE FROM %s WHERE deleted != 'infinity'" % table)
 
     def reportError(self, failure, ip):
         """Generic method to report an error on failure
