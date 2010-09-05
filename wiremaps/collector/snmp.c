@@ -822,7 +822,7 @@ static PyGetSetDef Snmp_getseters[] = {
      "community", NULL},
     {"version",
      (getter)Snmp_getversion, (setter)Snmp_setversion,
-     "community", NULL},
+     "version", NULL},
     {NULL}  /* Sentinel */
 };
 
