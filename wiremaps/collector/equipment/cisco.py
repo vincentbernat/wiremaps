@@ -10,20 +10,34 @@ from wiremaps.collector.helpers.fdb import CommunityFdbCollector
 from wiremaps.collector.helpers.cdp import CdpCollector
 
 class Cisco:
-    """Collector for Cisco"""
+    """Collector for Cisco (including Cisco CSS)"""
 
     implements(ICollector, IPlugin)
 
+    def __init__(self, css=False):
+        self.css = css
+
     def handleEquipment(self, oid):
-        return oid.startswith('.1.3.6.1.4.1.9.')
+        if oid.startswith('.1.3.6.1.4.1.9.'):
+            # Cisco
+            if oid.startswith('.1.3.6.1.4.1.9.9.368.'):
+                # Css
+                return self.css
+            # Not a Css
+            return not(self.css)
+        return False
+
 
     def collectData(self, equipment, proxy):
         # On Cisco, ifName is more revelant than ifDescr, especially
-        # on Catalyst switches
+        # on Catalyst switches. This is absolutely not the case for a CSS.
         t = {}
         trunk = CiscoTrunkCollector(equipment, proxy, t)
-        ports = PortCollector(equipment, proxy, invert=True, trunk=t)
-        ports.ifDescr = ports.ifAlias
+        if self.css:
+            ports = PortCollector(equipment, proxy, trunk=t)
+        else:
+            ports = PortCollector(equipment, proxy, invert=True, trunk=t)
+            ports.ifDescr = ports.ifAlias
         fdb = CiscoFdbCollector(equipment, proxy, self.config)
         arp = ArpCollector(equipment, proxy, self.config)
         cdp = CdpCollector(equipment, proxy)
@@ -37,6 +51,7 @@ class Cisco:
         return d
 
 cisco = Cisco()
+ciscoCss = Cisco(True)
 
 class CiscoFdbCollector(CommunityFdbCollector):
 
