@@ -52,9 +52,19 @@ class CollectorService(service.Service):
         if type(self.config['ips']) in [list, tuple]:
             remaining = []
             for ip in self.config['ips']:
-                remaining += [x for x in IP(ip)]
+                ip = IP(ip)
+                if ip.broadcast() == ip.net():
+                    remaining += [ip]
+                else:
+                    remaining += [x for x in ip
+                                  if x != ip.net() and x != ip.broadcast()]
         else:
-            remaining = [x for x in IP(self.config['ips'])]
+            ip = IP(self.config['ips'])
+            if ip.broadcast() == ip.net():
+                remaining = [ip]
+            else:
+                remaining = [x for x in ip
+                             if x != ip.net() and x != ip.broadcast()]
 
         # Start exploring
         dl = []
