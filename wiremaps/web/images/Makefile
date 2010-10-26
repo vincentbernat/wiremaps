@@ -7,7 +7,7 @@ MAXHEIGHT=320
 all: $(IMAGES)
 
 %.png: %.svg
-	inkscape --file=$< --export-png=$@ --export-area-canvas \
+	inkscape --file=$< --export-png=$@ -C \
 		 --export-width=$(WIDTH)
 	if [ $$(identify -format "%[fx:h]" $@) -gt $(MAXHEIGHT) ]; then \
 		mogrify -resize $(WIDTH)x$(MAXHEIGHT) $@ ; \
