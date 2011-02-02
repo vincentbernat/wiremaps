@@ -48,13 +48,14 @@ case "$1" in
 
     stop)
         echo -n "Stopping wiremaps: twistd"
-        start-stop-daemon --stop --quiet  \
+        start-stop-daemon --stop --quiet --retry=TERM/30/KILL/5 \
             --pidfile $pidfile
         echo "."	
     ;;
 
     restart)
         $0 stop
+        sleep 1
         $0 start
     ;;
 
