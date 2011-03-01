@@ -111,8 +111,8 @@ class RenderMixIn:
         return ctx.tag[", ".join(results)]
 
     def render_tooltip(self, ctx, data):
-        return T.a(_class="tt")[
-            " [?] ",
+        return T.invisible[
+            T.a(_class="tt")[" [?] "],
             T.span(_class="tooltip")[
                 T.div(_class="tooltipactions")[
                     T.ul[
