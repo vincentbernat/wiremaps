@@ -10,6 +10,14 @@ from database import Database
 from wiremaps.web.site import MainPage
 
 def makeService(config):
+
+    # Use psyco if available
+    try:
+        import psyco
+        psyco.full()
+    except ImportError:
+        pass
+
     # configuration file
     configfile = yaml.load(file(config['config'], 'rb').read())
     # database

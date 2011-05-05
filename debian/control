@@ -9,7 +9,7 @@ XS-Python-Version: current, >= 2.4
 
 Package: wiremaps
 Architecture: any
-Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-twisted-core (>= 2.4), python-nevow (>= 0.9.26), python-psycopg2 | python-pgsql, python-twisted-names, python-ipy, python-yaml, adduser
+Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-twisted-core (>= 2.4), python-nevow (>= 0.9.26), python-psycopg2 | python-pgsql, python-twisted-names, python-ipy, python-yaml, adduser, python-psyco [i386]
 Suggests: postgresql-server
 XB-Python-Version: ${python:Versions}
 Description: layer 2 network discovery application
