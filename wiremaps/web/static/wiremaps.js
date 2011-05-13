@@ -47,7 +47,7 @@ $(document).ready(function() {
     $("div#search").css("visibility", "visible");
     $("div#application").css("visibility", "visible");
     /* TODO: use buildApiUrl */
-    $("div#search input#search").autocomplete("api/1.0/complete",
+    $("div#search input#search").autocomplete("api/1.1/complete",
 					      {minChars: 3,
 					       onItemSelect: function(li) {
 						 $("div#search form").submit();
@@ -162,11 +162,17 @@ function loadEquipment(ip)
 	    url: buildApiUrl("equipment/"+ip+"/descr/"),
 	    dataType: "json",
 	    error: function(xmlh, textstatus, error) {
-		$("div#description").hide();
+		$("#description,#location").hide();
 	    },
 	    success: function(data) {
-	        $("div#description").html(data[0][0]);
-		$("div#description").show();
+	        $("#description").html(data[0][0]);
+	        $("#location").html(data[0][1]);
+		$("#description").show();
+		if (data[0][1] !== null) {
+		    $("#location").show();
+		} else {
+		    $("#location").hide();
+		}
 		hideMessage();
 	    }});
     sendMessage("info", "Loading list of ports for "+ip);
@@ -377,9 +383,9 @@ function displaySearchResults(data, elt) {
 function searchOrShow(event) {
     event.preventDefault();
     var target = $(this).attr("href").match(/.*\/([^\/]+)[\/]?/);
-    if (target[0].match(/api\/1\.0\/search\//))
+    if (target[0].match(/api\/1\.1\/search\//))
 	search(target[1]);
-    else if (target[0].match(/api\/1.0\/equipment\//)) {
+    else if (target[0].match(/api\/1.1\/equipment\//)) {
 	var a = $("div#equipments select option").filter(function() {
 		    return (($(this).attr("_ip") == target[1]) ||
 			    (($(this).attr("_hostname") != null) &&
@@ -437,9 +443,9 @@ var timemachine = "";
 function buildApiUrl(url) {
   /* Adapt the given URL to a time machine compatible one */
   if (timemachine) {
-    return "api/1.0/past/" + timemachine + "/" + url;
+    return "api/1.1/past/" + timemachine + "/" + url;
   }
-  return "api/1.0/" + url;
+  return "api/1.1/" + url;
 }
 
 function getNow() {

@@ -12,7 +12,7 @@ class ApiResource(rend.Page):
     """
 
     addSlash = True
-    versions = [ "1.0" ]        # Valid versions
+    versions = [ "1.0", "1.1" ]        # Valid versions
     docFactory = loaders.stan(T.html [ T.body [ T.p [ "Valid versions are:" ],
                                    T.ul [ [ T.li[v] for v in versions ] ] ] ])
 
@@ -24,6 +24,7 @@ class ApiResource(rend.Page):
 
     def childFactory(self, ctx, version):
         if version in ApiResource.versions:
+            version = tuple([int(i) for i in version.split(".")])
             ctx.remember(version, IApiVersion)
             return ApiVersionedResource(self.config, self.dbpool, self.collector)
         return None

@@ -15,7 +15,7 @@ class RenderMixIn:
     """Helper class that provide some builtin fragments"""
 
     def render_apiurl(self, ctx, data):
-        return ctx.tag(href= "api/%s/%s" % (IApiVersion(ctx),
+        return ctx.tag(href= "api/%s/%s" % (".".join([str(x) for x in IApiVersion(ctx)]),
                                             ctx.tag.attributes["href"]))
 
     def render_ip(self, ctx, ip):

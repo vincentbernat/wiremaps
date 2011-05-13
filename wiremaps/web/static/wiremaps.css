@@ -230,6 +230,14 @@ div#description
     font-size: 110%;
 }
 
+div#location
+{
+    display: none;
+    text-align: center;
+    font-size: 105%;
+    font-style: italic;
+}
+
 /* Ports */
 div#portscontainer
 {

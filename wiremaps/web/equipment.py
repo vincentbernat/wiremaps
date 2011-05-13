@@ -1,5 +1,5 @@
 from nevow import rend, loaders, tags as T
-from wiremaps.web.common import RenderMixIn
+from wiremaps.web.common import RenderMixIn, IApiVersion
 from wiremaps.web.json import JsonPage
 from wiremaps.web import ports
 
@@ -35,8 +35,14 @@ class EquipmentDescriptionResource(JsonPage):
         JsonPage.__init__(self)
 
     def data_json(self, ctx, data):
+        version = IApiVersion(ctx)
+        if version == (1, 0):
+            return self.dbpool.runQueryInPast(ctx,
+                                              "SELECT description FROM equipment_full "
+                                              "WHERE ip=%(ip)s AND deleted='infinity'",
+                                              {'ip': str(self.ip)})
         return self.dbpool.runQueryInPast(ctx,
-                                    "SELECT description FROM equipment_full "
+                                    "SELECT description, location FROM equipment_full "
                                     "WHERE ip=%(ip)s AND deleted='infinity'",
                                     {'ip': str(self.ip)})
 
