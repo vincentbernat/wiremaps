@@ -202,10 +202,12 @@ AND deleted='infinity'
         d = proxy.get(['.1.3.6.1.2.1.1.1.0', # description
                        '.1.3.6.1.2.1.1.2.0', # OID
                        '.1.3.6.1.2.1.1.5.0', # name
+                       '.1.3.6.1.2.1.1.6.0', # location
                        ])
         d.addCallback(lambda result: (proxy,
                                       Equipment(proxy.ip,
                                                 result['.1.3.6.1.2.1.1.5.0'].lower() or "unknown",
                                                 result['.1.3.6.1.2.1.1.2.0'],
-                                                result['.1.3.6.1.2.1.1.1.0'])))
+                                                result['.1.3.6.1.2.1.1.1.0'],
+                                                result['.1.3.6.1.2.1.1.6.0'] or None)))
         return d

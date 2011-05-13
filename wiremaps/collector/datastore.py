@@ -9,6 +9,7 @@ class IEquipment(Interface):
     name = Attribute('Name of this equipment.')
     oid = Attribute('OID of this equipment.')
     description = Attribute('Description of this equipment.')
+    location = Attribute('Location of the equipment.')
 
     ports = Attribute('List of ports for this equipment as a mapping with index as key')
     arp = Attribute('ARP mapping (IP->MAC) for this equipment.')
@@ -16,11 +17,12 @@ class IEquipment(Interface):
 class Equipment:
     implements(IEquipment)
 
-    def __init__(self, ip, name, oid, description):
+    def __init__(self, ip, name, oid, description, location):
         self.ip = ip
         self.name = name
         self.oid = oid
         self.description = description
+        self.location = location
         self.ports = {}
         self.arp = {}
 

@@ -106,6 +106,7 @@ CREATE TABLE equipment (
   name    text		   NULL,
   oid	  text		   NOT NULL,
   description text	   DEFAULT '',
+  location    text	   NULL,
   created abstime	   DEFAULT CURRENT_TIMESTAMP,
   updated abstime	   DEFAULT CURRENT_TIMESTAMP,
   deleted abstime	   DEFAULT 'infinity',

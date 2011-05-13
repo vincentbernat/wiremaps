@@ -252,3 +252,15 @@ DO ALSO
         d.addCallbacks(lambda _: self.pool.runInteraction(cleanup),
                        lambda _: None)
         return d
+
+    def upgradeDatabase_06(self):
+        """add syslocation column in equipment table"""
+
+        def addsyslocation(txn):
+            txn.execute("ALTER TABLE equipment ADD COLUMN location text NULL")
+            txn.execute("ALTER TABLE equipment_past ADD COLUMN location text NULL")
+
+        d = self.pool.runOperation("SELECT location FROM equipment LIMIT 1");
+        d.addCallbacks(lambda _: None,
+                       lambda _: self.pool.runInteraction(addsyslocation))
+        return d

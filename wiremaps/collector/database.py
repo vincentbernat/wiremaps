@@ -34,27 +34,28 @@ class DatabaseWriter:
     def _equipment(self, txn):
         """Write equipment to the database."""
         # We need to check if this equipment exists and if something has changed
-        txn.execute("SELECT ip, name, oid, description "
+        txn.execute("SELECT ip, name, oid, description, location "
                     "FROM equipment WHERE ip = %(ip)s AND deleted='infinity'",
                     {'ip': self.equipment.ip})
         id = txn.fetchall()
         target = {'name': self.equipment.name,
                   'oid': self.equipment.oid,
                   'description': self.equipment.description,
+                  'location': self.equipment.location,
                   'ip': self.equipment.ip}
         if not id:
-            txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
-                        "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
+            txn.execute("INSERT INTO equipment (ip, name, oid, description, location) VALUES "
+                        "(%(ip)s, %(name)s, %(oid)s, %(description)s, %(location)s)",
                         target)
         else:
             # Maybe something changed
             if id[0][1] != target["name"] or id[0][2] != target["oid"] or \
-                    id[0][3] != target["description"]:
+                    id[0][3] != target["description"] or id[0][4] != target["location"]:
                 txn.execute("UPDATE equipment SET deleted=CURRENT_TIMESTAMP "
                             "WHERE ip=%(ip)s AND deleted='infinity'",
                             target)
-                txn.execute("INSERT INTO equipment (ip, name, oid, description) VALUES "
-                            "(%(ip)s, %(name)s, %(oid)s, %(description)s)",
+                txn.execute("INSERT INTO equipment (ip, name, oid, description, location) VALUES "
+                            "(%(ip)s, %(name)s, %(oid)s, %(description)s, %(location)s)",
                             target)
             else:
                 # Nothing changed, update `updated' column
