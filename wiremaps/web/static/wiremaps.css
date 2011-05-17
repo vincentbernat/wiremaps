@@ -439,3 +439,7 @@ a.tt + span.tooltip
     text-align: center;
     font-size: 120%;
 }
+
+.wrap {
+    word-wrap: break-word;
+}

@@ -37,13 +37,8 @@ class RenderMixIn:
         d.addErrback(lambda x: None)
         return d
 
-    zwsp = Entity('zwsp', 8203, 'zero width space')
     def render_zwsp(self, name):
-        result = []
-        for x in name.replace(".",". ").replace("-","- ").split(" "):
-            result.append(x)
-            result.append(self.zwsp)
-        return result
+        return T.span(_class="wrap")[name]
 
     def render_solvedip(self, ctx, name):
         try:
