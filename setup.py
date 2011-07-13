@@ -21,7 +21,7 @@ if __name__ == "__main__":
             'Programming Language :: Python',
             'Topic :: System :: Networking',
             ],
-          url='https://trac.luffy.cx/wiremaps/',
+          url='https://github.com/vincentbernat/wiremaps',
           description='layer 2 network discovery application',
           author='Vincent Bernat',
           author_email="bernat@luffy.cx",
