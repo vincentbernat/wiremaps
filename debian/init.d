@@ -25,6 +25,10 @@ version="$(twistd --version | head -1 | awk '{print $NF}')"
 case "$1" in
     start)
         echo -n "Starting wiremaps: twistd"
+	[ -d $(dirname $pidfile) ] || {
+	    mkdir -p $(dirname $pidfile)
+	    chown $user:$group $(dirname $pidfile)
+	}
 	case "$version" in
 	    8.*)
 		start-stop-daemon -c $user -g $group --start \
