@@ -122,7 +122,7 @@ class LldpCollector:
         """Add LLDP information in C{self.equipment}"""
         for port in self.lldpSysName:
             self.equipment.ports[port].lldp = Lldp(
-                self.lldpSysName.get[port],
+                self.lldpSysName.get(port),
                 self.lldpSysDesc.get(port, ""),
                 # When port ID subtype is ifName, use it instead of description
                 self.lldpPortIdSubtype[port] == 5 and self.lldpPortId.get(port, "") or \
