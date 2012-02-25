@@ -28,6 +28,32 @@ class CollectorService(service.Service):
         self.exploring = False
         AgentProxy.use_getbulk = self.config.get("bulk", True)
 
+    def enumerateIP(self):
+        """Enumerate the list of IP to explore.
+
+        @return: a list of tuple (ip, community) that needs to be
+           explored.
+        """
+        if type(self.config['ips']) in [list, tuple]:
+            remaining = []
+            for ip in self.config['ips']:
+                ip, _, community = ip.partition("@")
+                ip = IP(ip)
+                if ip.broadcast() == ip.net():
+                    remaining += [(ip, community)]
+                else:
+                    remaining += [(x, community) for x in ip
+                                  if x != ip.net() and x != ip.broadcast()]
+        else:
+            ip, _, community = self.config['ips'].partition("@")
+            ip = IP(ip)
+            if ip.broadcast() == ip.net():
+                remaining = [(ip, community)]
+            else:
+                remaining = [(x, community) for x in ip
+                             if x != ip.net() and x != ip.broadcast()]
+        return remaining
+
     def startExploration(self):
         """Start to explore the range of IP.
 
@@ -49,24 +75,7 @@ class CollectorService(service.Service):
         print "Start exploration..."
 
         # Expand list of IP to explore
-        if type(self.config['ips']) in [list, tuple]:
-            remaining = []
-            for ip in self.config['ips']:
-                ip, _, community = ip.partition("@")
-                ip = IP(ip)
-                if ip.broadcast() == ip.net():
-                    remaining += [(ip, community)]
-                else:
-                    remaining += [(x, community) for x in ip
-                                  if x != ip.net() and x != ip.broadcast()]
-        else:
-            ip, _, community = self.config['ips'].partition("@")
-            ip = IP(ip)
-            if ip.broadcast() == ip.net():
-                remaining = [(ip, community)]
-            else:
-                remaining = [(x, community) for x in ip
-                             if x != ip.net() and x != ip.broadcast()]
+        remaining = self.enumerateIP()
 
         # Start exploring
         dl = []
@@ -81,12 +90,20 @@ class CollectorService(service.Service):
         """Start to explore a given IP.
 
         @param ip: IP to explore
-        @param community: community to use for this specific IP
+
+        @param community: community to use for this specific IP. If
+           C{True}, we will try to recover the community from the list
+           of IP.
         """
         print "Explore IP %s" % ip
-        if community:
+        if community is True:
+            # We need to take the community from the list of IP, if available
+            community = [c for i,c in self.enumerateIP() if str(i) == str(ip) and c]
+        elif community:
+            # A community has been provided, don't try to guess
             community = [community]
-        else:
+        if not community:
+            # No community, just try to guess from the defaults
             community = self.config['community']
         d = defer.maybeDeferred(self.guessCommunity,
                                 None, None, ip,
