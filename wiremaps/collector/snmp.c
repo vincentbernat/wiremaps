@@ -83,12 +83,10 @@ Snmp_updatereactor(void)
 	double to;
 
 	FD_ZERO(&fdset);
-	timeout.tv_sec = 5;
-	timeout.tv_usec = 0;
-	block = 0;
+	block = 1;		/* This means we don't have a timeout
+				   planned. block will be reset to 0
+				   if we need to setup a timeout. */
 	snmp_select_info(&maxfd, &fdset, &timeout, &block);
-	if (block == 1)	
-		timeout.tv_sec = 5;
 	for (fd = 0; fd < maxfd; fd++) {
 		if (FD_ISSET(fd, &fdset)) {
 			result = PyDict_Contains(SnmpFds, PyInt_FromLong(fd));
