@@ -36,8 +36,8 @@ class CollectorService(service.Service):
         """
 
         def doWork(remaining):
-            for ip in remaining:
-                d = self.startExploreIP(ip)
+            for ip, community in remaining:
+                d = self.startExploreIP(ip, community)
                 d.addErrback(self.reportError, ip)
                 yield d
 
@@ -46,24 +46,26 @@ class CollectorService(service.Service):
             raise exception.CollectorAlreadyRunning(
                 "Exploration still running")
         self.exploring = True
-        print "Start exploring %s..." % self.config['ips']
+        print "Start exploration..."
 
         # Expand list of IP to explore
         if type(self.config['ips']) in [list, tuple]:
             remaining = []
             for ip in self.config['ips']:
+                ip, _, community = ip.partition("@")
                 ip = IP(ip)
                 if ip.broadcast() == ip.net():
-                    remaining += [ip]
+                    remaining += [(ip, community)]
                 else:
-                    remaining += [x for x in ip
+                    remaining += [(x, community) for x in ip
                                   if x != ip.net() and x != ip.broadcast()]
         else:
-            ip = IP(self.config['ips'])
+            ip, _, community = self.config['ips'].partition("@")
+            ip = IP(ip)
             if ip.broadcast() == ip.net():
-                remaining = [ip]
+                remaining = [(ip, community)]
             else:
-                remaining = [x for x in ip
+                remaining = [(x, community) for x in ip
                              if x != ip.net() and x != ip.broadcast()]
 
         # Start exploring
@@ -75,15 +77,20 @@ class CollectorService(service.Service):
             dl.append(d)
         defer.DeferredList(dl).addCallback(self.stopExploration)
 
-    def startExploreIP(self, ip):
+    def startExploreIP(self, ip, community=None):
         """Start to explore a given IP.
 
         @param ip: IP to explore
+        @param community: community to use for this specific IP
         """
         print "Explore IP %s" % ip
+        if community:
+            community = [community]
+        else:
+            community = self.config['community']
         d = defer.maybeDeferred(self.guessCommunity,
                                 None, None, ip,
-                                self.config['community'])
+                                community)
         d.addCallback(self.getInformations)
         return d
 
@@ -110,7 +117,7 @@ class CollectorService(service.Service):
 
     def stopExploration(self, ignored):
         """Stop exploration process."""
-        print "Exploration of %s finished!" % self.config['ips']
+        print "Exploration finished!"
         self.exploring = False
         self.dbpool.runInteraction(self.cleanup)
 

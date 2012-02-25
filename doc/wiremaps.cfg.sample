@@ -2,7 +2,7 @@
 ---
 
 collector:
-  ips: 192.168.14.0/24
+  ips: [192.168.14.0/24, 192.168.15.0/24@special]
   parallel: 4
   community: [ public, community2 ]
   expire: 1
