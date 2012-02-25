@@ -62,6 +62,8 @@ You can install the application with:
     python setup.py build
     sudo python setup.py install
 
+Errors about missing `twisted/plugins/__init__.py` can be ignored.
+
 If you do not wish to install the application, you still need to
 compile the module to build SNMP queries. This can be done with:
 
