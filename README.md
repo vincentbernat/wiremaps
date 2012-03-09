@@ -34,6 +34,7 @@ To use this application, you need the following Debian packages:
  - python-nevow ([Nevow][9])
  - python-ipy ([iPy][10])
  - python-yaml ([PyYAML][11])
+ - python-dev
 
 [4]: http://www.postgresql.org
 [5]: http://initd.org/psycopg/
@@ -62,7 +63,10 @@ You can install the application with:
     python setup.py build
     sudo python setup.py install
 
-Errors about missing `twisted/plugins/__init__.py` can be ignored.
+Errors about missing `twisted/plugins/__init__.py` can be ignored. You
+need to have the appropriate libraries and development tools to be
+able to compile Python modules. On Debian/Ubuntu, this is `python-dev`
+package.
 
 If you do not wish to install the application, you still need to
 compile the module to build SNMP queries. This can be done with:
