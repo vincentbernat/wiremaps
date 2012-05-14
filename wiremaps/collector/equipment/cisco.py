@@ -36,7 +36,8 @@ class Cisco:
         if self.css:
             ports = PortCollector(equipment, proxy, trunk=t)
         else:
-            ports = PortCollector(equipment, proxy, invert=True, trunk=t)
+            ports = PortCollector(equipment, proxy, trunk=t,
+                                  names="ifDescr", descrs="ifName")
             ports.ifDescr = ports.ifAlias
         fdb = CiscoFdbCollector(equipment, proxy, self.config)
         arp = ArpCollector(equipment, proxy, self.config)

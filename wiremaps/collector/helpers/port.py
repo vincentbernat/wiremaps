@@ -14,8 +14,8 @@ class PortCollector:
     ifHighSpeed = '.1.3.6.1.2.1.31.1.1.1.15'
 
     def __init__(self, equipment, proxy,
-                 normName=None, normPort=None, filter=None, invert=False,
-                 trunk=None):
+                 normName=None, normPort=None, filter=None,
+                 trunk=None, names="ifName", descrs="ifDescr"):
         """Create a collector for port information
 
         @param proxy: proxy to use to query SNMP
@@ -23,16 +23,18 @@ class PortCollector:
         @param normName: function to normalize port name
         @param normPort: function to normalize port index
         @param filter: filter out those ports
-        @param invert: invert ifName and ifDescr
         @param trunk: collected trunk information (mapping trunk index -> list of members)
+        @param names: MIB name for port names
+        @param descrs: MIB name for port descriptions
         """
         self.proxy = proxy
         self.equipment = equipment
         self.normName = normName
         self.normPort = normPort
         self.filter = filter
-        self.invert = invert
         self.trunk = trunk
+        self.names = names
+        self.descrs = descrs
 
     def gotIfTypes(self, results):
         """Callback handling retrieving of interface types.
@@ -184,9 +186,9 @@ class PortCollector:
         print "Collecting port information for %s" % self.proxy.ip
         d = self.proxy.walk(self.ifType)
         d.addCallback(self.gotIfTypes)
-        d.addCallback(lambda x: self.proxy.walk(self.invert and self.ifName or self.ifDescr))
+        d.addCallback(lambda x: self.proxy.walk(getattr(self,self.descrs)))
         d.addCallback(self.gotIfDescrs)
-        d.addCallback(lambda x: self.proxy.walk(self.invert and self.ifDescr or self.ifName))
+        d.addCallback(lambda x: self.proxy.walk(getattr(self,self.names)))
         d.addCallback(self.gotIfNames)
         d.addCallback(lambda x: self.proxy.walk(self.ifOperStatus))
         d.addCallback(self.gotOperStatus)

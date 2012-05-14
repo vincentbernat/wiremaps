@@ -27,7 +27,8 @@ class ExtremeSummit:
         return ExtremeVlanCollector
 
     def collectData(self, equipment, proxy):
-        ports = PortCollector(equipment, proxy, invert=True)
+        ports = PortCollector(equipment, proxy,
+                              names="ifDescr", descrs="ifName")
         fdb = FdbCollector(equipment, proxy, self.config)
         arp = ArpCollector(equipment, proxy, self.config)
         edp = EdpCollector(equipment, proxy)
@@ -64,7 +65,8 @@ class ExtremeWare:
                         ])
 
     def collectData(self, equipment, proxy):
-        ports = PortCollector(equipment, proxy, invert=True)
+        ports = PortCollector(equipment, proxy,
+                              names="ifDescr", descrs="ifName")
         vlan = ExtremeVlanCollector(equipment, proxy)
         fdb = ExtremeFdbCollector(vlan, equipment, proxy, self.config)
         arp = ArpCollector(equipment, proxy, self.config)
