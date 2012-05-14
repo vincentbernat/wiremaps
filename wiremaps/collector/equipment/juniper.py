@@ -78,11 +78,10 @@ class JuniperStackCollector(object):
         return d
 
 class JuniperVlanCollector(object):
-    oidVlanID     = '.1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5' # jnxExVlanTag
-    oidVlanNames  = '.1.3.6.1.4.1.2636.3.40.1.5.1.5.1.2' # jnxExVlanName
-
-    oidVlanTagnes = '.1.3.6.1.4.1.2636.3.40.1.5.1.7.1.4' # jnxExVlanPortTagness
-    oidRealIfID   = '.1.3.6.1.2.1.17.1.4.1.2'            # dot1dBasePortIfIndex
+    oidVlanID        = '.1.3.6.1.4.1.2636.3.40.1.5.1.5.1.5' # jnxExVlanTag
+    oidVlanNames     = '.1.3.6.1.4.1.2636.3.40.1.5.1.5.1.2' # jnxExVlanName
+    oidVlanPortGroup = '.1.3.6.1.4.1.2636.3.40.1.5.1.7.1.3' # jnxExVlanPortStatus
+    oidRealIfID      = '.1.3.6.1.2.1.17.1.4.1.2'            # dot1dBasePortIfIndex
 
     def __init__(self, equipment, proxy, normport):
         self.proxy = proxy
@@ -104,7 +103,7 @@ class JuniperVlanCollector(object):
             vid = int(oid.split(".")[-1])
             dic[vid] = results[oid]
 
-    def gotTrunkStatus(self, results):
+    def gotPorts(self, results):
         for oid in results:
             port = int(oid.split(".")[-1])
             port = self.normport(self.realifId[port])
@@ -118,9 +117,6 @@ class JuniperVlanCollector(object):
         print "Collecting VLAN information for %s" % self.proxy.ip
         self.realifId = {}
         self.vlanVid = {}
-        self.trunked = {}
-        self.mibidx = {}
-        self.vlans = {}
         self.names = {}
 
         # Get list of VLANs
@@ -129,12 +125,12 @@ class JuniperVlanCollector(object):
         # Get vlan Names
         d.addCallback(lambda x: self.proxy.walk(self.oidVlanNames))
         d.addCallback(self.gotVlanName,self.vlanVid)
-        # Get list of ifMib to jnxMib interface index asotiation
+        # Get list of ifMib to jnxMib interface index association
         d.addCallback(lambda x: self.proxy.walk(self.oidRealIfID))
         d.addCallback(self.gotRealIfID, self.realifId)
         # Get list of interfaces in vlans
-        d.addCallback(lambda x: self.proxy.walk(self.oidVlanTagnes))
-        d.addCallback(self.gotTrunkStatus)
+        d.addCallback(lambda x: self.proxy.walk(self.oidVlanPortGroup))
+        d.addCallback(self.gotPorts)
 
         return d
 
