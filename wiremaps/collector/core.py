@@ -37,7 +37,11 @@ class CollectorService(service.Service):
         if type(self.config['ips']) in [list, tuple]:
             remaining = []
             for ip in self.config['ips']:
-                ip, _, community = ip.partition("@")
+                parts = ip.split("@", 1)
+                ip = parts[0]
+                community = None
+                if len(parts) > 1:
+                    community = parts[1]
                 ip = IP(ip)
                 if ip.broadcast() == ip.net():
                     remaining += [(ip, community)]
@@ -45,7 +49,11 @@ class CollectorService(service.Service):
                     remaining += [(x, community) for x in ip
                                   if x != ip.net() and x != ip.broadcast()]
         else:
-            ip, _, community = self.config['ips'].partition("@")
+            parts = ip.split("@", 1)
+            ip = parts[0]
+            community = None
+            if len(parts) > 1:
+                community = parts[1]
             ip = IP(ip)
             if ip.broadcast() == ip.net():
                 remaining = [(ip, community)]
