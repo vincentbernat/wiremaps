@@ -4,7 +4,7 @@ from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.datastore import LocalVlan
-from wiremaps.collector.helpers.port import PortCollector
+from wiremaps.collector.helpers.port import PortCollector, TrunkCollector
 from wiremaps.collector.helpers.fdb import FdbCollector
 from wiremaps.collector.helpers.arp import ArpCollector
 from wiremaps.collector.helpers.lldp import LldpCollector, LldpSpeedCollector
@@ -17,29 +17,43 @@ class Juniper:
     def handleEquipment(self, oid):
         return oid.startswith('.1.3.6.1.4.1.2636.')
 
-    def normport(self, port, ports, parents):
-        if port in parents.parent:
-            return parents.parent[port]
+    def normport(self, port, ports, parents, trunk):
+        if ports is None:
+            # Trunk normalization
+            if port in trunk:
+                if trunk[port]:
+                    return port
+                return None
+            if port in parents.parent:
+                return parents.parent[port]
+            return port
+        # Regular normalization
         if port not in ports.portNames:
+            if port in parents.parent:
+                return parents.parent[port]
             return None
         return port
 
     def collectData(self, equipment, proxy):
-        ports = PortCollector(equipment, proxy,
-                              names="ifAlias", descrs="ifName")
+        t = {}
         parents = JuniperStackCollector(equipment, proxy)
+        trunk = TrunkCollector(equipment, proxy, t)
+        ports = PortCollector(equipment, proxy,
+                              trunk=t,
+                              normTrunk=lambda x: self.normport(x, None, parents, t),
+                              names="ifAlias", descrs="ifName")
         arp = ArpCollector(equipment, proxy, self.config)
         lldp = LldpCollector(equipment, proxy,
-                             lambda x: self.normport(x, ports, parents))
+                             lambda x: self.normport(x, ports, parents, t))
         speed = LldpSpeedCollector(equipment, proxy,
-                                   lambda x: self.normport(x, ports, parents))
+                                   lambda x: self.normport(x, ports, parents, t))
         fdb = JuniperFdbCollector(equipment, proxy, self.config,
-                                  lambda x: self.normport(x, ports, parents))
+                                  lambda x: self.normport(x, ports, parents, t))
         vlan = JuniperVlanCollector(equipment, proxy,
-                                    lambda x: self.normport(x, ports, parents))
-        
-        d = ports.collectData()
+                                    lambda x: self.normport(x, ports, parents, t))
+        d = trunk.collectData()
         d.addCallback(lambda x: parents.collectData())
+        d.addCallback(lambda x: ports.collectData())
         d.addCallback(lambda x: vlan.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())

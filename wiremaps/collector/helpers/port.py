@@ -15,7 +15,7 @@ class PortCollector:
 
     def __init__(self, equipment, proxy,
                  normName=None, normPort=None, filter=None,
-                 trunk=None, names="ifName", descrs="ifDescr"):
+                 trunk=None, normTrunk=None, names="ifName", descrs="ifDescr"):
         """Create a collector for port information
 
         @param proxy: proxy to use to query SNMP
@@ -24,6 +24,7 @@ class PortCollector:
         @param normPort: function to normalize port index
         @param filter: filter out those ports
         @param trunk: collected trunk information (mapping trunk index -> list of members)
+        @param normTrunk: function to normalize port index inside trunks
         @param names: MIB name for port names
         @param descrs: MIB name for port descriptions
         """
@@ -33,6 +34,7 @@ class PortCollector:
         self.normPort = normPort
         self.filter = filter
         self.trunk = trunk
+        self.normTrunk = normTrunk
         self.names = names
         self.descrs = descrs
 
@@ -55,7 +57,7 @@ class PortCollector:
                                 62,   # fastEther
                                 69,   # fastEtherFX
                                 117,  # gigabitEthernet
-                                ] or (self.trunk and port in self.trunk):
+                                ] or (self.trunk and port in self.trunk and self.trunk[port]):
                 self.ports.append(port)
 
     def gotIfDescrs(self, results):
@@ -173,7 +175,11 @@ class PortCollector:
                                               self.speed.get(port, None))
         if self.trunk:
             for t in self.trunk:
+                if not self.trunk[t]: continue
                 for port in self.trunk[t]:
+                    if self.normTrunk is not None:
+                        port = self.normTrunk(port)
+                    if port not in self.equipment.ports: continue
                     self.equipment.ports[port].trunk = Trunk(t)
 
     def collectData(self):
@@ -222,7 +228,7 @@ class TrunkCollector:
         @param results: C{IF-MIB::ifType}
         """
         for oid in results:
-            if results[oid] == 54 or result[oid] == 161:
+            if results[oid] == 54 or results[oid] == 161:
                 port = int(oid.split(".")[-1])
                 self.trunk[port] = []
 
@@ -234,6 +240,7 @@ class TrunkCollector:
         for oid in results:
             physport = int(oid.split(".")[-1])
             trunkport = int(oid.split(".")[-2])
+            if physport == 0: continue
             if trunkport in self.trunk:
                 self.trunk[trunkport].append(physport)
         empty = []
