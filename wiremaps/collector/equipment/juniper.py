@@ -66,10 +66,16 @@ class JuniperStackCollector(object):
             y = int(oid.split(".")[-2])
             if y == 0: continue
             if port == 0: continue
-            if port in self.parent:
-                self.parent[y] = self.parent[port]
-            else:
-                self.parent[y] = port
+            if y in self.parent: continue
+            self.parent[y] = port
+        # Remove indirections
+        change = True
+        while change:
+            change = False
+            for y in self.parent:
+                if self.parent[y] in self.parent:
+                    self.parent[y] = self.parent[self.parent[y]]
+                    change = True
 
     def collectData(self):
         print "Collecting additional port information for %s" % self.proxy.ip
