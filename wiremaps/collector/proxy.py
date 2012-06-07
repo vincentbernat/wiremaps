@@ -47,15 +47,19 @@ class Walker(object):
         stop = False
         for o in x:
             if o in self.results:
+                # Loop?
                 stop = True
                 continue
             if translateOid(o)[:len(translateOid(self.baseoid))] != \
                     translateOid(self.baseoid):
+                # End of table
                 stop = True
                 continue
             self.results[o] = x[o]
-            if translateOid(self.lastoid) < translateOid(o):
-                self.lastoid = o
+            # We don't check that OID are increasing. Some
+            # implementations are buggy. We have a loop detection
+            # above.
+            self.lastoid = o
         if stop or not x:
             self.defer.callback(self.results)
             self.defer = None
