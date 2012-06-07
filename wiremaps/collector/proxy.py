@@ -45,10 +45,12 @@ class Walker(object):
 
     def getMore(self, x):
         stop = False
+        lastoid = None
+        dups = 0
         for o in x:
             if o in self.results:
                 # Loop?
-                stop = True
+                dups = dups + 1
                 continue
             if translateOid(o)[:len(translateOid(self.baseoid))] != \
                     translateOid(self.baseoid):
@@ -56,14 +58,23 @@ class Walker(object):
                 stop = True
                 continue
             self.results[o] = x[o]
-            # We don't check that OID are increasing. Some
-            # implementations are buggy. We have a loop detection
-            # above.
-            self.lastoid = o
-        if stop or not x:
+            # Buggy implementation may have a not increasing OID. We
+            # consider only the biggest OID from the set of returned
+            # OID to be the one that we should use. This means if the
+            # order is incorrect, we may end up querying the same OID
+            # several time, but this will converge.
+            if lastoid is None:
+                lastoid = o
+            elif translateOid(lastoid) < translateOid(o):
+                lastoid = o
+        if dups == len(x):
+            # We get only duplicates, stop here
+            stop = True
+        if stop:
             self.defer.callback(self.results)
             self.defer = None
             return
+        self.lastoid = lastoid
         d = self.proxy.getbulk(self.lastoid)
         d.addErrback(lambda x: x.trap(snmp.SNMPEndOfMibView,
                                       snmp.SNMPNoSuchName) and {})
