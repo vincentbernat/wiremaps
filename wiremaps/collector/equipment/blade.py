@@ -8,6 +8,7 @@ from wiremaps.collector.helpers.fdb import FdbCollector
 from wiremaps.collector.helpers.arp import ArpCollector
 from wiremaps.collector.equipment.alteon import AlteonVlanCollector, AlteonSpeedCollector
 from wiremaps.collector.helpers.vlan import VlanCollector
+from wiremaps.collector.helpers.lldp import LldpCollector
 
 class BladeEthernetSwitch:
     """Collector for various Blade Ethernet Switch based on AlteonOS"""
@@ -32,6 +33,7 @@ class BladeEthernetSwitch:
 
         fdb = FdbCollector(equipment, proxy, self.config, normport=lambda x: x%128)
         arp = ArpCollector(equipment, proxy, self.config)
+        lldp = LldpCollector(equipment, proxy, normport=lambda x: x%128)
 
         vlan = AlteonVlanCollector(equipment, proxy, lambda x: x%128 - 1)
         vlan.oidVlanNames = '%s.2.1.1.3.1.2' % self.baseoid
@@ -42,6 +44,7 @@ class BladeEthernetSwitch:
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: vlan.collectData())
+        d.addCallback(lambda x: lldp.collectData())
         return d
 
 class NortelEthernetSwitch(BladeEthernetSwitch):

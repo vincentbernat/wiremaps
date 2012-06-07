@@ -50,6 +50,9 @@ class LldpCollector:
         self.lldpMgmtIp = {}
         for oid in results:
             oid = oid[len(self.lldpRemManAddrIfId):]
+            if len(oid.split(".")) < 5:
+                # Blade network has the most buggy implementation...
+                continue
             if oid.split(".")[4] != "1":
                 continue
             if oid.split(".")[5] == "4":
