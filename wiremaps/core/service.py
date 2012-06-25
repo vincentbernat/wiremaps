@@ -27,7 +27,7 @@ def makeService(config):
     collector = CollectorService(configfile, dbpool)
     collector.setServiceParent(application)
 
-    web = internet.TCPServer(config['port'],
+    web = internet.TCPServer(int(config['port']),
                              appserver.NevowSite(MainPage(configfile,
                                                       dbpool,
                                                       collector)),
