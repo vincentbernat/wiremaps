@@ -91,6 +91,16 @@ The description of the equipment can be grabbed using
 
  [["Ethernet Routing Switch 5510-24T"]]
 
+With version 1.1, you can also get the location with the same URL::
+ $ curl -i http://localhost:8087/api/1.1/equipment/192.168.110.15/descr/
+ HTTP/1.1 200 OK
+ Transfer-encoding: chunked
+ Date: Sun, 11 Jul 2010 08:47:59 GMT
+ Content-type: application/json; charset=UTF-8
+ Server: TwistedWeb/2.4.0
+
+ [["Ethernet Routing Switch 5520-24T","B3/N33"]]
+
 Get VLAN
 --------
 
