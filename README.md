@@ -60,6 +60,7 @@ for an example. The default path for this file is
 `/etc/wiremaps/wiremaps.cfg`. You can alter it with `--config` option.
 
 You can install the application with:
+
     python setup.py build
     sudo python setup.py install
 
