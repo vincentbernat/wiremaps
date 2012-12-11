@@ -35,6 +35,7 @@ To use this application, you need the following Debian packages:
  - python-ipy ([iPy][10])
  - python-yaml ([PyYAML][11])
  - python-dev
+ - libsnmp-dev
 
 [4]: http://www.postgresql.org
 [5]: http://initd.org/psycopg/
