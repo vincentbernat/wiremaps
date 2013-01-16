@@ -30,7 +30,7 @@ case "$1" in
 	    chown $user:$group $(dirname $pidfile)
 	}
 	case "$version" in
-	    8.*)
+	    8.*|9.*|1?.*)
 		start-stop-daemon -c $user -g $group --start \
 		    --quiet --exec /usr/bin/twistd -- \
                     --pidfile=$pidfile \
