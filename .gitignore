@@ -11,3 +11,10 @@
 dropin.cache
 /twistd.log
 /wiremaps/web/static/stamp-ports
+
+/debian/wiremaps/
+/debian/wiremaps.substvars
+/debian/wiremaps.*.debhelper
+/debian/wiremaps.debhelper.log
+/debian/files
+/debian/python-module-stampdir/wiremaps
