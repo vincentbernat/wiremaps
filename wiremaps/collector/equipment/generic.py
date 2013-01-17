@@ -4,7 +4,7 @@ from twisted.internet import defer
 
 from wiremaps.collector.icollector import ICollector
 from wiremaps.collector.helpers.port import PortCollector
-from wiremaps.collector.helpers.fdb import FdbCollector
+from wiremaps.collector.helpers.fdb import FdbCollector, QFdbCollector
 from wiremaps.collector.helpers.arp import ArpCollector
 from wiremaps.collector.helpers.lldp import LldpCollector, LldpSpeedCollector
 from wiremaps.collector.helpers.vlan import Rfc2674VlanCollector, IfMibVlanCollector
@@ -29,6 +29,8 @@ class Generic:
         ports = PortCollector(equipment, proxy)
         fdb = FdbCollector(equipment, proxy, self.config,
                            lambda x: self.normport(x, ports))
+        fdb2 = QFdbCollector(equipment, proxy, self.config,
+                             lambda x: self.normport(x, ports))
         arp = ArpCollector(equipment, proxy, self.config)
         lldp = LldpCollector(equipment, proxy,
                              lambda x: self.normport(x, ports))
@@ -40,6 +42,7 @@ class Generic:
                                    normPort=lambda x: self.normport(x, ports))
         d = ports.collectData()
         d.addCallback(lambda x: fdb.collectData())
+        d.addCallback(lambda x: fdb2.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: speed.collectData())
