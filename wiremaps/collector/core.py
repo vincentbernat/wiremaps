@@ -236,9 +236,18 @@ AND deleted='infinity'
                        '.1.3.6.1.2.1.1.5.0', # name
                        '.1.3.6.1.2.1.1.6.0', # location
                        ])
+
+        def norm(name):
+            # Try to fix some broken system names
+            name = name.lower().strip()
+            if not name:
+                return "unknown"
+            name = name.replace(" ", "_")
+            return name
+
         d.addCallback(lambda result: (proxy,
                                       Equipment(proxy.ip,
-                                                result['.1.3.6.1.2.1.1.5.0'].lower() or "unknown",
+                                                norm(result['.1.3.6.1.2.1.1.5.0']),
                                                 result['.1.3.6.1.2.1.1.2.0'],
                                                 result['.1.3.6.1.2.1.1.1.0'],
                                                 result['.1.3.6.1.2.1.1.6.0'] or None)))
