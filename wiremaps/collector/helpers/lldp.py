@@ -218,12 +218,12 @@ class LldpSpeedCollector(SpeedCollector):
             port = int(oid.split(".")[-1])
             mau = results[oid]
             if mau in self.mau:
-                self.speed[port] = self.mau[mau][0]
+                self.equipment.ports[port].speed = self.mau[mau][0]
                 if self.mau[mau][1]:
-                    self.duplex[port] = self.mau[mau][1]
+                    self.equipment.ports[port].duplex = self.mau[mau][1]
 
     def gotAutoneg(self, results):
         """Callback handling autoneg"""
         for oid in results:
             port = int(oid.split(".")[-1])
-            self.autoneg[port] = bool(results[oid] == 1)
+            self.equipment.ports[port].autoneg = bool(results[oid] == 1)
