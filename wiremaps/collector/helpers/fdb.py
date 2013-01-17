@@ -59,6 +59,12 @@ class FdbCollector:
         d = self.collectFdbData()
         return d
 
+class QFdbCollector(FdbCollector):
+    """Collect data using FDB and Q-BRIDGE-MIB"""
+
+    dot1qTpFdbPort = '.1.3.6.1.2.1.17.7.1.2.2.1.2'
+    dot1dTpFdbPort = dot1qTpFdbPort
+
 class CommunityFdbCollector(FdbCollector):
     """Collect FDB for switch using indexed community
 

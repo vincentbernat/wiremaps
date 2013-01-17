@@ -40,7 +40,7 @@ class VlanCollector:
                                 port = self.normPort(port)
                             if port is not None:
                                 self.equipment.ports[port].vlan.append(
-                                    LocalVlan(vid, self.vlanNames[vid]))
+                                    LocalVlan(vid, self.vlanNames[vid] or "VLAN %d" % vid))
 
     def collectData(self):
         """Collect VLAN data from SNMP"""
