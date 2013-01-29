@@ -226,4 +226,5 @@ class LldpSpeedCollector(SpeedCollector):
         """Callback handling autoneg"""
         for oid in results:
             port = int(oid.split(".")[-1])
-            self.equipment.ports[port].autoneg = bool(results[oid] == 1)
+            if port in self.equipment.ports:
+                self.equipment.ports[port].autoneg = bool(results[oid] == 1)
