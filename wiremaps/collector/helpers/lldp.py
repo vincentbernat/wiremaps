@@ -217,7 +217,7 @@ class LldpSpeedCollector(SpeedCollector):
         for oid in results:
             port = int(oid.split(".")[-1])
             mau = results[oid]
-            if mau in self.mau:
+            if mau in self.mau and port in self.equipment.ports:
                 self.equipment.ports[port].speed = self.mau[mau][0]
                 if self.mau[mau][1]:
                     self.equipment.ports[port].duplex = self.mau[mau][1]
