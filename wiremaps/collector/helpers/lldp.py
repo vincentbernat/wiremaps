@@ -128,7 +128,7 @@ class LldpCollector:
                 self.lldpSysName.get(port),
                 self.lldpSysDesc.get(port, ""),
                 # When port ID subtype is ifName, use it instead of description
-                self.lldpPortIdSubtype[port] == 5 and self.lldpPortId.get(port, "") or \
+                self.lldpPortIdSubtype.get(port, -1) == 5 and self.lldpPortId.get(port, "") or \
                     self.lldpPortDesc.get(port, ""),
                 self.lldpMgmtIp.get(port, "0.0.0.0"))
 
