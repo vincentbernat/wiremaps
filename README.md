@@ -19,7 +19,7 @@ The situation is the same for Windows. However, there exists a
 [commercial one][3].
 
 [1]: http://en.wikipedia.org/wiki/LLDP
-[2]: https://trac.luffy.cx/lldpd/
+[2]: http://vincentbernat.github.io/lldpd/
 [3]: http://www.hanewin.net/lldp-e.htm
 
 Installation
@@ -95,7 +95,7 @@ Indexation is not done automatically. You must browse
 `http://localhost:8087/api/1.0/equipment/refresh` to initiate a whole
 refresh. Put this command in a crontab.
 
-In the git repository (`git clone git://trac.luffy.cx/wiremaps.git`),
+In the git repository (`git clone git://github.com/vincentbernat/wiremaps.git`),
 there is a `debian/` directory that builds a Debian package (with
 `dpkg-buildpackage -us -uc`). It does not setup the database.
 

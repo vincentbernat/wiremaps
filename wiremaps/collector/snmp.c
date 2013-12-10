@@ -1,5 +1,4 @@
-/* Simple interface to libnetsnmp for twisted. Inspired by synchronous module
- * from snimpy (https://trac.luffy.cx/snimpy/)
+/* Simple interface to libnetsnmp for twisted.
  *
  * (c) Copyright 2008 Vincent Bernat <bernat@luffy.cx>
  *
