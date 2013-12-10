@@ -2,6 +2,12 @@
 
 from zope.interface import Interface, Attribute, implements
 
+def ascii(s):
+    """Convert to ASCII a string"""
+    if s is None:
+        return None
+    return s.decode("ascii", "replace")
+
 class IEquipment(Interface):
     """Interface for object containing complete description of an equipment"""
 
@@ -19,10 +25,10 @@ class Equipment:
 
     def __init__(self, ip, name, oid, description, location):
         self.ip = ip
-        self.name = name
+        self.name = ascii(name)
         self.oid = oid
-        self.description = description
-        self.location = location
+        self.description = ascii(description)
+        self.location = ascii(location)
         self.ports = {}
         self.arp = {}
 
@@ -50,9 +56,9 @@ class Port:
 
     def __init__(self, name, state,
                  alias=None, mac=None, speed=None, duplex=None, autoneg=None):
-        self.name = name
+        self.name = ascii(name)
         self.state = state
-        self.alias = alias
+        self.alias = ascii(alias)
         self.mac = mac
         self.speed = speed
         self.duplex = duplex
@@ -89,7 +95,7 @@ class Edp:
     implements(IEdp)
 
     def __init__(self, sysname, slot, port):
-        self.sysname = sysname
+        self.sysname = ascii(sysname)
         self.slot = slot
         self.port = port
 
@@ -105,10 +111,10 @@ class Cdp:
     implements(ICdp)
 
     def __init__(self, sysname, port, ip, platform):
-        self.sysname = sysname
+        self.sysname = ascii(sysname)
         self.port = port
         self.ip = ip
-        self.platform = platform
+        self.platform = ascii(platform)
 
 class ILldp(Interface):
     """Interface for object containing LLDP data"""
@@ -122,9 +128,9 @@ class Lldp:
     implements(ILldp)
 
     def __init__(self, sysname, sysdesc, portdesc, ip=None):
-        self.sysname = sysname
-        self.sysdesc = sysdesc
-        self.portdesc = portdesc
+        self.sysname = ascii(sysname)
+        self.sysdesc = ascii(sysdesc)
+        self.portdesc = ascii(portdesc)
         self.ip = ip
 
 class IVlan(Interface):
@@ -141,7 +147,7 @@ class IRemoteVlan(IVlan):
 class Vlan:
     def __init__(self, vid, name):
         self.vid = vid
-        self.name = name
+        self.name = ascii(name)
 
 class LocalVlan(Vlan):
     implements(ILocalVlan)
