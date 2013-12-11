@@ -18,3 +18,5 @@ dropin.cache
 /debian/wiremaps.debhelper.log
 /debian/files
 /debian/python-module-stampdir/wiremaps
+
+/*.pid
