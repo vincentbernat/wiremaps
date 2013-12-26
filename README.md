@@ -93,7 +93,9 @@ to use older version of Twisted (2.4).
 
 Indexation is not done automatically. You must browse
 `http://localhost:8087/api/1.0/equipment/refresh` to initiate a whole
-refresh. Put this command in a crontab.
+refresh. Put this command in a crontab:
+
+    16 */3 * * * nobody curl -s http://localhost:8087/api/1.0/equipment/refresh
 
 In the git repository (`git clone git://github.com/vincentbernat/wiremaps.git`),
 there is a `debian/` directory that builds a Debian package (with
