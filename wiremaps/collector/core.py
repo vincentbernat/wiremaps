@@ -26,6 +26,7 @@ class CollectorService(service.Service):
         self.dbpool = dbpool
         self.setName("SNMP collector")
         self.exploring = False
+	self.ips = []
         AgentProxy.use_getbulk = self.config.get("bulk", True)
 
     def enumerateIP(self):
@@ -34,33 +35,19 @@ class CollectorService(service.Service):
         @return: a list of tuple (ip, community) that needs to be
            explored.
         """
-        if type(self.config['ips']) in [list, tuple]:
-            remaining = []
-            for ip in self.config['ips']:
-                parts = ip.split("@", 1)
-                ip = parts[0]
+        self.ips = []
+	ipfile = open(self.config['ipfile'], "r")
+        for ip in ipfile:
+		ip = ip.split("#", 1)[0].strip()
+		if not ip:
+			continue
+		parts = ip.split("@", 1)
+                ip = IP(parts[0])
                 community = None
-                if len(parts) > 1:
-                    community = parts[1]
-                ip = IP(ip)
-                if ip.broadcast() == ip.net():
-                    remaining += [(ip, community)]
-                else:
-                    remaining += [(x, community) for x in ip
-                                  if x != ip.net() and x != ip.broadcast()]
-        else:
-            parts = ip.split("@", 1)
-            ip = parts[0]
-            community = None
-            if len(parts) > 1:
-                community = parts[1]
-            ip = IP(ip)
-            if ip.broadcast() == ip.net():
-                remaining = [(ip, community)]
-            else:
-                remaining = [(x, community) for x in ip
-                             if x != ip.net() and x != ip.broadcast()]
-        return remaining
+		if len(parts) > 1:
+			community = parts[1]
+                self.ips += [(ip, community)]
+	ipfile.close()
 
     def startExploration(self):
         """Start to explore the range of IP.
@@ -71,9 +58,11 @@ class CollectorService(service.Service):
 
         def doWork(remaining):
             for ip, community in remaining:
-                d = self.startExploreIP(ip, community)
-                d.addErrback(self.reportError, ip)
-                yield d
+		for x in list(ip):
+			if ip.net() == ip.broadcast() or (x != ip.net() and x != ip.broadcast()):
+				d = self.startExploreIP(x, community)
+				d.addErrback(self.reportError, x)
+				yield d
 
         # Don't explore if already exploring
         if self.exploring:
@@ -83,12 +72,12 @@ class CollectorService(service.Service):
         print "Start exploration..."
 
         # Expand list of IP to explore
-        remaining = self.enumerateIP()
+        self.enumerateIP()
 
         # Start exploring
         dl = []
         coop = task.Cooperator()
-        work = doWork(remaining)
+        work = doWork(self.ips)
         for i in xrange(self.config['parallel']):
             d = coop.coiterate(work)
             dl.append(d)
@@ -106,7 +95,9 @@ class CollectorService(service.Service):
         print "Explore IP %s" % ip
         if community is True:
             # We need to take the community from the list of IP, if available
-            community = [c for i,c in self.enumerateIP() if str(i) == str(ip) and c]
+            community = []
+            community += [c for i,c in self.ips if str(i) == str(ip) and c]
+            community += [c for i,c in self.ips if str(i) == str(ip.net()) and c]
         elif community:
             # A community has been provided, don't try to guess
             community = [community]

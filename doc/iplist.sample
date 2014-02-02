@@ -1,0 +1,7 @@
+#List of IPs/Subnets to explore
+#Start comments with a hash
+#Empty lines are ignored
+#Add one entry per line in the format IP/Mask[@Community]
+
+192.168.14.0/24
+192.168.15.0/24@special
