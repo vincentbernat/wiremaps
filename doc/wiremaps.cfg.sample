@@ -2,7 +2,7 @@
 ---
 
 collector:
-  ips: [192.168.14.0/24, 192.168.15.0/24@special]
+  ipfile: ./doc/iplist.sample
   parallel: 4
   community: [ public, community2 ]
   expire: 1
