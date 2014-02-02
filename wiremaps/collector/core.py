@@ -26,7 +26,7 @@ class CollectorService(service.Service):
         self.dbpool = dbpool
         self.setName("SNMP collector")
         self.exploring = False
-	self.ips = []
+        self.ips = []
         AgentProxy.use_getbulk = self.config.get("bulk", True)
 
     def enumerateIP(self):
@@ -36,18 +36,18 @@ class CollectorService(service.Service):
            explored.
         """
         self.ips = []
-	ipfile = open(self.config['ipfile'], "r")
+        ipfile = open(self.config['ipfile'], "r")
         for ip in ipfile:
-		ip = ip.split("#", 1)[0].strip()
-		if not ip:
-			continue
-		parts = ip.split("@", 1)
-                ip = IP(parts[0])
-                community = None
-		if len(parts) > 1:
-			community = parts[1]
+            ip = ip.split("#", 1)[0].strip()
+            if not ip:
+                continue
+            parts = ip.split("@", 1)
+            ip = IP(parts[0])
+            community = None
+            if len(parts) > 1:
+                community = parts[1]
                 self.ips += [(ip, community)]
-	ipfile.close()
+        ipfile.close()
 
     def startExploration(self):
         """Start to explore the range of IP.
@@ -58,11 +58,11 @@ class CollectorService(service.Service):
 
         def doWork(remaining):
             for ip, community in remaining:
-		for x in list(ip):
-			if ip.net() == ip.broadcast() or (x != ip.net() and x != ip.broadcast()):
-				d = self.startExploreIP(x, community)
-				d.addErrback(self.reportError, x)
-				yield d
+                for x in list(ip):
+                    if ip.net() == ip.broadcast() or (x != ip.net() and x != ip.broadcast()):
+                        d = self.startExploreIP(x, community)
+                        d.addErrback(self.reportError, x)
+                        yield d
 
         # Don't explore if already exploring
         if self.exploring:
