@@ -161,7 +161,7 @@ Refreshing
 
 To force Wiremaps to retrieve new information, you can use the
 following two URL:
- - ``/refresh/`` to refresh all information for all equipments and
+ - ``/equipment/refresh/`` to refresh all information for all equipments and
    discover new equipments
  - ``/equipment/<ip>/refresh/`` to refresh the information related to
    the equipment whose IP is given.
