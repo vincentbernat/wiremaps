@@ -44,6 +44,7 @@ Getting the list of known equipments
 ------------------------------------
 
 The list of known equipment can be grabbed using ``/equipment/``::
+
  $ curl -i http://localhost:8087/api/1.0/equipment/
  HTTP/1.1 200 OK
  Transfer-encoding: chunked
@@ -60,6 +61,7 @@ Getting the list of ports
 
 The list of ports of an equipment can be grabbed using
 ``/equipment/<ip>/``::
+
  $ curl -i http://localhost:8087/api/1.0/equipment/192.168.110.15/
  HTTP/1.1 200 OK
  Transfer-encoding: chunked
@@ -82,6 +84,7 @@ Getting the description of an equipment
 
 The description of the equipment can be grabbed using
 ``/equipment/<ip>/descr/``::
+
  $ curl -i http://localhost:8087/api/1.0/equipment/192.168.110.15/descr/
  HTTP/1.1 200 OK
  Transfer-encoding: chunked
@@ -92,6 +95,7 @@ The description of the equipment can be grabbed using
  [["Ethernet Routing Switch 5510-24T"]]
 
 With version 1.1, you can also get the location with the same URL::
+
  $ curl -i http://localhost:8087/api/1.1/equipment/192.168.110.15/descr/
  HTTP/1.1 200 OK
  Transfer-encoding: chunked
@@ -106,6 +110,7 @@ Get VLAN
 
 You can get an HTML table with the list of VLAN and associated port in
 a user-friendly format with ``/equipment/<ip>/vlans/``::
+
  $ curl -i http://localhost:8087/api/1.0/equipment/192.168.110.15/vlans/
  HTTP/1.1 200 OK
  Transfer-encoding: chunked
@@ -131,6 +136,7 @@ Getting information about one port
 
 To get information about one port, use ``/equipment/<ip>/<port>/``
 where ``<port>`` is the index of the port::
+
  $ curl -i http://localhost:8087/api/1.0/equipment/192.168.110.15/1/
  HTTP/1.1 200 OK
  Transfer-encoding: chunked
