@@ -46,7 +46,7 @@ class CollectorService(service.Service):
             community = None
             if len(parts) > 1:
                 community = parts[1]
-                self.ips += [(ip, community)]
+            self.ips += [(ip, community)]
         ipfile.close()
 
     def startExploration(self):
