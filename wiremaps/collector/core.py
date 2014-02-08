@@ -97,7 +97,7 @@ class CollectorService(service.Service):
             # We need to take the community from the list of IP, if available
             community = []
             community += [c for i,c in self.ips if str(i) == str(ip) and c]
-            community += [c for i,c in self.ips if str(i) == str(ip.net()) and c]
+            community += [c for i,c in self.ips if str(i) == str(IP(ip).net()) and c]
         elif community:
             # A community has been provided, don't try to guess
             community = [community]
