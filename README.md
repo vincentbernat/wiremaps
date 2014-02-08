@@ -68,7 +68,8 @@ You can install the application with:
 Errors about missing `twisted/plugins/__init__.py` can be ignored. You
 need to have the appropriate libraries and development tools to be
 able to compile Python modules. On Debian/Ubuntu, this is `python-dev`
-package.
+package. You also need Net-SNMP and its development files. On
+Debian/Ubuntu, this is `libsnmp-dev` package.
 
 If you do not wish to install the application, you still need to
 compile the module to build SNMP queries. This can be done with:
