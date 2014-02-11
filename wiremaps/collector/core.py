@@ -171,8 +171,6 @@ AND deleted='infinity'
         @param info: C{(proxy, equipment)} tuple
         """
         proxy, equipment = info
-        proxy.version = 2       # Switch to version 2. Plugins should
-                                # switch back to version 1 if needed.
         # Filter out plugins that do not handle our equipment
         plugins = [ plugin for plugin
                     in getPlugins(ICollector,
@@ -193,7 +191,7 @@ AND deleted='infinity'
         d.addCallback(lambda _: DatabaseWriter(equipment, self.config).write(self.dbpool))
         return d
 
-    def guessCommunity(self, ignored, proxy, ip, communities, version=1):
+    def guessCommunity(self, ignored, proxy, ip, communities, version=2):
         """Try to guess a community.
 
         @param proxy: an old proxy to close if different of C{None}
@@ -212,8 +210,9 @@ AND deleted='infinity'
                                community=community,
                                version=version)
         # Set version and communities for next run if this one doesn't succeed
-        version=version % 2 + 1
-        if version == 1:
+        version-=1
+        if version == 0:
+            version=2
             communities=communities[1:]
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])
         d.addCallbacks(callback=lambda x,y: y, callbackArgs=(proxy,),
