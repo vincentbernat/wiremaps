@@ -171,8 +171,6 @@ AND deleted='infinity'
         @param info: C{(proxy, equipment)} tuple
         """
         proxy, equipment = info
-        proxy.version = 2       # Switch to version 2. Plugins should
-                                # switch back to version 1 if needed.
         # Filter out plugins that do not handle our equipment
         plugins = [ plugin for plugin
                     in getPlugins(ICollector,
@@ -193,26 +191,33 @@ AND deleted='infinity'
         d.addCallback(lambda _: DatabaseWriter(equipment, self.config).write(self.dbpool))
         return d
 
-    def guessCommunity(self, ignored, proxy, ip, communities):
+    def guessCommunity(self, ignored, proxy, ip, communities, version=2):
         """Try to guess a community.
 
         @param proxy: an old proxy to close if different of C{None}
         @param ip: ip of the equipment to test
         @param communities: list of communities to test
+        @param version: SNMP version (1 or 2)
         """
         if not communities:
             raise exception.NoCommunity("unable to guess community")
         community = communities[0]
         if proxy:
             proxy.community=community
+            proxy.version=version
         else:
             proxy = AgentProxy(ip=str(ip),
                                community=community,
-                               version=1) # Start with version 1 for maximum compatibility
+                               version=version)
+        # Set version and communities for next run if this one doesn't succeed
+        version-=1
+        if version == 0:
+            version=2
+            communities=communities[1:]
         d = proxy.get(['.1.3.6.1.2.1.1.1.0'])
         d.addCallbacks(callback=lambda x,y: y, callbackArgs=(proxy,),
                        errback=self.guessCommunity, errbackArgs=(proxy, ip,
-                                                                 communities[1:]))
+                                                                 communities, version))
         return d
 
     def getBasicInformation(self, proxy):
