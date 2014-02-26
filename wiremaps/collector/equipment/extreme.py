@@ -21,6 +21,7 @@ class ExtremeSummit:
                         '.1.3.6.1.4.1.1916.2.54', # Extreme Summit 48e
                         '.1.3.6.1.4.1.1916.2.76', # Extreme Summit 48t
                         '.1.3.6.1.4.1.1916.2.62', # Black Diamond 8810
+                        '.1.3.6.1.4.1.1916.2.155', # Extreme Summit 460t
                         ])
 
     def vlanFactory(self):
