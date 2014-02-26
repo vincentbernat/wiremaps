@@ -20,7 +20,7 @@ from wiremaps.collector.equipment.generic import generic
 
 class CollectorService(service.Service):
     """Service to collect data from SNMP"""
-    
+
     def __init__(self, config, dbpool):
         self.config = config['collector']
         self.dbpool = dbpool
@@ -45,13 +45,12 @@ class CollectorService(service.Service):
             self.ips += [(ip, community)]
 
         if "ipfile" in self.config:
-            ipfile = open(self.config['ipfile'], "r")
-            for ip in ipfile:
-                ip = ip.split("#", 1)[0].strip()
-                if not ip:
-                    continue
-                appendIP(ip)
-            ipfile.close()
+            with open(self.config['ipfile'], "r") as ipfile:
+                for ip in ipfile:
+                    ip = ip.split("#", 1)[0].strip()
+                    if not ip:
+                        continue
+                    appendIP(ip)
         if "ips" in self.config:
             if type(self.config['ips']) not in [list, tuple]:
                 appendIP(self.config['ips'])
