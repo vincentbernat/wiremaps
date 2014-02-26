@@ -24,7 +24,8 @@ class Database:
                     config['database'].get('port', 5432),
                     config['database']['database'],
                     config['database']['username'],
-                    config['database']['password']))
+                    config['database']['password']),
+                    cp_reconnect=True)
         else:
             p = adbapi.ConnectionPool("psycopg2",
                                       "host=%s port=%d dbname=%s "
@@ -33,7 +34,8 @@ class Database:
                     config['database'].get('port', 5432),
                     config['database']['database'],
                     config['database']['username'],
-                    config['database']['password']))
+                    config['database']['password']),
+                    cp_reconnect=True)
         self.pool = p
         reactor.callLater(0, self.checkDatabase)
 
