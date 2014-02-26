@@ -36,18 +36,28 @@ class CollectorService(service.Service):
            explored.
         """
         self.ips = []
-        ipfile = open(self.config['ipfile'], "r")
-        for ip in ipfile:
-            ip = ip.split("#", 1)[0].strip()
-            if not ip:
-                continue
+        def appendIP(ip):
             parts = ip.split("@", 1)
             ip = IP(parts[0])
             community = None
             if len(parts) > 1:
                 community = parts[1]
             self.ips += [(ip, community)]
-        ipfile.close()
+
+        if "ipfile" in self.config:
+            ipfile = open(self.config['ipfile'], "r")
+            for ip in ipfile:
+                ip = ip.split("#", 1)[0].strip()
+                if not ip:
+                    continue
+                appendIP(ip)
+            ipfile.close()
+        if "ips" in self.config:
+            if type(self.config['ips']) not in [list, tuple]:
+                appendIP(self.config['ips'])
+            else:
+                for ip in self.config['ips']:
+                    appendIP(ip)
 
     def startExploration(self):
         """Start to explore the range of IP.
