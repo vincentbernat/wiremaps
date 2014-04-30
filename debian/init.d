@@ -36,7 +36,7 @@ case "$1" in
                     --pidfile=$pidfile \
 		    --no_save \
                     --logfile=$logfile \
-	            wiremaps --config=/etc/wiremaps/wiremaps.cfg
+	            wiremaps --config=$configfile
 		;;
 	    *)
 		start-stop-daemon -c $user -g $group --start \
