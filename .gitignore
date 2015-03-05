@@ -20,3 +20,4 @@ dropin.cache
 /debian/python-module-stampdir/wiremaps
 
 /*.pid
+/*.cfg
