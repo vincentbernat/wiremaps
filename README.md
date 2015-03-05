@@ -7,6 +7,10 @@ information from the FDB (MAC-port table on switches), the ARP table
 (MAC-IP table) and some miscellaneous information like interface
 names.
 
+**Warning**: Wiremaps is not well-maintained. It is aging and may be
+unlikely to produce good results out-of-the box. I intend to rewrite
+it at some point but didn't get time yet.
+
 The ARP table is only used to link IP addresses to MAC addresses (and
 vice-versa). We don't use the information about the interface where
 this information came from.
