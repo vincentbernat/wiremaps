@@ -1,6 +1,7 @@
 import os.path
 import re
 
+from pkg_resources import resource_filename
 from twisted.python import util
 from twisted.enterprise import adbapi
 from twisted.internet import defer
@@ -11,7 +12,7 @@ from IPy import IP
 
 class ImageResource(rend.Page):
 
-    image_dir = util.sibpath(__file__, "images")
+    image_dir = resource_filename(__name__, "images")
 
     def __init__(self, dbpool):
         self.dbpool = dbpool

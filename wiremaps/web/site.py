@@ -1,16 +1,18 @@
 import os
 
+from pkg_resources import resource_string, resource_filename
 from twisted.python import util
 from zope.interface import implements
-from nevow import rend, appserver, loaders, page
+from nevow import rend, loaders
 from nevow import tags as T
 from nevow import static, inevow
 
 from wiremaps.web.api import ApiResource
 
+
 class MainPage(rend.Page):
 
-    docFactory = loaders.xmlfile(util.sibpath(__file__, "main.xhtml"))
+    docFactory = loaders.xmlstr(resource_string(__name__, "main.xhtml"))
 
     def __init__(self, config, dbpool, collector):
         self.config = config['web']
@@ -27,7 +29,7 @@ class MainPage(rend.Page):
         return static.File(self.config['logo'])
 
     def child_static(self, ctx):
-        return static.File(util.sibpath(__file__, "static"))
+        return static.File(resource_filename(__name__, "static"))
 
     def child_api(self, ctx):
         return ApiResource(self.config, self.dbpool, self.collector)
@@ -38,6 +40,7 @@ class MainPage(rend.Page):
             inevow.IRequest(ctx).rememberRootURL()
             return RedirectApi()
         return None
+
 
 class RedirectApi(object):
     """Redirect to new API.
