@@ -1,13 +1,15 @@
-# When modifying this class, also update doc/database.sql
+# When modifying this class, also update database.sql
 
 import warnings
 
+from pkg_resources import resource_string
 from twisted.python import log
 from twisted.internet import reactor, defer
 from twisted.enterprise import adbapi
 
+
 class Database:
-    
+
     def __init__(self, config):
         try:
             import psycopg2
@@ -44,7 +46,7 @@ class Database:
 
         If the database is running, launch upgrade process.
         """
-        d = self.pool.runOperation("SELECT 1 FROM equipment LIMIT 1")
+        d = self.pool.runOperation("SELECT 1")
         d.addCallbacks(lambda _: self.upgradeDatabase(),
                        self.databaseFailure)
         return d
@@ -77,6 +79,18 @@ class Database:
         """When upgrade fails, just stop the reactor..."""
         log.msg("unable to update database:\n%s" % str(fail))
         reactor.stop()
+
+    def upgradeDatabase_00(self):
+        """create initial schema if no table is present"""
+
+        def install(txn):
+            statements = resource_string(__name__, "database.sql")
+            txn.execute(statements)
+
+        d = self.pool.runOperation("SELECT 1 FROM equipment LIMIT 1")
+        d.addCallbacks(lambda _: None,
+                       lambda _: self.pool.runInteraction(install))
+        return d
 
     def upgradeDatabase_01(self):
         """check the schema to be compatible with time travel function"""

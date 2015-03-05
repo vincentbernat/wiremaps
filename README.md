@@ -52,10 +52,6 @@ schema. As postgres user (`su - postgres`), you can use the following:
     createuser -P wiremaps
     createdb -O wiremaps wiremaps
 
-Then load the content of `doc/database.sql`:
-
-    psql -h localhost -U wiremaps -W < doc/database.sql
-
 You need to write a `wiremaps.cfg` file. See `doc/wiremaps.cfg.sample`
 for an example. The default path for this file is
 `/etc/wiremaps/wiremaps.cfg`. You can alter it with `--config` option.

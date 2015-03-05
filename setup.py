@@ -38,6 +38,7 @@ if __name__ == "__main__":
                     "wiremaps.core",
                     "twisted.plugins"],
           package_data={'twisted': ['plugins/wiremaps_plugin.py'],
+                        'wiremaps.core': ["database.sql"],
                         'wiremaps.web': ["static/*.png", "static/*.gif",
                                          "static/*.css", "static/*.js",
                                          "main.xhtml",
