@@ -1,5 +1,6 @@
 # When modifying this class, also update database.sql
 
+import os
 import warnings
 
 from pkg_resources import resource_string
@@ -11,6 +12,8 @@ from twisted.enterprise import adbapi
 class Database:
 
     def __init__(self, config):
+        pghost = config['database'].get('host', os.environ.get('PGHOST', 'localhost'))
+        pgport = int(config['database'].get('port', os.environ.get('PGPORT', 5432)))
         try:
             import psycopg2
         except ImportError:
@@ -22,8 +25,7 @@ class Database:
                 raise ImportError("Neither psycopg2 or pyPgSQL is present on your system")
             p = adbapi.ConnectionPool("pyPgSQL.PgSQL",
                                       "%s:%d:%s:%s:%s" % (
-                    config['database'].get('host', 'localhost'),
-                    config['database'].get('port', 5432),
+                    pghost, pgport,
                     config['database']['database'],
                     config['database']['username'],
                     config['database']['password']),
@@ -32,8 +34,7 @@ class Database:
             p = adbapi.ConnectionPool("psycopg2",
                                       "host=%s port=%d dbname=%s "
                                       "user=%s password=%s" % (
-                    config['database'].get('host', 'localhost'),
-                    config['database'].get('port', 5432),
+                    pghost, pgport,
                     config['database']['database'],
                     config['database']['username'],
                     config['database']['password']),

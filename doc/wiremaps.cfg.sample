@@ -9,7 +9,6 @@ collector:
   fdbexpire: 24
   arpexpire: 24
 database:
-  host: localhost
   username: wiremaps
   password: wiremaps
   database: wiremaps
