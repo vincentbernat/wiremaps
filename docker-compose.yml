@@ -1,0 +1,14 @@
+wiremaps:
+  build: .
+  links:
+    - db
+  ports:
+    - "8087:8087"
+  volumes:
+    - /etc/wiremaps:/etc/wiremaps
+
+db:
+  image: postgres:9
+  environment:
+    POSTGRES_USER: wiremaps
+    POSTGRES_PASSWORD: wiremaps
