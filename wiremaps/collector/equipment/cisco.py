@@ -8,6 +8,7 @@ from wiremaps.collector.helpers.port import PortCollector
 from wiremaps.collector.helpers.arp import ArpCollector
 from wiremaps.collector.helpers.fdb import CommunityFdbCollector
 from wiremaps.collector.helpers.cdp import CdpCollector
+from wiremaps.collector.helpers.lldp import LldpCollector
 
 class Cisco:
     """Collector for Cisco (including Cisco CSS)"""
@@ -42,12 +43,14 @@ class Cisco:
         fdb = CiscoFdbCollector(equipment, proxy, self.config)
         arp = ArpCollector(equipment, proxy, self.config)
         cdp = CdpCollector(equipment, proxy)
+        lldp = LldpCollector(equipment, proxy)
         vlan = CiscoVlanCollector(equipment, proxy, ports)
         d = trunk.collectData()
         d.addCallback(lambda x: ports.collectData())
         d.addCallback(lambda x: arp.collectData())
         d.addCallback(lambda x: fdb.collectData())
         d.addCallback(lambda x: cdp.collectData())
+        d.addCallback(lambda x: lldp.collectData())
         d.addCallback(lambda x: vlan.collectData())
         return d
 
