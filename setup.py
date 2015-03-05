@@ -2,10 +2,6 @@ from distutils.core import setup, Extension
 from wiremaps import VERSION
 
 
-def refresh_plugin_cache():
-    from twisted.plugin import IPlugin, getPlugins
-    list(getPlugins(IPlugin))
-
 if __name__ == "__main__":
     setup(name="wiremaps",
           version=VERSION,
