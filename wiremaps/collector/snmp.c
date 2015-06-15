@@ -770,6 +770,34 @@ Snmp_setretries(SnmpObject *self, PyObject *value, void *closure)
 }
 
 static PyObject*
+Snmp_gettimeout(SnmpObject *self, void *closure)
+{
+	return PyInt_FromLong(self->ss->timeout);
+}
+
+static int
+Snmp_settimeout(SnmpObject *self, PyObject *value, void *closure)
+{
+	long timeout;
+
+	if (value == NULL) {
+		PyErr_SetString(PyExc_TypeError, "cannot delete timeout");
+		return -1;
+	}
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError,
+                    "timeout should be an integer");
+		return -1;
+	}
+
+	timeout = PyInt_AsLong(value);
+	if (PyErr_Occurred())
+		return -1;
+	self->ss->timeout = timeout;
+	return 0;
+}
+
+static PyObject*
 SnmpReader_repr(SnmpReaderObject *self)
 {
 	return PyString_FromFormat("<SnmpReader fd:%d>", self->fd);
@@ -851,6 +879,9 @@ static PyGetSetDef Snmp_getseters[] = {
     {"retries",
      (getter)Snmp_getretries, (setter)Snmp_setretries,
      "retries", NULL},
+    {"timeout",
+     (getter)Snmp_gettimeout, (setter)Snmp_settimeout,
+     "timeout", NULL},
     {NULL}  /* Sentinel */
 };
 
