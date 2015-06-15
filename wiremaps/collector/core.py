@@ -218,6 +218,15 @@ AND deleted='infinity'
             proxy = AgentProxy(ip=str(ip),
                                community=community,
                                version=version)
+
+        # Set timeout/retries
+        timeout = self.config.get("timeout", None)
+        retries = self.config.get("retries", None)
+        if timeout is not None and timeout >= 0:
+            proxy.timeout = timeout
+        if retries is not None and retries >= 0:
+            proxy.retries = retries
+
         # Set version and communities for next run if this one doesn't succeed
         version-=1
         if version == 0:

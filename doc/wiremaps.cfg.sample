@@ -8,6 +8,8 @@ collector:
   expire: 1
   fdbexpire: 24
   arpexpire: 24
+  retries: 3
+  timeout: 1000
 database:
   username: wiremaps
   password: wiremaps

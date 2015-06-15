@@ -256,7 +256,7 @@ Snmp_init(SnmpObject *self, PyObject *args, PyObject *kwds)
 		return -1;
 	}
 	if (retries >= 0) self->ss->retries = retries;
-	if (timeout >= 0) self->ss->timeout = timeout;
+	if (timeout >= 0) self->ss->timeout = timeout / 1000;
 	if ((self->defers = PyDict_New()) == NULL)
 		return -1;
 	if (Snmp_updatereactor() == -1)
@@ -797,7 +797,7 @@ Snmp_settimeout(SnmpObject *self, PyObject *value, void *closure)
 	timeout = PyInt_AsLong(value);
 	if (PyErr_Occurred())
 		return -1;
-	self->ss->timeout = timeout;
+	self->ss->timeout = timeout / 1000;
 	return 0;
 }
 
