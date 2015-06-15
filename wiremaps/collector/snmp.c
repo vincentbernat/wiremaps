@@ -212,13 +212,15 @@ Snmp_init(SnmpObject *self, PyObject *args, PyObject *kwds)
 {
 	PyObject *host=NULL, *community=NULL;
 	char *chost=NULL, *ccommunity=NULL;
-	int version = 2;
+	int version = 2, retries = -1, timeout = -1;
 	struct snmp_session session;
 
-	static char *kwlist[] = {"ip", "community", "version", NULL};
-		
-	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|i", kwlist, 
-		&host, &community, &version))
+	static char *kwlist[] = {"ip", "community", "version", "retries", "timeout",
+				 NULL};
+
+	if (!PyArg_ParseTupleAndKeywords(args, kwds, "OO|iii", kwlist,
+					 &host, &community, &version,
+					 &retries, &timeout))
 		return -1;
 
 	snmp_sess_init(&session);
@@ -253,6 +255,8 @@ Snmp_init(SnmpObject *self, PyObject *args, PyObject *kwds)
 		free(session.peername);
 		return -1;
 	}
+	if (retries >= 0) self->ss->retries = retries;
+	if (timeout >= 0) self->ss->timeout = timeout;
 	if ((self->defers = PyDict_New()) == NULL)
 		return -1;
 	if (Snmp_updatereactor() == -1)
