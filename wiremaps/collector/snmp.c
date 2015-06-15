@@ -742,6 +742,34 @@ Snmp_setversion(SnmpObject *self, PyObject *value, void *closure)
 }
 
 static PyObject*
+Snmp_getretries(SnmpObject *self, void *closure)
+{
+	return PyInt_FromLong(self->ss->retries);
+}
+
+static int
+Snmp_setretries(SnmpObject *self, PyObject *value, void *closure)
+{
+	int retries;
+
+	if (value == NULL) {
+		PyErr_SetString(PyExc_TypeError, "cannot delete retries");
+		return -1;
+	}
+	if (!PyInt_Check(value)) {
+		PyErr_SetString(PyExc_TypeError,
+                    "retries should be an integer");
+		return -1;
+	}
+
+	retries = PyInt_AsLong(value);
+	if (PyErr_Occurred())
+		return -1;
+	self->ss->retries = retries;
+	return 0;
+}
+
+static PyObject*
 SnmpReader_repr(SnmpReaderObject *self)
 {
 	return PyString_FromFormat("<SnmpReader fd:%d>", self->fd);
@@ -820,6 +848,9 @@ static PyGetSetDef Snmp_getseters[] = {
     {"version",
      (getter)Snmp_getversion, (setter)Snmp_setversion,
      "version", NULL},
+    {"retries",
+     (getter)Snmp_getretries, (setter)Snmp_setretries,
+     "retries", NULL},
     {NULL}  /* Sentinel */
 };
 
