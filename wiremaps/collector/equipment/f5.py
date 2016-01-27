@@ -122,10 +122,12 @@ class F5PortCollector:
                              1: 'half',
                              2: 'full'}[self.data["duplex"].get(p, 0)])
         for trunk, port in self.association["trunk"]:
+            if port not in interfaces: continue
             self.equipment.ports[interfaces.index(port) + 1].trunk = \
                 Trunk(interfaces.index(trunk) + 1)
         for vlan, port in self.association["vlan"]:
             if vlan not in self.data["vid"]: continue
+            if port not in interfaces: continue
             self.equipment.ports[interfaces.index(port) + 1].vlan.append(
                 LocalVlan(self.data["vid"][vlan],
                           vlan))
