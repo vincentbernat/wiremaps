@@ -54,10 +54,17 @@ class VlanCollector:
         d.addCallback(lambda _: self.completeEquipment())
         return d
 
+
 class Rfc2674VlanCollector(VlanCollector):
     """Collect VLAN information for switch that respects RFC 2674"""
-    oidVlanNames = '.1.3.6.1.2.1.17.7.1.4.3.1.1' # dot1qVlanStaticName
-    oidVlanPorts = '.1.3.6.1.2.1.17.7.1.4.2.1.4' # dot1qVlanCurrentEgressPorts
+    oidVlanNames = '.1.3.6.1.2.1.17.7.1.4.3.1.1'  # dot1qVlanStaticName
+    oidVlanPorts = '.1.3.6.1.2.1.17.7.1.4.2.1.4'  # dot1qVlanCurrentEgressPorts
+
+
+class Rfc2674StaticVlanCollector(Rfc2674VlanCollector):
+    """Collect static VLAN information for switch implementing RFC 2674"""
+    oidVlanPorts = '.1.3.6.1.2.1.17.7.1.4.3.2.1'  # dot1qVlanCurrentEgressPorts
+
 
 class IfMibVlanCollector:
     """Collect VLAN information using IF-MIB.
